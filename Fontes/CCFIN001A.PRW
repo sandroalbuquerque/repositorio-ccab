@@ -1,6 +1,8 @@
 #include "rwmake.ch"
 #include "protheus.ch"
 #INCLUDE "TopConn.ch"
+#define cENTER Chr(10)+Chr(13)
+
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
@@ -18,7 +20,7 @@
 */
 User Function CCFIN001()
 
-
+Private lAltera := .F.
 Private aRotina :=	{{ "Pesquisar"	,"AxPesqui"  					, 0 , 1 },;
 { "Visualizar"	,"FA280Visua"					, 0 , 2 },;
 { "Selecionar"	,'ExecBlock("CCFININC",.T.,.T.)', 0 , 3 },;
@@ -48,6 +50,10 @@ Private oGet1
 Private oFont15B   	:= TFont():New("Arial",,15,,.T.,,,,.T.,.F.) 
 Private oFont13B   	:= TFont():New("Arial",,13,,.T.,,,,.T.,.F.) 
 Private _nColAtu	:= 0
+Private aAux        := {}
+Private oValor		
+Private oQtdTit 		
+
 
 If xFilial("SC5") == '01'
 	dbSelectArea("SE1")
@@ -105,8 +111,6 @@ Local cIndex		:= ""
 Local nOpca 		:= 0
 Local oDlg, oDlg1,oDlg2
 Local oGet
-Local oValor		:= 0
-Local oQtdTit 		:= 0
 Local oValorFat 	:= 0
 Local aMoedas		:= {}
 Local cVar,nO
@@ -246,19 +250,19 @@ cAliasSE1 := "QRYSE1"
 
 cQuery := ""
 aEval(aStru,{|x| cQuery += ","+AllTrim(x[1])})
-cQuery  := "SELECT "+SubStr(cQuery,2) + ","
-cQuery  += "SE1.R_E_C_N_O_ RECNO "
-cQuery	+= "FROM "
-cQuery	+= RetSqlName("SE1")+ " SE1 "
-cQuery	+= "WHERE "
-cQuery 	+= "E1_FILIAL='"+ xFilial("SE1") + "' "
-cQuery 	+= "AND E1_CLIENTE In ('"	+ cCli1+ "') "
-cQuery	+= "AND E1_SITUACA IN ('0','F','G') "			//Carteira, Carteira Protesto e Carteira Acordo
-cQuery	+= "AND E1_SALDO>0 "
-cQuery	+= "AND E1_MOEDA= "+Substr(_cMoed,1,1)+" "
-cQuery	+= "AND D_E_L_E_T_ = ' ' "
-cQuery	+= "AND E1_TIPO IN ('NF','DP') "
-cQuery	+= "AND E1_ORIGEM = 'MATA460' "
+cQuery  := "SELECT "+SubStr(cQuery,2) + ","+cENTER
+cQuery  += "SE1.R_E_C_N_O_ RECNO "+cENTER
+cQuery	+= "FROM "+cENTER
+cQuery	+= RetSqlName("SE1")+ " SE1 "+cENTER
+cQuery	+= "WHERE "+cENTER
+cQuery 	+= "E1_FILIAL='"+ xFilial("SE1") + "' "+cENTER
+cQuery 	+= "AND E1_CLIENTE In ('"	+ cCli1+ "') "+cENTER
+cQuery	+= "AND E1_SITUACA IN ('0','F','G') "+cENTER			//Carteira, Carteira Protesto e Carteira Acordo
+cQuery	+= "AND E1_SALDO>0 "+cENTER
+cQuery	+= "AND E1_MOEDA= "+Substr(_cMoed,1,1)+" "+cENTER
+cQuery	+= "AND D_E_L_E_T_ = ' ' "+cENTER
+cQuery	+= "AND E1_TIPO IN ('NF','DP') "+cENTER
+cQuery	+= "AND E1_ORIGEM = 'MATA460' "+cENTER
 cQuery  += "ORDER BY " + SqlOrder(SubStr(SE1->(IndexKey(1)),1,At("E1_TIPO",SE1->(IndexKey(1)))-2)+"+RECNO")
 
 MemoWrit('NFIN01.SQL', cQuery)
@@ -316,12 +320,18 @@ oTimer:Activate()
 @ C(1.6) , C(25	)	Say "Valor Selecionado" FONT oDlg1:oFont //"Valor Selecionado"
 @ C(1.6) , C(34	)	Say "T¡t. Selec." FONT oDlg1:oFont //"T¡t. Selec."
 @ C(2.4) , C(25	)	Say oValor		VAR nValor		Picture "@E 99,999,999,999.99" FONT oDlg1:oFont
-@ C(2.4) , C(34)	Say oQtdTit 	VAR nQtdTit 	Picture "999"  FONT oDlg1:oFont SIZE C(20),C(11)
+@ C(2.4) , C(34)	Say oQtdTit 	VAR nQtdTit 	Picture "999"  FONT oDlg1:oFont SIZE C(20),C(11)   
 
 oMark :=MsSelect():New(cAliasSe1,"E1_OK","!E1_SALDO",aCampos,@lInverte,@cMarca,{C(50),C(2),C(200),C(520)})
-oMark:bMark := {||Fa280Exibe(cAliasSe1,cMarca,oValor,oQtdTit,oMark,@nValor)}
+oMark:bMark := {||Fa280Exibe(cAliasSe1,cMarca,oValor,oQtdTit,oMark,@nValor), nValor := AtualizaValor(cAliasSe1,cMarca,@nValor)}
 oMark:oBrowse:lhasMark := .t.
 oMark:oBrowse:lCanAllmark := .t.
+oMark:oBrowse:bAllMark := {|| _ALL(cMarca,@oMark,cAliasSe1,@nValor,oDlg1)}
+oMark:oBrowse:Refresh()	
+                       
+
+//@ C(205), C(20) BUTTON "Marca Todos" Size 35,11 ACTION (MARCATODOS(cMarca,cAliasSe1)) OF oDlg Pixel
+//@ C(205), C(50) BUTTON "Desm. Todos" Size 35,11 ACTION (MARCATODOS(cMarca,cAliasSe1)) OF oDlg Pixel
 
 ACTIVATE MSDIALOG oDlg1 ON INIT EnchoiceBar(oDlg1,{|| nOpca := 1,;
 IIF(Fa280ValOK(),IF(Fa280Soma(),oDlg1:End(),;
@@ -396,7 +406,7 @@ If nOpcA == 1
 		DbSkip()
 	EndDo
 	
-	U_MontaTela() // Tela de informaçoes dos novos titulos
+	U_MontaTela() 			// Tela de informaçoes dos novos titulos
 	
 EndIf
 
@@ -416,6 +426,7 @@ Return()
 */
 
 User Function _Processa()
+LOCAL aArray := {}
 
 _nTipo := If(Substr(_cTipo,1,1)=="C",1,2)
 _nTaxa := If(Substr(_cTaxa,1,1)=="D",1,2)
@@ -479,6 +490,7 @@ If Aviso("Confirma a execução?","Confirma a execução?",{"Sim","Não"},,) == 1
 	_nBase4:= _nBase4 / _nSaldo
 	_nBase5:= _nBase5 / _nSaldo
 	
+	/*
 	If _xTipo == '9'
 		
 		If _nParc <> 0
@@ -525,6 +537,8 @@ If Aviso("Confirma a execução?","Confirma a execução?",{"Sim","Não"},,) == 1
 				If lMsErroAuto
 					DisarmTransaction()
 					Mostraerro()
+				else
+					alert('Gerou um Titulo Nº '+_cTitulo+' Tipo: 9')
 				EndIf
 				
 			Next
@@ -571,12 +585,18 @@ If Aviso("Confirma a execução?","Confirma a execução?",{"Sim","Não"},,) == 1
 			If lMsErroAuto
 				DisarmTransaction()
 				Mostraerro()
+			else
+					alert('Gerou ('+alltrim(Str(_i))+') Titulo Nº '+_cTitulo+' Tipo Diferente de 9')
 			EndIf
 			
 		Next
 		
 	EndIf
 	
+	*/  
+	aCols := aClone(oGet1:aCols)
+	Begin Transaction 
+	                   
 	_XCHAVE := AllTrim(_CODCLI)+AllTrim(_LOJACLI)+AllTrim(Iif(_nTipo == 1,GETMV("MV_XSERCRD"),GETMV("MV_XSERREN")))+_cTitulo
 	
 	_cMotBx :=Iif(_nTipo == 1,GETMV("MV_XMOTBXC"),GETMV("MV_XMOTBXR"))
@@ -617,7 +637,7 @@ If Aviso("Confirma a execução?","Confirma a execução?",{"Sim","Não"},,) == 1
 			
 			lMsErroAuto := .f.
 			
-			MSExecAuto({|x,y| FINA070(x,y)},aBaixa)
+			MSExecAuto({|x,y| FINA070(x,y)},aBaixa, 3)
 			
 			If lMsErroAuto
 				MostraErro()
@@ -637,12 +657,9 @@ If Aviso("Confirma a execução?","Confirma a execução?",{"Sim","Não"},,) == 1
 				PA1->PA1_E1PRE  := AllTrim(Iif(_nTipo == 1,GETMV("MV_XSERCRD"),GETMV("MV_XSERREN")))
 				//PA1->PA1_E1NUM  := _cTitulo
 				PA1->PA1_E1TIP  := "NF "
-				
-				
 				MsUnlock()
 				
 			Else
-				
 				
 				DbSelectArea("PA1")
 				DbSetOrder(1)
@@ -660,15 +677,69 @@ If Aviso("Confirma a execução?","Confirma a execução?",{"Sim","Não"},,) == 1
 				PA1->PA1_E1PRE  := AllTrim(Iif(_nTipo == 1,GETMV("MV_XSERCRD"),GETMV("MV_XSERREN")))
 				//PA1->PA1_NUME1  := _cTitulo
 				PA1->PA1_E1TIP  := "NF "
-				
-				
+
 				MsUnlock()
+
 			EndIf
 		EndIf
 		DbSelectArea("QRYSE1")
 		DbSkip()
 	EndDo
 	
+	// Irá gerar os titulos com os novos valores
+	For _i := 1 To Len(aCols)
+			//_nvalapp := aAux[1,2]
+			dbSelectArea('SE1')
+			dbSetOrder(1)
+			aTitulo :=  {}
+			aTitulo := 	{{"E1_PREFIXO"  ,AllTrim(Iif(_nTipo == 1,GETMV("MV_XSERCRD"),GETMV("MV_XSERREN")))     	,Nil},;
+						 {"E1_NUM"		,_cTitulo																,Nil},;
+						 {"E1_PARCELA"	,Right(aCols[_i][1],2)													,Nil},;
+						 {"E1_TIPO"		,"NF "																	,Nil},;
+						 {"E1_NATUREZ"	,AllTrim(Iif(_nTipo == 1,GETMV("MV_XNATCRD"),GETMV("MV_XNATREN")))		,Nil},;
+						 {"E1_CLIENTE"	,_CODCLI																,Nil},;
+						 {"E1_LOJA"		,_LOJACLI																,Nil},;
+						 {"E1_EMISSAO"	,dDataBase																,Nil},;
+						 {"E1_VENCTO"	,aCols[_i][7]															,Nil},;
+						 {"E1_VENCREA"	,DataValida(aCols[_i][7])												,Nil},;
+						 {"E1_VALOR"	, aCols[_i][2]															,Nil},;
+						 {"E1_VLCRUZ"	,(aCols[_i][2] *_nTaxa)												,Nil},;
+						 {"E1_JUROS" 	,aCols[_i][4]	 														,Nil},;
+						 {"E1_CORREC" 	,aCols[_i][5]	 														,Nil},;
+						 {"E1_MULTA" 	,aCols[_i][6]	 														,Nil},;
+						 {"E1_DESCONT" 	,aCols[_i][3]	 														,Nil},;
+						 {"E1_VEND1"	,_cVend1																,Nil},;
+						 {"E1_VEND2"	,_cVend2																,Nil},;
+						 {"E1_VEND3"	,_cVend3																,Nil},;
+						 {"E1_VEND4"	,_cVend4																,Nil},;
+						 {"E1_VEND5"	,_cVend5																,Nil},;
+						 {"E1_COMIS1"	,_nComis1																,Nil},;
+						 {"E1_COMIS2"	,_nComis2																,Nil},;
+						 {"E1_COMIS3"	,_nComis3																,Nil},;
+						 {"E1_COMIS4"	,_nComis4																,Nil},;
+						 {"E1_COMIS5"	,_nComis5																,Nil},;
+						 {"E1_MOEDA"	,_cMoeda																,Nil},;
+						 {"E1_BASCOM1"	,(aCols[_i][2] *_nTaxa)*_nBase1										,Nil},;
+						 {"E1_BASCOM2"	,(aCols[_i][2] *_nTaxa)*_nBase2										,Nil},;
+						 {"E1_BASCOM3"	,(aCols[_i][2] *_nTaxa)*_nBase3										,Nil},;
+						 {"E1_BASCOM4"	,(aCols[_i][2] *_nTaxa)*_nBase4										,Nil},;
+						 {"E1_BASCOM5"	,(aCols[_i][2] *_nTaxa)*_nBase5										,Nil},;
+						 {"E1_DESCFIN"	,_nValdesc																,Nil},;
+						 {"E1_TXMOEDA"	,_nTaxa																	,Nil}}
+						
+			lMsHelpAuto := .t.
+			lMsErroAuto := .f.
+
+			MSExecAuto({|x,y| FINA040(x,y)},aTitulo,3)
+			
+			If lMsErroAuto
+				DisarmTransaction()
+				Mostraerro()
+			EndIf	
+
+	Next
+	
+	End Transaction
 	
 	U_CCFI01A(_XCHAVE, _nTaxa, _nTaxa)
 	
@@ -926,25 +997,16 @@ User Function CCFINEXC()
 
 If AllTrim(SE1->E1_ORIGEM) == "FINA040" .and. AllTrim(SE1->E1_PREFIXO) $(AllTrim(GETMV("MV_XSERCRD"))+"/"+AllTrim(GETMV("MV_XSERREN")))
 	
+
+	If !MsgYesNo("Deseja realmente excluir titulo Nº"+SE1->E1_NUM,"Atenção!!!")			              // Adicionado por Valdemir Jose 05/12/2012
+	   Return
+	endif
+
 	_cMotBx:=Iif(AllTrim(GETMV("MV_XSERCRD")) == SE1->E1_PREFIXO,GETMV("MV_XMOTBXC"),GETMV("MV_XMOTBXR"))
 	
-	If Select("TRB") > 0
-		DbSelectArea("TRB")
-		DbCloseArea("TRB")
-	EndIf
 	
-	BeginSql Alias "TRB"
-		%noparser%
-		Select PA1.R_E_C_N_O_ As Recd, * From %Table:PA1% PA1, %Table:SE5% SE5
-		Where E5_FILIAL+E5_PREFIXO+E5_NUMERO+E5_PARCELA+E5_CLIFOR+E5_LOJA+E5_TIPO =
-		PA1_E1FIL+PA1_E1PRE+PA1_E1NUM+PA1_E1PAR+PA1_E1CLI+PA1_E1LOJ+PA1_E1TIP
-		and E5_RECPAG = 'R' and E5_DTDIGIT = PA1_E5DTA and PA1.%NotDel% and SE5.%NotDel% AND E5_TIPODOC = 'BA'
-		and PA1_E1FIL+PA1_E1PRE+PA1_NUME1+PA1_E1TIP = %Exp:xFilial("SE1")+SE1->E1_PREFIXO+SE1->E1_NUM+SE1->E1_TIPO% and E5_MOTBX = %Exp:_cMotBx% and E5_SITUACA = ' '
-	EndSql
-	
-	_X1QUERY:= GETLastQuery()
-	
-	
+    AbreTRB()         // Valdemir Jose 05/12/2012  Arraração de PA1 com SE5
+    
 	DbSelectArea("TRB")
 	DbGoTop()
 	
@@ -952,11 +1014,12 @@ If AllTrim(SE1->E1_ORIGEM) == "FINA040" .and. AllTrim(SE1->E1_PREFIXO) $(AllTrim
 		DbSelectArea("EXC")
 		DbCloseArea("EXC")
 	EndIf
-	
+	                                    
+	// FILTRA OS REGISTROS, BUSCANDO O NUMERO DO TITULO NOVO NA TABELA PA1, POSICIONANDO NA TABELA SE1
 	BeginSql Alias "EXC"
 		%noparser%
 		Select * From %Table:SE1% SE1
-		Where SE1.%NotDel% and E1_FILIAL+E1_PREFIXO+E1_NUM+E1_TIPO = %Exp:TRB->PA1_E1FIL+TRB->PA1_E1PRE+TRB->PA1_NUME1+TRB->PA1_E1TIP%
+		Where SE1.%NotDel% and E1_FILIAL+E1_PREFIXO+E1_NUM+E1_TIPO = %Exp:TRB->PA1_E1FIL+TRB->PA1_E1APRE+TRB->PA1_E1ANUM+TRB->PA1_E1ATIP%
 	EndSql
 	
 	DbSelectArea("EXC")
@@ -977,13 +1040,36 @@ If AllTrim(SE1->E1_ORIGEM) == "FINA040" .and. AllTrim(SE1->E1_PREFIXO) $(AllTrim
 		
 		lMsHelpAuto := .t.
 		lMsErroAuto := .f.
-		MSExecAuto({|x,y| FINA040(x,y)},aTitulo,5)
+		//MSExecAuto({|x,y| FINA040(x,y)},aTitulo,5)      // Exclusão de Titulos
+		MSExecAuto({|x,y| FINA070(x,y)},aTitulo,5)      // Estorna Titulos
 		
 		DbSelectArea("EXC")
 		
 		DbSkip()
 	EndDo
 	
+	//Deleta os Titulos Novos Referente ao agrupamento para o novo titulo
+	_cDel := "Delete From "+RetSqlName("SE1")+" SE1 "
+	_cDel := _cDel + " Where SE1.D_E_L_E_T_ = ' ' AND  E1_FILIAL+E1_PREFIXO+E1_NUM+E1_TIPO = '"+TRB->PA1_E1FIL+TRB->PA1_EA1PRE+TRB->PA1_EA1NUM+TRB->PA1_EA1TIP+"'"
+	MemoWrite('UPDSE1.SQL', _cDel)
+	TcSqlExec(_cDel)
+	
+    // Exclui Referência entre os novos titulos com os que foram aglutinados - Valdemir 05/12/2012
+	DbSelectArea("EXC")
+	DbGoTop()
+	Do While !Eof("EXC")
+		dbSelectArea('PA1')
+		dbSetOrder(2)
+		if dbSeek(xFilial('PA1')+TRB->PA1_E1FIL+EXC->PA1_EA1NUM+EXC->PA1_EA1PRE+EXC->PA1_EA1TIP)		
+			RecLock('PA1',.F.)
+			dbDelete()
+			MsUnlock()
+		endif
+		DbSelectArea("EXC")
+		dbSkip()
+	EndDo	
+	/*                                                                           
+	// Atualiza tabela SE5
 	DbSelectArea("TRB")
 	DbGoTop()
 	Do While !Eof("TRB")
@@ -1010,6 +1096,8 @@ If AllTrim(SE1->E1_ORIGEM) == "FINA040" .and. AllTrim(SE1->E1_PREFIXO) $(AllTrim
 		DbSelectArea("TRB")
 		DbSkip()
 	EndDo
+	*/
+	
 EndIf
 
 Return
@@ -1088,6 +1176,7 @@ DEFINE MSDIALOG oDlg1 TITLE _cTitoDlg1 FROM C(022),C(009) TO C(280),C(540) PIXEL
 @ C(117),C(005) Say "Soma das parcelas:"											   			SIZE C(050),C(008) COLOR CLR_BLACK	Font oFont13B	PIXEL OF oDlg1
 @ C(116),C(060) MsGet _oSomaPar 	Var _nSomaPar	Picture "@E 9,999,999.99"					Size C(050),C(008) COLOR CLR_RED 					PIXEL OF oDlg1	
 
+RegToMemory('SE1',.F.)
 fGetDados1()
 
 _oSomaPar:bWhen		:= {|| .F. }
@@ -1095,7 +1184,7 @@ _oSomaOri:bWhen		:= {|| .F. }
 
 ACTIVATE MSDIALOG oDlg1 CENTERED ON INIT EnchoiceBar(oDlg1,{|| IIF(VldTela(),oDlg1:End(),nil) }, {||( oDlg1:End() )},,aButtons)
 
-/*
+/*                                       
 DEFINE MSDIALOG oDlg1 FROM	22,9 TO 280,540 TITLE _cTitoDlg1 						   							   PIXEL
 @ 010, 030 Say   	"Valor"                      									   		SIZE 055, 011 OF oDlg1 PIXEL
 @ 010, 095 Say   	"Desc. Pont."													   		SIZE 055, 011 OF oDlg1 PIXEL
@@ -1260,9 +1349,9 @@ Static Function fGetDados1()
 **************************
 // Variaveis deste Form                                                                                                         
 Local nX			:= 0                                                                                                              
-Local aGetAux1	    := {"C7_ITEM","E1_VLCRUZ","E1_DESCONT","E1_VENCTO"}  
+Local aGetAux1	    := {"C7_ITEM","E1_VLCRUZ","E1_DESCONT","E1_JUROS","E1_CORREC","E1_MULTA","E1_VENCTO"}  
 Local aCpoGDa      	:= aGetAux1 				// Vetor responsavel pela montagem da aHeader       
-Local aAlter       	:= {"E1_VLCRUZ","E1_DESCONT","E1_VENCTO","NOUSER"}	// Vetor com os campos que poderao ser alterados                                                                                 
+Local aAlter       	:= {"E1_VLCRUZ","E1_DESCONT","E1_VENCTO","E1_JUROS","E1_CORREC","E1_MULTA","NOUSER"}	// Vetor com os campos que poderao ser alterados                                                                                 
 Local nOpc         	:= GD_INSERT+GD_UPDATE+GD_DELETE // Posicao do elemento do vetor aRotina que a MsNewGetDados usara como referencia  
 Local cLinOk       	:= "AllwaysTrue"    		// Funcao executada para validar o contexto da linha atual do aCols                  
 Local cTudoOk      	:= "AllwaysTrue"    		// Funcao executada para validar o contexto geral da MsNewGetDados (todo aCols)      
@@ -1288,7 +1377,10 @@ For nX := 1 to Len(aCpoGDa)
 		If 	   nX == 1;	cTit := "Item"
 		ElseIf nX == 2;	cTit := "Valor"
 		ElseIf nX == 3;	cTit := "Desconto"
-		ElseIf nX == 4;	cTit := "Vencimento"
+		ElseIf nX == 4;	cTit := "Juros"
+		ElseIf nX == 5;	cTit := "Correção"
+		ElseIf nX == 6;	cTit := "Multa"
+		ElseIf nX == 7;	cTit := "Vencimento"
         EndIf
 		
 		If nX == 2 //Valor
@@ -1439,3 +1531,127 @@ If "MP8" $ oApp:cVersion
 EndIf
 //Return Round(nTam,2)
 Return nTam
+
+
+      
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³CCFIN001A ºAutor  ³Valdemir Jose       º Data ³  04/12/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Atualizara o valor a ser apresentado do total do titulo     º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function AtualizaValor(pcAliasSe1,pcMarca,pnValor)
+	Local aArea := GetArea()
+         
+	pnValor := 0
+	
+	(pcAliasSe1)->( dbGotop() )                 
+	While !(pcAliasSe1)->( Eof() )
+		if (pcAliasSe1)->E1_OK = pcMarca
+			pnValor += 	(pcAliasSe1)->E1_SALDO
+	    endif 
+		(pcAliasSe1)->( dbSkip() )
+	EndDo                        
+	
+	RestArea( aArea )
+
+Return pnValor
+
+
+Static Function MARCATODOS(pcMarca, pcAliasSe1)
+	Local aArea := GetArea()
+	
+	(pcAliasSe1)->( dbGotop() )                 
+	While !(pcAliasSe1)->( Eof() )
+	     ReckLock(pcAliasSe1,.F.)
+		 (pcAliasSe1)->E1_OK := if((pcAliasSe1)->E1_OK=pcMarca,'',pcMarca)
+	     MsUnlock()
+		(pcAliasSe1)->( dbSkip() )
+	EndDo                        
+    
+	RestArea( aArea )
+
+Return
+
+
+STATIC Function _ALL(cMarca,oMark,cAliasSe1, nValor, oDlg1)
+Local nReg := (cAliasSe1)->(Recno())
+
+dbSelectArea(cAliasSe1)
+(cAliasSe1)->(dbGoTop())   
+nValor  := 0           
+nQtdTit := 0
+While (cAliasSe1)->(!Eof())
+	RecLock(cAliasSe1)
+	IF (cAliasSe1)->E1_OK == cMarca
+		(cAliasSe1)->E1_OK := "  "
+	Else
+		(cAliasSe1)->E1_OK := cMarca 
+		nValor += (cAliasSe1)->E1_SALDO
+		nQtdTit += 1
+	Endif
+	(cAliasSe1)->(dbSkip())
+Enddo                 
+(cAliasSe1)->(dbGoto(nReg))
+
+oMark:oBrowse:Refresh(.t.)
+//@ C(2.4) , C(25	)	Say oValor		VAR nValor		Picture "@E 999,999,999,999,999.99" FONT oDlg1:oFont SIZE C(30),C(11)   
+//@ C(2.4) , C(34)	Say oQtdTit 	VAR nQtdTit 	Picture "999999"  FONT oDlg1:oFont SIZE C(30),C(11)   
+oValor:REFRESH()
+oQTDTIT:REFRESH()
+Return Nil
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³AbreTRB() ºAutor  ³Valdemir Jose       º Data ³  05/12/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Abre Query para Buscar Titulos a serem excluidos e estorna-º±±
+±±º          ³ dos                                                        º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function AbreTRB()
+Local cQry := ''
+
+	If Select("TRB") > 0
+		DbSelectArea("TRB")
+		DbCloseArea("TRB")
+	EndIf
+
+	cQry += "Select  * From "+RetSqlName('PA1')+" PA1, "+RetSqlName('SE5')+" SE5 "+cENTER
+	cQry += "Where PA1.D_E_L_E_T_ = ' ' AND SE5.D_E_L_E_T_ = ' ' "+cENTER
+	cQry += " AND SE5.E5_NUMERO = PA1.PA1_E1NUM  "+cENTER
+	cQry += " AND SE5.E5_FILIAL = PA1.PA1_FILIAL "+cENTER
+	cQry += " AND SE5.E5_MOTBX = PA1.PA1_E1PRE   "+cENTER
+	cQry += " AND SE5.E5_PARCELA = PA1.PA1_E1PAR "+cENTER
+	cQry += " AND SE5.E5_CLIFOR = PA1.PA1_E1CLI  "+cENTER
+	cQry += " AND SE5.E5_LOJA = PA1.PA1_E1LOJ    "+cENTER
+	cQry += " AND SE5.E5_TIPO = PA1.PA1_E1TIP    "+cENTER
+	cQry += " AND E5_DTDIGIT = PA1_E5DTA "+cENTER
+	cQry += " AND E5_RECPAG = 'R'  "+cENTER
+	cQry += " AND E5_SITUACA = ' ' "+cENTER
+
+	Memowrite("CCFIN001A.SQL",cQry)
+	
+	dbUseArea(.T., "TOPCONN", TCGenQry(,,cQry), "TRB", .F., .T.)
+	
+	dbSelectArea("TRB") 
+	dbGotop()
+	                
+Return
