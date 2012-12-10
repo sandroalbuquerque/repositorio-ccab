@@ -654,8 +654,8 @@ If Aviso("Confirma a execução?","Confirma a execução?",{"Sim","Não"},,) == 1
 				PA1->PA1_E1NUM  := QRYSE1->E1_NUM
 				PA1->PA1_E1PAR  := QRYSE1->E1_PARCELA
 				PA1->PA1_E1FIL  := xFilial("SE1")
-				PA1->PA1_E1PRE  := AllTrim(Iif(_nTipo == 1,GETMV("MV_XSERCRD"),GETMV("MV_XSERREN")))
-				//PA1->PA1_E1NUM  := _cTitulo
+				PA1->PA1_E1APRE := AllTrim(Iif(_nTipo == 1,GETMV("MV_XSERCRD"),GETMV("MV_XSERREN")))   // Foi adicionado por Valdemir Jose 06/12/12
+				PA1->PA1_E1ANUM := _cTitulo																 // Foi adicionado por Valdemir Jose 06/12/12
 				PA1->PA1_E1TIP  := "NF "
 				MsUnlock()
 				
@@ -674,8 +674,8 @@ If Aviso("Confirma a execução?","Confirma a execução?",{"Sim","Não"},,) == 1
 				PA1->PA1_E1NUM  := QRYSE1->E1_NUM
 				PA1->PA1_E1PAR  := QRYSE1->E1_PARCELA
 				PA1->PA1_E1FIL  := xFilial("SE1")
-				PA1->PA1_E1PRE  := AllTrim(Iif(_nTipo == 1,GETMV("MV_XSERCRD"),GETMV("MV_XSERREN")))
-				//PA1->PA1_NUME1  := _cTitulo
+				PA1->PA1_E1APRE := AllTrim(Iif(_nTipo == 1,GETMV("MV_XSERCRD"),GETMV("MV_XSERREN")))   // Foi adicionado por Valdemir Jose 06/12/12
+				PA1->PA1_E1ANUM := _cTitulo																// Foi adicionado por Valdemir Jose 06/12/12
 				PA1->PA1_E1TIP  := "NF "
 
 				MsUnlock()
@@ -993,12 +993,12 @@ Return(_ret)
 
 
 User Function CCFINEXC()
-
+Local lRET := .T.
 
 If AllTrim(SE1->E1_ORIGEM) == "FINA040" .and. AllTrim(SE1->E1_PREFIXO) $(AllTrim(GETMV("MV_XSERCRD"))+"/"+AllTrim(GETMV("MV_XSERREN")))
 	
 
-	If !MsgYesNo("Deseja realmente excluir titulo Nº"+SE1->E1_NUM,"Atenção!!!")			              // Adicionado por Valdemir Jose 05/12/2012
+	If !MsgYesNo("Deseja realmente excluir titulo Nº "+SE1->E1_NUM,"Atenção!!!")			              // Adicionado por Valdemir Jose 05/12/2012
 	   Return
 	endif
 
@@ -1019,84 +1019,17 @@ If AllTrim(SE1->E1_ORIGEM) == "FINA040" .and. AllTrim(SE1->E1_PREFIXO) $(AllTrim
 	BeginSql Alias "EXC"
 		%noparser%
 		Select * From %Table:SE1% SE1
-		Where SE1.%NotDel% and E1_FILIAL+E1_PREFIXO+E1_NUM+E1_TIPO = %Exp:TRB->PA1_E1FIL+TRB->PA1_E1APRE+TRB->PA1_E1ANUM+TRB->PA1_E1ATIP%
+		Where SE1.%NotDel% and E1_FILIAL+E1_PREFIXO+E1_NUM+E1_TIPO = %Exp:TRB->PA1_E1FIL+TRB->PA1_E1APRE+TRB->PA1_E1ANUM+TRB->PA1_E1TIP%
 	EndSql
+
+	Processa( {|| lRET := EstornaTit()},"Processando","Processo em andamento..." )
+	  
+	if lRET
+	   Alert("Registro estornado com sucesso")
+	else
+	   Alert("Houve problemas ao tentar estornar o registro, por favor verifique...")
+	endif
 	
-	DbSelectArea("EXC")
-	DbGoTop()
-	Do While !Eof("EXC")
-		//		aTitulo := {}
-		aTitulo := {{"E1_PREFIXO" , EXC->E1_PREFIXO	,Nil},;
-		{"E1_NUM"		, EXC->E1_NUM		,Nil},;
-		{"E1_PARCELA"	, EXC->E1_PARCELA	,Nil},;
-		{"E1_TIPO"		, EXC->E1_TIPO		,Nil},;
-		{"E1_NATUREZ"	, EXC->E1_NATUREZ	,Nil},;
-		{"E1_CLIENTE"	, EXC->E1_CLIENTE	,Nil},;
-		{"E1_LOJA"		, EXC->E1_LOJA		,Nil},;
-		{"E1_EMISSAO"	, EXC->E1_EMISSAO	,Nil},;
-		{"E1_VENCTO"	, EXC->E1_VENCTO	,Nil},;
-		{"E1_VENCREA"	, EXC->E1_VENCREA	,Nil},;
-		{"E1_VALOR"		, EXC->E1_VALOR		,Nil}}
-		
-		lMsHelpAuto := .t.
-		lMsErroAuto := .f.
-		//MSExecAuto({|x,y| FINA040(x,y)},aTitulo,5)      // Exclusão de Titulos
-		MSExecAuto({|x,y| FINA070(x,y)},aTitulo,5)      // Estorna Titulos
-		
-		DbSelectArea("EXC")
-		
-		DbSkip()
-	EndDo
-	
-	//Deleta os Titulos Novos Referente ao agrupamento para o novo titulo
-	_cDel := "Delete From "+RetSqlName("SE1")+" SE1 "
-	_cDel := _cDel + " Where SE1.D_E_L_E_T_ = ' ' AND  E1_FILIAL+E1_PREFIXO+E1_NUM+E1_TIPO = '"+TRB->PA1_E1FIL+TRB->PA1_EA1PRE+TRB->PA1_EA1NUM+TRB->PA1_EA1TIP+"'"
-	MemoWrite('UPDSE1.SQL', _cDel)
-	TcSqlExec(_cDel)
-	
-    // Exclui Referência entre os novos titulos com os que foram aglutinados - Valdemir 05/12/2012
-	DbSelectArea("EXC")
-	DbGoTop()
-	Do While !Eof("EXC")
-		dbSelectArea('PA1')
-		dbSetOrder(2)
-		if dbSeek(xFilial('PA1')+TRB->PA1_E1FIL+EXC->PA1_EA1NUM+EXC->PA1_EA1PRE+EXC->PA1_EA1TIP)		
-			RecLock('PA1',.F.)
-			dbDelete()
-			MsUnlock()
-		endif
-		DbSelectArea("EXC")
-		dbSkip()
-	EndDo	
-	/*                                                                           
-	// Atualiza tabela SE5
-	DbSelectArea("TRB")
-	DbGoTop()
-	Do While !Eof("TRB")
-		
-		_cUpd := "Update "+RetSqlName("SE5")+" Set D_E_L_E_T_ = '*' "
-		_cUpd := _cUpd + " Where E5_FILIAL+E5_PREFIXO+E5_NUMERO+E5_PARCELA+E5_CLIFOR+E5_LOJA+E5_TIPO = '"+TRB->E5_FILIAL+TRB->E5_PREFIXO+TRB->E5_NUMERO+TRB->E5_PARCELA+TRB->E5_CLIFOR+TRB->E5_LOJA+TRB->E5_TIPO+"'"
-		_cUpd := _cUpd + "and E5_RECPAG = 'R' and E5_DTDIGIT = '"+TRB->E5_DTDIGIT+"' and E5_MOTBX = '"+TRB->E5_MOTBX+"' and E5_SEQ = '"+TRB->E5_SEQ+"'"
-		MemoWrite('UPDSE5.SQL', _cUpd)
-		TcSqlExec(_cUpd)
-		
-		_cUpd := "Update "+RetSqlName("SE1")+" Set E1_SALDO = '"+Str(TRB->E5_VLMOED2)+"', E1_XPEDNOV = ' ', E1_DESCFIN = E1_XDESCON "
-		_cUpd := _cUpd + " Where E1_FILIAL+E1_PREFIXO+E1_NUM+E1_PARCELA+E1_CLIENTE+E1_LOJA+E1_TIPO = '"+TRB->PA1_E1FIL+TRB->PA1_E1PRE+TRB->PA1_E1NUM+TRB->PA1_E1PAR+TRB->PA1_E1CLI+TRB->PA1_E1LOJ+TRB->PA1_E1TIP+"'"
-		MemoWrite('UPDSE1.SQL', _cUpd)
-		TcSqlExec(_cUpd)
-		
-		
-		DbSelectArea("PA1")
-		DbGoTo(TRB->Recd)
-		RecLock("PA1")
-		DbDelete()
-		MsUnlock()
-		
-		
-		DbSelectArea("TRB")
-		DbSkip()
-	EndDo
-	*/
 	
 EndIf
 
@@ -1638,14 +1571,16 @@ Local cQry := ''
 	cQry += "Where PA1.D_E_L_E_T_ = ' ' AND SE5.D_E_L_E_T_ = ' ' "+cENTER
 	cQry += " AND SE5.E5_NUMERO = PA1.PA1_E1NUM  "+cENTER
 	cQry += " AND SE5.E5_FILIAL = PA1.PA1_FILIAL "+cENTER
-	cQry += " AND SE5.E5_MOTBX = PA1.PA1_E1PRE   "+cENTER
+	cQry += " AND SE5.E5_MOTBX = PA1.PA1_E1APRE  "+cENTER
 	cQry += " AND SE5.E5_PARCELA = PA1.PA1_E1PAR "+cENTER
 	cQry += " AND SE5.E5_CLIFOR = PA1.PA1_E1CLI  "+cENTER
 	cQry += " AND SE5.E5_LOJA = PA1.PA1_E1LOJ    "+cENTER
 	cQry += " AND SE5.E5_TIPO = PA1.PA1_E1TIP    "+cENTER
-	cQry += " AND E5_DTDIGIT = PA1_E5DTA "+cENTER
-	cQry += " AND E5_RECPAG = 'R'  "+cENTER
-	cQry += " AND E5_SITUACA = ' ' "+cENTER
+	cQry += " AND SE5.E5_DTDIGIT = PA1_E5DTA "+cENTER
+	cQry += " AND SE5.E5_RECPAG = 'R'  "+cENTER
+	cQry += " AND SE5.E5_SITUACA = ' ' "+cENTER
+	cQry += " AND PA1.PA1_E1ANUM = '"+SE1->E1_NUM+"' "+cENTER
+	cQry += " AND PA1.PA1_E1APRE = '"+SE1->E1_PREFIXO+"' "+cENTER
 
 	Memowrite("CCFIN001A.SQL",cQry)
 	
@@ -1655,3 +1590,115 @@ Local cQry := ''
 	dbGotop()
 	                
 Return
+
+
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³CCFIN001A ºAutor  ³Valdemir Jose       º Data ³  07/12/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Estorna Titulos                                             º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function EstornaTit() 
+Local lRet := .F.
+
+	Begin Transaction
+
+	DbSelectArea("EXC")
+	DbGoTop()
+	Do While !Eof("EXC")
+		//		posiciona SE1 para Estornar registros
+		dbSelectArea('SE1')
+		dbSetOrder(2)
+		if dbSeek(xFilial('SE1')+EXC->E1_CLIENTE+EXC->E1_LOJA+TRB->PA1_E1PRE+TRB->PA1_E1NUM+IF(EMPTY(TRB->PA1_E1PAR),'   ',TRB->PA1_E1PAR)+TRB->PA1_E1TIP)
+		
+			aTitulo := {{"E1_PREFIXO" , SE1->E1_PREFIXO	,Nil},;
+			{"E1_NUM"		, SE1->E1_NUM   	,Nil},;
+			{"E1_PARCELA"	, SE1->E1_PARCELA	,Nil},;
+			{"E1_TIPO"		, SE1->E1_TIPO		,Nil},;
+			{"E1_NATUREZ"	, SE1->E1_NATUREZ	,Nil},;
+			{"E1_CLIENTE"	, SE1->E1_CLIENTE	,Nil},;
+			{"E1_LOJA"		, SE1->E1_LOJA		,Nil},;
+			{"E1_EMISSAO"	, SE1->E1_EMISSAO	,Nil},;
+			{"E1_VENCTO"	, SE1->E1_VENCTO	,Nil},;
+			{"E1_VENCREA"	, SE1->E1_VENCREA	,Nil},;
+			{"E1_VALOR"		, SE1->E1_VALOR		,Nil}}
+			                                       
+			lMsHelpAuto := .t.
+			lMsErroAuto := .f.
+			
+			MSExecAuto({|x,y| FINA070(x,y)},aTitulo,5)      // Estorna Titulos
+			
+			lRet := (!lMsErroAuto)
+		
+		endif
+		
+		DbSelectArea("EXC")
+		
+		DbSkip()
+	EndDo
+	
+	
+	// Exclui os titulos novos com base na referencia do PA1 - Valdemir 07/12/12
+	if lRet
+		DbSelectArea("EXC")
+		DbGoTop()
+		Do While !Eof("EXC")
+			//		aTitulo := {}
+			aTitulo := {{"E1_PREFIXO" , EXC->E1_PREFIXO	,Nil},;
+			{"E1_NUM"		, EXC->E1_NUM		,Nil},;
+			{"E1_PARCELA"	, EXC->E1_PARCELA	,Nil},;
+			{"E1_TIPO"		, EXC->E1_TIPO		,Nil},;
+			{"E1_NATUREZ"	, EXC->E1_NATUREZ	,Nil},;
+			{"E1_CLIENTE"	, EXC->E1_CLIENTE	,Nil},;
+			{"E1_LOJA"		, EXC->E1_LOJA		,Nil},;
+			{"E1_EMISSAO"	, EXC->E1_EMISSAO	,Nil},;
+			{"E1_VENCTO"	, EXC->E1_VENCTO	,Nil},;
+			{"E1_VENCREA"	, EXC->E1_VENCREA	,Nil},;
+			{"E1_VALOR"		, EXC->E1_VALOR		,Nil}}
+			
+			lMsHelpAuto := .t.
+			lMsErroAuto := .f.
+			MSExecAuto({|x,y| FINA040(x,y)},aTitulo,5)      // Exclusão de Titulos
+			                          
+			lRet := (!lMsErroAuto)
+			
+			DbSelectArea("EXC")
+			
+			DbSkip()
+		EndDo
+	Endif
+    // Exclui Referência entre os novos titulos com os que foram aglutinados - Valdemir 05/12/2012
+	if lRet
+		DbSelectArea("EXC")
+		DbGoTop()
+		Do While !Eof("EXC")
+			dbSelectArea('PA1')
+			dbSetOrder(2)
+			if dbSeek(xFilial('PA1')+TRB->PA1_E1FIL+EXC->PA1_EA1NUM+EXC->PA1_EA1PRE+EXC->PA1_EA1TIP)		
+				RecLock('PA1',.F.)
+				dbDelete()
+				MsUnlock()
+			endif
+			DbSelectArea("EXC")
+			dbSkip()
+		EndDo	
+	Else
+		// Caso encontre problemas não efetua nenhuma atualização
+		RollBackSX8()
+		DisarmTransaction()
+	endif
+	
+	End Transaction
+
+Return lRET
