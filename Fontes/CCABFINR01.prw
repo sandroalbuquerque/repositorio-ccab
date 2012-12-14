@@ -4,6 +4,28 @@
 #Define PAD_RIGHT           1
 #Define PAD_CENTER          2
 
+#define COLUNA01			20
+#define COLUNA02		   110   
+#define COLUNA03		   290
+#define COLUNA04		   350
+#define COLUNA05          440
+#define COLUNA06          590
+#define COLUNA07          740
+#define COLUNA08          890
+#define COLUNA09         1040
+#define COLUNA10         1190
+#define COLUNA11         1390
+#define COLUNA12         1490
+#define COLUNA13         1690
+#define COLUNA14		  1860
+#define COLUNA15		  1980
+#define COLUNA16		  2130
+#define COLUNA17		  2320
+#define COLUNA18		  2480
+#define COLUNA19		  2630
+#define COLUNA20         2780
+
+
 
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -20,19 +42,6 @@
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 User Function CCABFINR01()
-Local cDesc1 			:= "Este programa tem como objetivo imprimir relatorio "
-Local cDesc2    		:= "Movimentação de Titulos, "
-Local cDesc3     		:= "respeitando o parâmetro informado."
-Local cPict         	:= ""
-Local titulo       		:= "RELATÓRIO MOVIMENTAÇÃO DE TITULOS"// 
-Local nPos         		:= 0         
-Local Cabec1       		:= ""
-Local Cabec2       		:= ""
-Local imprime      		:= .T.
-Local aOrd 				:= {}
-LOCAL cConta  			:= ""
-Local _Query            := ""     
-Local _QryPerda         := ""
 Local aP                := {}
 Local aHelp             := {}
 Local aCabec            := {}            
@@ -40,55 +49,10 @@ Local hora_inv          := Substr(Time(),1,2)+Substr(Time(),4,2)+Substr(Time(),7
 Local cArqExcel         := ""
 Local cNomeArq          := "CCABFR01_"+DTOS(DATE())+"_"+hora_inv
 
-Private nLin            := 1
 Private aTmp            
 Private aCampo   		:= {}
-Private aPosTitulo      := {30, 250, 840, 1390, 1600, 2000}
-Private aQuery          := {0,0,0,0,0,0,0,0,0,0}
-Private lEnd         	:= .F.
-Private lAbortPrint  	:= .F.
-Private CbTxt        	:= ""
-Private limite          := 80
-Private tamanho         := "P"
-Private nomeprog        := "CCABFR01"
-Private nTipo           := 18
-Private aReturn         := { "Zebrado", 1, "Administracao", 2, 2, 1, "", 1}
-Private nLastKey        := 0
 Private cPerg       	:= "CCABFR01"
-Private cbcont     		:= 00
-Private wnrel      		:= "CCABFR01" 
-Private cString 		:= "TMP"                      
-Private aCol_           := {}
-Private nApresentar     := 0      
-Private nLarFolha       := 0 
-Private bInstancia      := .F.
-Private cSubTit         := ''
-Private cSubTit1        := ''
-
-PRIVATE oPrint
-PRIVATE lFirst 	:= .F.                                                                                  	
-PRIVATE ContFl  := 1
-PRIVATE oFont07,oFont08,oFont09,oFont10, oFont10n, oFont11,oFont13,oFont15, oFont16,oFont18
-PRIVATE oFont07b,oFont08b, oFont09b, oFont10b, oFont11b, oFont13b,oFont15b, oFont16b, oFont18b
-
-
-// Configurando fontes para relatório
-oFont07	:= TFont():New("Arial",07,07,,.F.,,,,.T.,.F.)
-oFont07b:= TFont():New("Arial",07,07,,.T.,,,,.T.,.F.)
-oFont08	:= TFont():New("Arial",08,08,,.F.,,,,.T.,.F.)
-oFont08b:= TFont():New("Arial",08,08,,.T.,,,,.T.,.F.)
-oFont09	:= TFont():New("Arial",09,09,,.F.,,,,.T.,.F.)
-oFont09b:= TFont():New("Arial",09,09,,.T.,,,,.T.,.F.)
-oFont10	:= TFont():New("Arial",10,10,,.F.,,,,.T.,.F.)
-oFontTit:= TFont():New("Arial",09,09,,.T.,,,,.T.,.F.)
-oFont10b:= TFont():New("Arial",10,10,,.T.,,,,.T.,.F.)
-oFont11	:= TFont():New("Arial",11,11,,.T.,,,,.T.,.F.)		//Normal s/negrito
-oFont13	:= TFont():New("Arial",13,13,,.F.,,,,.T.,.F.)		//Normal s/negrito
-oFont13b:= TFont():New("Arial",13,13,,.T.,,,,.T.,.F.)		//Normal s/negrito
-oFont15	:= TFont():New("Arial",15,15,,.T.,,,,.T.,.F.)
-oFont16	:= TFont():New("Arial",16,16,,.T.,,,,.T.,.F.)
-oFont18	:= TFont():New("Arial",18,18,,.T.,,,,.T.,.F.)
-
+Private aMotBx          := ReadMotBx()    // Carrega todas descrições da baixa
                                        
 //Criar o array com as perguntas e help
 aAdd(aP,{"Apresentar como         ?"      ,"N", 02,0,"C", "",""		     , "Relatório","Excel"	  , "Ambos",""   , ""})   //01
@@ -122,7 +86,7 @@ aAdd(aHelp,{"Informe o Gestor inicial"})
 aAdd(aHelp,{"Informe o Gestor final"})
 
 // Cabecalho para exportar para excel
-aTmp   := {'PREFIXO','Nº TITULO','TIPO','PORTADOR','CODCLI','LOCAL','NOME CLIENTE','PJ/PF','CNPJ/CPF','CIDADE','ESTADO','RISCO CCAB','DT.1º COMPRA','VEND2','GESTOR','EMISSAO','VENCTO','VENCTO.REAL','VLR.TITULO','MOEDA','HISTORICO','DT.BAIXA','DIG.BAIXA','VLR.BAIXA','MOTIVO BAIXA','CORRECAO','JUROS','DESCONTO','SALDO'}
+aTmp   := {'PREFIXO','Nº TITULO','TIPO','PORTADOR','CODCLI','LOCAL','NOME CLIENTE','PJ/PF','CNPJ/CPF','CIDADE','ESTADO','RISCO CCAB','DT.1º COMPRA','VEND2','GESTOR','EMISSAO','VENCTO','VENCTO.REAL','VLR.TITULO','VLR.REAL','MOEDA','HISTORICO','DT.BAIXA','DIG.BAIXA','VLR.BAIXA','MOTIVO BAIXA','CORRECAO','JUROS','DESCONTO','SALDO'}
                                                                                         
 if !SX1Parametro(aP,aHelp)
  Return
@@ -144,12 +108,17 @@ Endif
 
 dbSelectArea("TMP")
 
-dbGotop()            
 
-Processa( {|| GetArrayExcel(cNomeArq) },"Aguarde","Gerando planilha...")
+if (nApresentar = 1) .or. (nApresentar = 3)
+	dbGotop()            
+	Processa( {|| CCABFINR01A() },"Aguarde","Montando relatório...")
+endif
 
 
-
+if (nApresentar = 2) .or. (nApresentar=3)
+	dbGotop()            
+	Processa( {|| GetArrayExcel(cNomeArq) },"Aguarde","Gerando planilha...")
+endif
 
 TMP->( dbCloseArea() )	      
 
@@ -175,15 +144,22 @@ Return
 */
 Static Function GetArrayExcel(cNomeArq)
 Local nVlrBaixa, nCorrecao, nJuros, nDesconto, nSaldo
-Local nCnt := 0
+Local nI, nCnt  := 0
+Local cMOTBAIXA := ''
+Local _nValor   := 0
+Local cTitulo   := ''
+Local nMostVlrTit  := 0
+Local nMostVlrRea  := 0
 
+nVlrTitulo := 0
+nVlrTReal  := 0
 nVlrBaixa  := 0
 nCorrecao  := 0 
 nJuros     := 0 
 nDesconto  := 0 
 nSaldo     := 0
 
-
+CursorWait()
 //nCnt := Conta("TMP","!Eof()")
 dbEval( {|x| nCnt++ },,{|| TMP->( !EOF() )})
 
@@ -205,7 +181,19 @@ While !Eof()
 	ENDIF
 	             
 	
-	dbSelectArea('TMP')
+	dbSelectArea('TMP')              
+	
+   nMostVlrTit := 0
+   nMostVlrRea := 0
+   if (cTitulo  <> TMP->NUMTITULO) .and. (_nValor <> TMP->VLRTITULO)
+	  nMostVlrTit := TMP->VLRTITULO
+	  nMostVlrRea := TMP->VLREAL
+   endif
+	            
+	
+	
+	nI        :=  Ascan(aMotBx, {|x| Substr(x,1,3) == Upper(TMP->MOTBAIXA) })   //Busca a Descrição do Motivo da Baixa
+	cMOTBAIXA := if( nI > 0,Substr(aMotBx[nI],07,10),"" )
 
     aAdd(aCampo,{chr(160)+TMP->PREFIXO,;
                  chr(160)+TMP->NUMTITULO,;
@@ -218,31 +206,41 @@ While !Eof()
                  chr(160)+cCNPJ_CPF,;
                  SA1->A1_MUN,;
                  SA1->A1_EST,;
-                 chr(160)+SA1->A1_RISCO,;
+                 chr(160)+SA1->A1_XCLASSE,;
                  cPRICOM,;
                  chr(160)+TMP->VEND2,;
                  chr(160)+TMP->GESTOR,;
                  DTOC(STOD(TMP->EMISSAO)),;
                  DTOC(STOD(TMP->VENCTO)),;
                  DTOC(STOD(TMP->VENCTOREAL)),;
-                 Transform(TMP->VLRTITULO,'@E 999,999,999,999.99'),;
+                 Transform(nMostVlrTit,'@E 999,999,999,999.99'),;    
+                 Transform(nMostVlrRea,'@E 999,999,999,999.99'),;    
                  chr(160)+STRZERO(TMP->MOEDA,2),;
                  alltrim(TMP->HISTORICO),;
                  DTOC(STOD(TMP->DTBAIXA)),;
                  DTOC(STOD(TMP->DIGBAIXA)),;
                  Transform(TMP->VLRBAIXA,'@E 999,999,999,999.99'),;
-                 alltrim(TMP->MOTBAIXA),;
+                 cMOTBAIXA,;
                  Transform(TMP->CORRECAO,'@E 999,999,999,999.99'),;
                  Transform(TMP->JUROS   ,'@E 999,999,999,999.99'),;
                  Transform(TMP->DESCONTO,'@E 999,999,999,999.99'),;
                  Transform(TMP->SALDO   ,'@E 999,999,999,999.99') ;
     })
-
+                          
+   	// Trata em caso de se repetir o titulo
+   	if (cTitulo  <> TMP->NUMTITULO) .and. (_nValor <> TMP->VLRTITULO)
+    	nVlrTitulo += TMP->VLRTITULO
+    	nVlrTReal  += TMP->VLREAL
+    endif     
+    
 	nVlrBaixa  += TMP->VLRBAIXA
 	nCorrecao  += TMP->CORRECAO
 	nJuros     += TMP->JUROS 
 	nDesconto  += TMP->DESCONTO
 	nSaldo     += TMP->SALDO
+
+   cTitulo  := TMP->NUMTITULO
+   _nValor  := TMP->VLRTITULO
 
 	dbSkip()
 EndDo                                
@@ -266,7 +264,8 @@ aAdd(aCampo,{'TOTAL',;
                  '',;
                  '',;
                  '',;
-                 '',;
+                 Transform(nVlrTitulo,'@E 999,999,999,999.99'),;
+                 Transform(nVlrTReal,'@E 999,999,999,999.99'),;
                  '',;
                  '',;
                  '',;
@@ -285,6 +284,7 @@ IF (LEN(aCampo) > 0) .AND. ((nApresentar = 2) .or. (nApresentar = 3))
     	nResult := MAKEDIR("C:\Temp")
    Endif                                               
 
+   IncProc('Carregando planilha.... ')
    cArqExcel := "C:\Temp\"+cNomeArq+".html"    //+if(MV_PAR05==1,"html","csv")   
    If !GERAARQ(aTmp,aCampo,cArqExcel,'01')
     Return
@@ -297,6 +297,7 @@ IF (LEN(aCampo) > 0) .AND. ((nApresentar = 2) .or. (nApresentar = 3))
 		MsgAlert("MsExcel não instalado")
 		Return
 	Endif
+	CursorArrow()
 	oExcelApp := MsExcel():New()
 	oExcelApp:WorkBooks:Open( cArqExcel )  
 	oExcelApp:SetVisible(.T.)	  
@@ -336,17 +337,17 @@ Static Function MontaQuery()
 			// Obtem os registros a serem processados
 			cQuery += "SELECT SE1.E1_PREFIXO AS PREFIXO, SE1.E1_NUM AS NUMTITULO, SE1.E1_TIPO AS TIPO, SE1.E1_PORTADO AS PORTADOR, SE1.E1_CLIENTE  AS CODCLI,  "+cENTER
 			cQuery += "       SE1.E1_LOJA  AS LOCAL,SE1.E1_VEND2 AS VEND2,SE1.E1_XGESTOR AS GESTOR,SE1.E1_EMISSAO AS EMISSAO, 		  "+cENTER
-			cQuery += "       SE1.E1_VENCTO AS VENCTO, SE1.E1_VENCREA AS VENCTOREAL, SE1.E1_VALOR AS VLRTITULO,SE1.E1_MOEDA AS MOEDA, "+cENTER
+			cQuery += "       SE1.E1_VENCTO AS VENCTO, SE1.E1_VENCREA AS VENCTOREAL, SE1.E1_VALOR  AS VLRTITULO, SE1.E1_VLCRUZ AS VLREAL,SE1.E1_MOEDA AS MOEDA, "+cENTER
 			cQuery += "       SE1.E1_HIST AS HISTORICO, SE1.E1_BAIXA AS DTBAIXA, A.E5_DTDIGIT AS DIGBAIXA, "+cENTER
-			cQuery += "       A.VALOR AS VLRBAIXA, A.E5_HISTOR AS MOTBAIXA, SE1.E1_CORREC AS CORRECAO, SE1.E1_JUROS AS JUROS,SE1.E1_DESCONT AS DESCONTO,SE1.E1_SALDO AS SALDO "+cENTER
+			cQuery += "       A.VALOR AS VLRBAIXA, A.E5_MOTBX AS MOTBAIXA, A.E5_VLCORRE AS CORRECAO, A.E5_VLJUROS AS JUROS, A.E5_VLDESCO AS DESCONTO,SE1.E1_SALDO AS SALDO "+cENTER
 			cQuery += "       FROM "+RETSQLNAME("SE1")+" SE1 "+cENTER
 			cQuery += "		LEFT OUTER JOIN (  "+cENTER
-			cQuery += "		            SELECT E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_HISTOR,SUM(SE5.E5_VALOR) AS VALOR FROM "+RETSQLNAME("SE5")+" SE5 "+cENTER
+			cQuery += "		            SELECT E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_MOTBX, E5_VLCORRE, E5_VLJUROS, E5_VLDESCO, SUM(SE5.E5_VALOR) AS VALOR FROM "+RETSQLNAME("SE5")+" SE5 "+cENTER
 			cQuery += "					WHERE SE5.D_E_L_E_T_ = ' '  "+cENTER
 			cQuery += "					  AND SE5.E5_TIPODOC NOT IN ('RA','DC','D2','JR','J2','TL','MT','M2','CM','C2','TR','TE') "+cENTER
 			cQuery += "					  AND SE5.E5_SITUACA NOT IN ('C','E','X') "+cENTER
 			cQuery += "					  AND ((E5_TIPODOC = 'CD' AND E5_VENCTO <= E5_DATA) OR (E5_TIPODOC <> 'CD')) "+cENTER
-			cQuery += "					 GROUP BY E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_HISTOR "+cENTER
+			cQuery += "					 GROUP BY E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_MOTBX, E5_VLCORRE, E5_VLJUROS, E5_VLDESCO "+cENTER
 			cQuery += "				         ) A "+cENTER
 			cQuery += "		ON A.E5_NUMERO = SE1.E1_NUM AND A.E5_FILIAL = SE1.E1_FILIAL "+cENTER
 			cQuery += "		AND A.E5_PREFIXO = SE1.E1_PREFIXO "+cENTER
@@ -617,3 +618,509 @@ Next i
 bRET := Pergunte(cPerg,.T.)
 
 Return bRET
+
+      
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³CCABFINR01ºAutor  ³Valdemir Jose       º Data ³  12/12/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Emissão do Relatorio Movimento de Titulos                   º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function CCABFINR01A()
+Local cDesc1 			:= "Este programa tem como objetivo imprimir relatorio "
+Local cDesc2    		:= "Movimentação de Titulos, "
+Local cDesc3     		:= "respeitando o parâmetro informado."
+Local cPict         	:= ""
+Local titulo       		:= "RELATÓRIO MOVIMENTAÇÃO DE TITULOS"// 
+Local nPos         		:= 0         
+Local Cabec1       		:= ""
+Local Cabec2       		:= ""
+Local imprime      		:= .T.
+Local aOrd 				:= {}
+LOCAL cConta  			:= ""
+Local _Query            := ""     
+Private nLin            := 1
+Private aPosTitulo      := {COLUNA01,COLUNA02,COLUNA03,COLUNA04,COLUNA05,COLUNA06,COLUNA07,COLUNA08,COLUNA09,COLUNA10,COLUNA11,COLUNA12,COLUNA13,COLUNA14,COLUNA15,COLUNA16,COLUNA17,COLUNA18,COLUNA19,COLUNA20}
+Private aQuery          := {0,0,0,0,0,0,0,0,0,0}
+Private lEnd         	:= .F.
+Private lAbortPrint  	:= .F.
+Private CbTxt        	:= ""
+Private limite          := 80
+Private tamanho         := "P"
+Private nomeprog        := "CCABFR01"
+Private nTipo           := 18
+Private aReturn         := { "Zebrado", 1, "Administracao", 2, 2, 1, "", 1}
+Private nLastKey        := 0
+      
+Private cbcont     		:= 00
+Private wnrel      		:= "CCABFR01" 
+Private cString 		:= "TMP"                      
+Private aCol_           := {}
+Private nApresentar     := 0      
+Private nLarFolha       := 0 
+Private bInstancia      := .F.
+Private cSubTit         := ''
+Private cSubTit1        := ''
+
+PRIVATE oPrint
+PRIVATE lFirst 	:= .F.                                                                                  	
+PRIVATE ContFl  := 1
+PRIVATE oFont07,oFont08,oFont09,oFont10, oFont10n, oFont11,oFont13,oFont15, oFont16,oFont18
+PRIVATE oFont07b,oFont08b, oFont09b, oFont10b, oFont11b, oFont13b,oFont15b, oFont16b, oFont18b
+
+
+// Configurando fontes para relatório
+oFont07	:= TFont():New("Arial Narrow",07,07,,.F.,,,,.T.,.F.)
+oFont07b:= TFont():New("Arial Narrow",07,07,,.T.,,,,.T.,.F.)
+oFont08	:= TFont():New("Arial Narrow",08,08,,.F.,,,,.T.,.F.)
+oFont08b:= TFont():New("Arial Narrow",08,08,,.T.,,,,.T.,.F.)
+oFont09	:= TFont():New("Arial Narrow",09,09,,.F.,,,,.T.,.F.)
+oFont09b:= TFont():New("Arial Narrow",09,09,,.T.,,,,.T.,.F.)
+oFont10	:= TFont():New("Arial Narrow",10,10,,.F.,,,,.T.,.F.)
+oFontTit:= TFont():New("Arial Narrow",09,09,,.T.,,,,.T.,.F.)
+oFont10b:= TFont():New("Arial Narrow",10,10,,.T.,,,,.T.,.F.)
+oFont11	:= TFont():New("Arial Narrow",11,11,,.T.,,,,.T.,.F.)		//Normal s/negrito
+oFont13	:= TFont():New("Arial Narrow",13,13,,.F.,,,,.T.,.F.)		//Normal s/negrito
+oFont13b:= TFont():New("Arial Narrow",13,13,,.T.,,,,.T.,.F.)		//Normal s/negrito
+oFont15	:= TFont():New("Arial Narrow",15,15,,.T.,,,,.T.,.F.)
+oFont16	:= TFont():New("Arial Narrow",16,16,,.T.,,,,.T.,.F.)
+oFont18	:= TFont():New("Arial Narrow",18,18,,.T.,,,,.T.,.F.)
+
+wnrel := SetPrint(cString,wnrel   ,cPerg,@TITULO,cDesc1,cDesc2,cDesc3,.F.,,.F.,TAMANHO,.F.,.F.)
+
+If nLastKey == 27
+	TMP->( dbCloseArea() )
+	CursorArrow()
+	Return
+Endif
+
+SetDefault(aReturn,cString)
+
+If nLastKey == 27
+	TMP->( dbCloseArea() )
+	CursorArrow()
+	Return
+Endif
+
+nTipo := If(aReturn[4]==1,15,18)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Processamento. RPTSTATUS monta janela com a regua de processamento. ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin) },Titulo )
+
+CursorArrow()
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³RunReport   ºAutor  ³Valdemir José     º Data ³  07/06/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Processando Registros                                      º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function RunReport(Cabec1,Cabec2,Titulo,nPos)
+Local nLin     := 1
+Local nVlrBaixa  := 0
+Local nCorrecao  := 0 
+Local nJuros     := 0 
+Local nDesconto  := 0 
+Local nSaldo     := 0
+Local nVlrTitulo := 0
+Local nVlrReal   := 0
+Local nTVlrBaixa  := 0
+Local nTCorrecao  := 0 
+Local nTJuros     := 0 
+Local nTDesconto  := 0 
+Local nTSaldo     := 0
+Local cMOTBAIXA   := ""
+Local nVlrTTitulo := 0
+Local nVlrTReal   := 0
+Local nI          := 0
+Local cTitulo     := ''                
+Local _nValor     := 0
+Private cChave
+
+nTVlrBaixa  := 0
+nTCorrecao  := 0 
+nTJuros     := 0 
+nTDesconto  := 0 
+nTSaldo     := 0
+
+TMP->( dbGotop() )	
+While TMP->( ! EOF() ) 
+
+    cChave := TMP->CODCLI
+
+	dbSelectArea('SA1')
+	dbSeek(xFilial('SA1')+TMP->CODCLI+TMP->LOCAL)
+	
+	if (nLin > 1)
+		SubCabec(oPrint, nLin, oFont08b, cChave)
+  	    nLin    += 160
+	endif       
+	
+	nVlrTitulo := 0
+	nVlrReal   := 0
+	nVlrBaixa  := 0
+	nCorrecao  := 0 
+	nJuros     := 0 
+	nDesconto  := 0 
+	nSaldo     := 0
+	While TMP->( ! EOF() ) .AND.  (TMP->CODCLI=cChave)
+		
+		nI        :=  Ascan(aMotBx, {|x| Substr(x,1,3) == Upper(TMP->MOTBAIXA) })   //Busca a Descrição do Motivo da Baixa
+		cMOTBAIXA := if( nI > 0,Substr(aMotBx[nI],07,10),"" )
+
+		if (nLin = 1) .or. nLin >= 2250        
+		   if nLin >= 2250
+		      oPrint:Line(nLin+10,010,nLin+10,aPosTitulo[20]+170)
+			  oPrint:EndPage()
+			  oPrint:StartPage() 			// Inicia uma nova pagina
+		   Endif	           
+		   nLin    := CabecCCAB(TITULO,cSubTit,cSubTit1,"", @oPrint, @lFirst, @ContFl)+20
+		   nLin    += 40
+		Endif  
+		                      
+		// Impressão Grafica
+	    oPrint:Line(nLin-10, aPosTitulo[01]-20,nLin+50,aPosTitulo[01]-20 ,oFont09)                    
+	    oPrint:Line(nLin-10, aPosTitulo[02]-20,nLin+50,aPosTitulo[02]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[03]-20,nLin+50,aPosTitulo[03]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[04]-20,nLin+50,aPosTitulo[04]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[05]-20,nLin+50,aPosTitulo[05]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[06]-20,nLin+50,aPosTitulo[06]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[07]-20,nLin+50,aPosTitulo[07]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[08]-20,nLin+50,aPosTitulo[08]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[09]-20,nLin+50,aPosTitulo[09]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[10]-20,nLin+50,aPosTitulo[10]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[11]-20,nLin+50,aPosTitulo[11]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[12]-20,nLin+50,aPosTitulo[12]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[13]-20,nLin+50,aPosTitulo[13]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[14]-20,nLin+50,aPosTitulo[14]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[15]-20,nLin+50,aPosTitulo[15]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[16]-20,nLin+50,aPosTitulo[16]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[17]-20,nLin+50,aPosTitulo[17]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[18]-20,nLin+50,aPosTitulo[18]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[19]-20,nLin+50,aPosTitulo[19]-20 ,oFont09)
+	    oPrint:Line(nLin-10, aPosTitulo[20]-20,nLin+50,aPosTitulo[20]-20 ,oFont09)
+
+		oPrint:Line(nLin-10,aPosTitulo[20]+170,nLin+50,aPosTitulo[20]+170,oFont09)
+		  
+	    // Impressão dos Dados
+		oPrint:say (nLin , aPosTitulo[01], TMP->PREFIXO							 		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[02], TMP->NUMTITULO                            		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[03], TMP->TIPO							     		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[04], TMP->PORTADOR			                 		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[05], TMP->VEND2			    				 		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[06], TMP->GESTOR								 		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[07], DTOC(STOD(TMP->EMISSAO))				 		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[08], DTOC(STOD(TMP->VENCTO))					 		  ,oFont08)	                   
+		oPrint:say (nLin , aPosTitulo[09], DTOC(STOD(TMP->VENCTOREAL))			 	 		  ,oFont08)	                   
+		if (cTitulo <> TMP->NUMTITULO) .and. _nValor <> TMP->VLRTITULO
+			oPrint:say (nLin , aPosTitulo[10]+160, Transform(TMP->VLRTITULO,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+		else
+			oPrint:say (nLin , aPosTitulo[10]+160, Transform(0,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+		endif
+		oPrint:say (nLin , aPosTitulo[11], STRZERO(TMP->MOEDA,2)					 		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[12], Substr(alltrim(TMP->HISTORICO),1,10)	 		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[13], DTOC(STOD(TMP->DTBAIXA))				 		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[14], DTOC(STOD(TMP->DIGBAIXA))				 		  ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[15]+120, Transform(TMP->VLRBAIXA,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+		oPrint:say (nLin , aPosTitulo[16], cMOTBAIXA			   					 		 ,oFont08)	
+		oPrint:say (nLin , aPosTitulo[17]+130, Transform(TMP->CORRECAO,'@E 99,999,999.99'), oFont08,,,,1)	                   
+		oPrint:say (nLin , aPosTitulo[18]+120, Transform(TMP->JUROS   ,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+		oPrint:say (nLin , aPosTitulo[19]+120, Transform(TMP->DESCONTO,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+		oPrint:say (nLin , aPosTitulo[20]+160, Transform(TMP->SALDO   ,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+		nLin += 40
+        
+	    cChave := TMP->CODCLI
+
+		// Total por grupo de clientes
+		if (cTitulo <> TMP->NUMTITULO) .and. _nValor <> TMP->VLRTITULO
+			nVlrTitulo += TMP->VLRTITULO
+		endif
+		nVlrReal   += 0
+		nVlrBaixa  += TMP->VLRBAIXA
+		nCorrecao  += TMP->CORRECAO
+		nJuros     += TMP->JUROS 
+		nDesconto  += TMP->DESCONTO
+		nSaldo     += TMP->SALDO
+
+		// Total Geral dos Titulos
+		if (cTitulo <> TMP->NUMTITULO) .and. _nValor <> TMP->VLRTITULO
+			nVlrTTitulo += TMP->VLRTITULO
+		endif
+		nVlrTReal   += 0
+		nTVlrBaixa  += TMP->VLRBAIXA
+		nTCorrecao  += TMP->CORRECAO
+		nTJuros     += TMP->JUROS 
+		nTDesconto  += TMP->DESCONTO
+		nTSaldo     += TMP->SALDO                                      
+		
+		cTitulo := TMP->NUMTITULO
+		_nValor := TMP->VLRTITULO
+    
+		dbSelectArea('TMP')
+	    TMP->( dbSkip() )
+    EndDo
+
+	// Salta Pagina	
+	if (nLin = 1) .or. nLin >= 2250        
+	   if nLin >= 2250 
+	      oPrint:Line(nLin+10,010,nLin+10,aPosTitulo[06]+170)
+		  oPrint:EndPage()
+		  oPrint:StartPage() 			// Inicia uma nova pagina
+	   Endif	           
+	   nLin    := CabecCCAB(TITULO,cSubTit,cSubTit1,"", @oPrint, @lFirst, @ContFl)+20
+	   nLin    += 40
+	Endif  
+    
+	oPrint:Line(nLin+10,aPosTitulo[1]-20,nLin+10,aPosTitulo[20]+170)
+    nLin    += 20
+    oPrint:Line(nLin-10, aPosTitulo[1]-20,nLin+50,aPosTitulo[1]-20 ,oFont09)                    
+	oPrint:say (nLin , aPosTitulo[01], " TOTAL: "								  ,oFont08)	
+	oPrint:say (nLin , aPosTitulo[10]+160, Transform(nVLRTITULO,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+	oPrint:say (nLin , aPosTitulo[15]+120, TRANSFORM(nVlrBaixa ,"@E 999,999,999.99"),oFont08b,,,,1)	
+	oPrint:say (nLin , aPosTitulo[17]+130, TRANSFORM(nCorrecao ,"@E 99,999,999.99"),oFont08b,,,,1)	
+	oPrint:say (nLin , aPosTitulo[18]+120, TRANSFORM(nJuros    ,"@E 999,999,999.99"),oFont08b,,,,1)	
+	oPrint:say (nLin , aPosTitulo[19]+120, TRANSFORM(nDesconto ,"@E 999,999,999.99"),oFont08b,,,,1)	
+	oPrint:say (nLin , aPosTitulo[20]+160, TRANSFORM(nSaldo	,"@E 999,999,999.99"),oFont08b,,,,1)	
+	oPrint:Line(nLin-10,aPosTitulo[20]+170,nLin+50,aPosTitulo[20]+170,oFont09)
+	oPrint:Line(nLin+50,aPosTitulo[1]-20,nLin+50,aPosTitulo[20]+170)
+	nLin += 120
+
+ENDDO
+oPrint:Line(nLin+10,aPosTitulo[1]-20,nLin+10,aPosTitulo[20]+170)
+nLin    += 20
+oPrint:Line(nLin-10, aPosTitulo[1]-20,nLin+50,aPosTitulo[1]-20 ,oFont09)                    
+oPrint:say (nLin , aPosTitulo[01], " TOTAL: "								  ,oFont08)	
+oPrint:say (nLin , aPosTitulo[10]+160, Transform(nVLRTTITULO,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+oPrint:say (nLin , aPosTitulo[15]+120, TRANSFORM(nTVlrBaixa ,"@E 999,999,999.99"),oFont08b,,,,1)	
+oPrint:say (nLin , aPosTitulo[17]+130, TRANSFORM(nTCorrecao ,"@E 99,999,999.99"),oFont08b,,,,1)	
+oPrint:say (nLin , aPosTitulo[18]+120, TRANSFORM(nTJuros    ,"@E 999,999,999.99"),oFont08b,,,,1)	
+oPrint:say (nLin , aPosTitulo[19]+120, TRANSFORM(nTDesconto ,"@E 999,999,999.99"),oFont08b,,,,1)	
+oPrint:say (nLin , aPosTitulo[20]+160, TRANSFORM(nTSaldo	,"@E 999,999,999.99"),oFont08b,,,,1)	
+oPrint:Line(nLin-10,aPosTitulo[20]+170,nLin+50,aPosTitulo[20]+170,oFont09)
+oPrint:Line(nLin+50,aPosTitulo[1]-20,nLin+50,aPosTitulo[20]+170)
+nLin += 120
+
+SET DEVICE TO SCREEN
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Se impressao em disco, chama o gerenciador de impressao...          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+if bInstancia
+   oPrint:Preview()        // Visualiza impressao grafica antes de imprimir
+Endif
+
+If aReturn[5]==1
+	dbCommitAll()
+Endif
+
+MS_FLUSH()
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³FER065    ºAutor  ³Valdemir José       º Data ³  09/06/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ SubCabecalho, poderá fazer a chamada de qualquer lugar     º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function SubCabec(oPrint_, nReturn, cCabFonte, cCLIENTE)
+   
+	oPrint_:Box(nReturn    ,aPosTitulo[1]-20,nReturn+110,aPosTitulo[20]+170)
+	oPrint_:say (nReturn+15, aPosTitulo[1] ,"CLIENTE: "+cCLIENTE+" - "+SA1->A1_NOME    ,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[9] ,"CIDADE: "+SA1->A1_MUN    ,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[14],"ESTADO: "+SA1->A1_EST    ,cCabFonte)
+	nReturn+=50
+	oPrint_:say (nReturn+15, aPosTitulo[1] ,"PJ / PF: "+SA1->A1_PESSOA,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[4] ,"CNPJ/CPF: "+SA1->A1_CGC  ,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[9] ,"RISCO CCAB: "+SA1->A1_XCLASSE,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[14],"DT.1º COMPRA: "+DTOC(SA1->A1_PRICOM)  ,cCabFonte)
+	nReturn+=60
+	//oPrint_:Line(nReturn,aPosTitulo[1]-20,nReturn,aPosTitulo[20]+170)
+	// Sub Cabeçalho com os  titulos dos campos
+    oPrint_:Line(nReturn, aPosTitulo[1]-20,nReturn+50,aPosTitulo[1]-20  ,oFont09)
+	oPrint_:say (nReturn+10, aPosTitulo[1],"PRF"    ,cCabFonte)
+    oPrint_:Line(nReturn, aPosTitulo[2]-20,nReturn+50  ,aPosTitulo[2]-20 ,oFont09)
+	oPrint_:say (nReturn+10, aPosTitulo[2],"TITULO"         ,cCabFonte)
+    oPrint_:Line(nReturn, aPosTitulo[3]-20,nReturn+50  ,aPosTitulo[3]-20 ,oFont09)
+	oPrint_:say (nReturn+10, aPosTitulo[3]-10,"TP" ,cCabFonte)
+    oPrint_:Line(nReturn, aPosTitulo[4]-20,nReturn+50  ,aPosTitulo[4]-20 ,oFont09)
+	oPrint_:say (nReturn+10, aPosTitulo[4]-10,"PDOR"	  ,cCabFonte)							// PORTADOR
+    oPrint_:Line(nReturn,aPosTitulo[5]-20,nReturn+50   ,aPosTitulo[5]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[5],"VEND2"  	  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[6]-20,nReturn+50   ,aPosTitulo[6]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[6],"GESTOR"  	  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[7]-20,nReturn+50   ,aPosTitulo[7]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[7],"EMISSÃO"  	  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[8]-20,nReturn+50   ,aPosTitulo[8]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[8],"VENCTO."  	  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[9]-20,nReturn+50   ,aPosTitulo[9]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[9],"V.REAL" 	  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[10]-20,nReturn+50   ,aPosTitulo[10]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[10],"VLR.TIT."  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[11]-20,nReturn+50   ,aPosTitulo[11]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[11],"MDA"  	  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[12]-20,nReturn+50   ,aPosTitulo[12]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[12],"HIST."  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[13]-20,nReturn+50   ,aPosTitulo[13]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[13],"DT.BAIXA"  	  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[14]-20,nReturn+50   ,aPosTitulo[14]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[14],"DG.BAI"  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[15]-20,nReturn+50   ,aPosTitulo[15]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[15],"VR.BAIX"  ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[16]-20,nReturn+50   ,aPosTitulo[16]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[16],"MOT.BAI",cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[17]-20,nReturn+50   ,aPosTitulo[17]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[17],"CORREÇ"   ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[18]-20,nReturn+50   ,aPosTitulo[18]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[18],"JUROS"      ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[19]-20,nReturn+50   ,aPosTitulo[19]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[19],"DESC."   ,cCabFonte)
+    oPrint_:Line(nReturn,aPosTitulo[20]-20,nReturn+50   ,aPosTitulo[20]-20,oFont09)
+	oPrint_:say (nReturn+10,aPosTitulo[20],"SALDO TIT." ,cCabFonte)
+	
+    oPrint_:Line(nReturn,aPosTitulo[20]+170,nReturn+50,aPosTitulo[20]+170,oFont09)
+	
+    oPrint_:Line(nReturn+50,aPosTitulo[1]-20,nReturn+50,aPosTitulo[20]+170)
+	nReturn += 70        
+	                         
+Return                                              
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³FER065    ºAutor  ³Valdemir José       º Data ³  07/06/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³                                                            º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function CabecCCAB(pTITULO,pSubTit,pSubTit1,Cabec1, oPrint_, lFirst, ContFl)
+	Local nReturn := 0
+	Local cCabFonte 
+	
+	// Cabeçalho de Titulo Padrão do Relatório
+	nReturn += TITULOCABEC(pTITULO,pSubTit, pSubTit1, @oPrint_, @lFirst, @ContFl,'P')
+	cCabFonte:=oFont08b   
+	nReturn += 40                                 
+	//
+	SubCabec(oPrint_, nReturn, cCabFonte, cChave)
+	nReturn += 100
+	
+	bInstancia := .T.                               
+	
+Return nReturn
+
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³TITULOCABEC   ºAutor  ³Valdemir José   º Data ³  07/06/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Cabeçalho para TMSPrinter                                  º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ Dixtal                                                     º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function TITULOCABEC(pTITULO,pSubTit ,pSubTit1, oPrint, lFirst, ContFl, pTipo)
+	Local cFont            
+	Local nReturn  := 045
+	Local nColPix
+		
+	If !lFirst
+		lFirst		:= .T.
+		oPrint 		:= TMSPrinter():New(pTITULO)
+		if pTipo == 'P' 
+			oPrint:SetLandscape()            //Define que a impressao deve ser Paisagem - SetLandscape()
+		else
+			oPrint:SetPortrait()            //Define que a impressao deve ser RETRATO ou SetPortrait()
+		endif
+	Endif
+	
+	oPrint:StartPage() 						// Inicia uma nova pagina
+	cFont:=oFont10
+	                             
+    //Cabeçalho 1
+	oPrint:say (nReturn ,040 ,"CCAB AGRO SA",oFont10b)
+	oPrint:say (nReturn ,if(pTipo=="P",aPosTitulo[Len(aPosTitulo)],(aPosTitulo[Len(aPosTitulo)] / 2)+80),(RPTFOLHA+" "+TRANSFORM(ContFl,'999999')),cFont)
+	nReturn += 40
+	oPrint:say (nReturn ,040 ,"SIGA / "+FunName()+" - "+SM0->M0_NOME,cFont)
+	nReturn += 30
+	//-----------------------------
+	nColPix := Char2Pix('W',oFont16)
+	//-----------------------------
+	if pTipo == 'P' 
+		oPrint:Say(nReturn,((aPosTitulo[Len(aPosTitulo)]/2)-((len(alltrim(pTITULO))/2)*nColPix)),alltrim(pTITULO),oFont16)	//oFont10
+	Else
+		oPrint:say (nReturn ,(1000 / 2)+150,Padc(TRIM(pTITULO),80),oFont13b)    //
+	endif
+	// 1o. Subtitulo
+	if TRIM(pSubTit) != ""                        
+		nReturn += 80
+		oPrint:say (nReturn ,aPosTitulo[1]-20,Padc(TRIM(pSubTit),350),oFont07b,,,,PAD_CENTER) 
+	Endif
+	nReturn += 30
+	oPrint:say (nReturn ,040 ,(RPTHORA+" "+TIME()),cFont)
+	// 2o. Subtitulo
+	if TRIM(pSubTit1) != ""                        
+		oPrint:say (nReturn ,aPosTitulo[1]-20,Padc(TRIM(pSubTit1),350),oFont07b,,,,PAD_CENTER) 
+	Endif
+	if pTipo == 'P' 
+		oPrint:say (nReturn ,aPosTitulo[Len(aPosTitulo)],(RPTEMISS+" "+DTOC(MSDATE())),cFont)
+	else
+		oPrint:say (nReturn ,(3830 / 2)+80,(RPTEMISS+" "+DTOC(MSDATE())),cFont)
+	endif
+	nReturn += 60
+    oPrint:Line(nReturn,aPosTitulo[1]-20,nReturn,if(pTipo=="P",aPosTitulo[Len(aPosTitulo)]+170,(3880 / 2)+320))
+    //
+	nReturn += 40
+	ContFl += 1
+	
+Return( nReturn )
+
+
+// VALDEMIR - TRATAR TAMANHO DA FONTE
+Static Function Char2Pix(cTexto,oFont)
+Return(GetTextWidht(0,cTexto,oFont)*2)
