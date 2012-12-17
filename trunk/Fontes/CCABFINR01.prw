@@ -148,6 +148,8 @@ Local nI, nCnt  := 0
 Local cMOTBAIXA := ''
 Local _nValor   := 0
 Local cTitulo   := ''
+Local cPrefixo  := '' 
+Local cChave2   := ''
 Local nMostVlrTit  := 0
 Local nMostVlrRea  := 0
 
@@ -183,11 +185,12 @@ While !Eof()
 	
 	dbSelectArea('TMP')              
 	
-   nMostVlrTit := 0
-   nMostVlrRea := 0
-   if (cTitulo  <> TMP->NUMTITULO) .and. (_nValor <> TMP->VLRTITULO)
+   if cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
 	  nMostVlrTit := TMP->VLRTITULO
 	  nMostVlrRea := TMP->VLREAL
+   ELSE
+	   nMostVlrTit := 0
+	   nMostVlrRea := 0
    endif
 	            
 	
@@ -228,7 +231,7 @@ While !Eof()
     })
                           
    	// Trata em caso de se repetir o titulo
-   	if (cTitulo  <> TMP->NUMTITULO) .and. (_nValor <> TMP->VLRTITULO)
+   	if cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
     	nVlrTitulo += TMP->VLRTITULO
     	nVlrTReal  += TMP->VLREAL
     endif     
@@ -240,7 +243,9 @@ While !Eof()
 	nSaldo     += TMP->SALDO
 
    cTitulo  := TMP->NUMTITULO
-   _nValor  := TMP->VLRTITULO
+   _nValor  := TMP->VLRTITULO                                                             
+   cPrefixo := TMP->PREFIXO                 
+   cChave2  := TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
 
 	dbSkip()
 EndDo                                
@@ -757,7 +762,9 @@ Local nVlrTTitulo := 0
 Local nVlrTReal   := 0
 Local nI          := 0
 Local cTitulo     := ''                
-Local _nValor     := 0
+Local _nValor     := 0                                                         
+Local cChave2     := ''
+Local cPrefixo    := ''
 Private cChave
 
 nTVlrBaixa  := 0
@@ -835,7 +842,7 @@ While TMP->( ! EOF() )
 		oPrint:say (nLin , aPosTitulo[07], DTOC(STOD(TMP->EMISSAO))				 		  ,oFont08)	
 		oPrint:say (nLin , aPosTitulo[08], DTOC(STOD(TMP->VENCTO))					 		  ,oFont08)	                   
 		oPrint:say (nLin , aPosTitulo[09], DTOC(STOD(TMP->VENCTOREAL))			 	 		  ,oFont08)	                   
-		if (cTitulo <> TMP->NUMTITULO) .and. _nValor <> TMP->VLRTITULO
+		if (cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99"))
 			oPrint:say (nLin , aPosTitulo[10]+160, Transform(TMP->VLRTITULO,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
 		else
 			oPrint:say (nLin , aPosTitulo[10]+160, Transform(0,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
@@ -855,7 +862,7 @@ While TMP->( ! EOF() )
 	    cChave := TMP->CODCLI
 
 		// Total por grupo de clientes
-		if (cTitulo <> TMP->NUMTITULO) .and. _nValor <> TMP->VLRTITULO
+		if (cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99"))
 			nVlrTitulo += TMP->VLRTITULO
 		endif
 		nVlrReal   += 0
@@ -866,7 +873,7 @@ While TMP->( ! EOF() )
 		nSaldo     += TMP->SALDO
 
 		// Total Geral dos Titulos
-		if (cTitulo <> TMP->NUMTITULO) .and. _nValor <> TMP->VLRTITULO
+		if (cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99"))
 			nVlrTTitulo += TMP->VLRTITULO
 		endif
 		nVlrTReal   += 0
@@ -877,7 +884,9 @@ While TMP->( ! EOF() )
 		nTSaldo     += TMP->SALDO                                      
 		
 		cTitulo := TMP->NUMTITULO
-		_nValor := TMP->VLRTITULO
+		_nValor := TMP->VLRTITULO                                                
+		cPrefixo:= TMP->PREFIXO
+		cChave2 := TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
     
 		dbSelectArea('TMP')
 	    TMP->( dbSkip() )
