@@ -22,9 +22,9 @@ User Function CCFIN001()
 
 Private lAltera := .F.
 Private aRotina :=	{{ "Pesquisar"	,"AxPesqui"  					, 0 , 1 },;
-{ "Visualizar"	,"FA280Visua"					, 0 , 2 },;
-{ "Selecionar"	,'ExecBlock("CCFININC",.T.,.T.)', 0 , 3 },;
-{ "Exclui"		,'ExecBlock("CCFINEXC",.T.,.T.)', 0 , 4 }}
+					 { "Visualizar"	,"FA280Visua"					, 0 , 2 },;
+					 { "Selecionar"	,'ExecBlock("CCFININC",.T.,.T.)', 0 , 3 },;
+					 { "Exclui"		,'ExecBlock("CCFINEXC",.T.,.T.)', 0 , 4 }}
 Private cFatura		:=CRIAVAR("E1_NUM")
 Private cCli1		:=Space(6)
 Private cLoja1		:=Space(2)
@@ -140,7 +140,7 @@ Private oValor		:= 0
 Private oQtdTit 	:= 0
 Private cMarca		:= GetMark()
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Inicializa array com as moedas existentes.						  ³
+//³ Inicializa array com as moedas existentes.					 ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
 aMoedas := FDescMoed()
