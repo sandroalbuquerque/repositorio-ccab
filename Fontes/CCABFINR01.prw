@@ -86,7 +86,7 @@ aAdd(aHelp,{"Informe o Gestor inicial"})
 aAdd(aHelp,{"Informe o Gestor final"})
 
 // Cabecalho para exportar para excel
-aTmp   := {'PREFIXO','Nº TITULO','TIPO','PORTADOR','CODCLI','LOCAL','NOME CLIENTE','PJ/PF','CNPJ/CPF','CIDADE','ESTADO','RISCO CCAB','DT.1º COMPRA','VEND2','GESTOR','EMISSAO','VENCTO','VENCTO.REAL','VLR.TITULO','VLR.REAL','MOEDA','HISTORICO','DT.BAIXA','DIG.BAIXA','VLR.BAIXA','MOTIVO BAIXA','CORRECAO','JUROS','DESCONTO','SALDO'}
+aTmp   := {'PREFIXO','Nº TITULO','TIPO','PORTADOR','CODCLI','LOCAL','NOME CLIENTE','PJ/PF','CNPJ/CPF','CIDADE','ESTADO','RISCO CCAB','DT.1º COMPRA','VEND2','GESTOR','EMISSAO','VENCTO','VENCTO.REAL','VLR.TITULO','VLR.REAL','MOEDA','HISTORICO','DT.BAIXA','VLR.BAIXA R$','MOTIVO BAIXA','CORRECAO R$','JUROS R$','DESCONTO R$','SALDO','SALDO R$'}
                                                                                         
 if !SX1Parametro(aP,aHelp)
  Return
@@ -146,12 +146,15 @@ Static Function GetArrayExcel(cNomeArq)
 Local nVlrBaixa, nCorrecao, nJuros, nDesconto, nSaldo
 Local nI, nCnt  := 0
 Local cMOTBAIXA := ''
-Local _nValor   := 0
+Local _nValor   := 0                       
+Local nSaldo    := 0
+Local nSaldoR   := 0
 Local cTitulo   := ''
 Local cPrefixo  := '' 
 Local cChave2   := ''
 Local nMostVlrTit  := 0
-Local nMostVlrRea  := 0
+Local nMostVlrRea  := 0         
+Local nMostSaldo   := 0
 
 nVlrTitulo := 0
 nVlrTReal  := 0
@@ -160,6 +163,9 @@ nCorrecao  := 0
 nJuros     := 0 
 nDesconto  := 0 
 nSaldo     := 0
+nSaldoR    := 0   
+nSaldoRS   := 0            
+nTaxa      := 0
 
 CursorWait()
 //nCnt := Conta("TMP","!Eof()")
@@ -176,6 +182,10 @@ While !Eof()
 	      cCNPJ_CPF := SA1->A1_CGC
 	      cJF       := SA1->A1_PESSOA
 	      cPRICOM   := dtoc(SA1->A1_PRICOM)
+	      cMun      := SA1->A1_MUN
+	      cUF       := SA1->A1_EST
+	      cNome     := SA1->A1_NOME                 
+	      dbSeek(xFilial('SA1')+TMP->CODCLI+'01')         // Acrescentado 17/12/2012 - 11:50h, para buscar o risco sempre da loja 01
 	ELSE
 	      cCNPJ_CPF := 'NOT FOUND'
 	      cJF       := 'NOT FOUND'
@@ -188,27 +198,40 @@ While !Eof()
    if cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
 	  nMostVlrTit := TMP->VLRTITULO
 	  nMostVlrRea := TMP->VLREAL
+	  nMostSaldo  := TMP->SALDO
+	  if (TMP->MOEDA <> 1) .AND. (TMP->SALDO > 0) 
+		  	nTaxa       := (TMP->VLREAL / TMP->VLRTITULO)
+	  		nSaldoR     :=  (TMP->SALDO * nTaxa)
+	  else
+	    IF (TMP->MOEDA <> 1)
+	    	nSaldoR :=  0
+	    ELSE
+	    	nSaldoR :=  TMP->SALDO
+	    ENDIF
+	  endif
    ELSE
 	   nMostVlrTit := 0
 	   nMostVlrRea := 0
+	   nMostSaldo  := 0
+	   nSaldoR     := 0
    endif
 	            
 	
 	
 	nI        :=  Ascan(aMotBx, {|x| Substr(x,1,3) == Upper(TMP->MOTBAIXA) })   //Busca a Descrição do Motivo da Baixa
 	cMOTBAIXA := if( nI > 0,Substr(aMotBx[nI],07,10),"" )
-
+    
     aAdd(aCampo,{chr(160)+TMP->PREFIXO,;
                  chr(160)+TMP->NUMTITULO,;
                  chr(160)+TMP->TIPO,;
                  chr(160)+TMP->PORTADOR,;
                  chr(160)+TMP->CODCLI,;
                  chr(160)+TMP->LOCAL,;
-                 SA1->A1_NOME,;
+                 cNome,;
                  cJF,;
                  chr(160)+cCNPJ_CPF,;
-                 SA1->A1_MUN,;
-                 SA1->A1_EST,;
+                 cMun,;
+                 cUF,;
                  chr(160)+SA1->A1_XCLASSE,;
                  cPRICOM,;
                  chr(160)+TMP->VEND2,;
@@ -220,27 +243,30 @@ While !Eof()
                  Transform(nMostVlrRea,'@E 999,999,999,999.99'),;    
                  chr(160)+STRZERO(TMP->MOEDA,2),;
                  alltrim(TMP->HISTORICO),;
-                 DTOC(STOD(TMP->DTBAIXA)),;
                  DTOC(STOD(TMP->DIGBAIXA)),;
                  Transform(TMP->VLRBAIXA,'@E 999,999,999,999.99'),;
                  cMOTBAIXA,;
                  Transform(TMP->CORRECAO,'@E 999,999,999,999.99'),;
                  Transform(TMP->JUROS   ,'@E 999,999,999,999.99'),;
                  Transform(TMP->DESCONTO,'@E 999,999,999,999.99'),;
-                 Transform(TMP->SALDO   ,'@E 999,999,999,999.99') ;
+                 Transform(nMostSaldo   ,'@E 999,999,999,999.99'),;
+                 Transform(nSaldoR      ,'@E 999,999,999,999.99') ;
     })
+
+ 	// DTOC(STOD(TMP->DTBAIXA)),; - Removido por solicitação do Reinaldo 18/12/2012
                           
    	// Trata em caso de se repetir o titulo
    	if cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
     	nVlrTitulo += TMP->VLRTITULO
     	nVlrTReal  += TMP->VLREAL
+		nSaldo     += nMostSaldo                                   
+		nSaldoRS   += nSaldoR
     endif     
     
 	nVlrBaixa  += TMP->VLRBAIXA
 	nCorrecao  += TMP->CORRECAO
 	nJuros     += TMP->JUROS 
 	nDesconto  += TMP->DESCONTO
-	nSaldo     += TMP->SALDO
 
    cTitulo  := TMP->NUMTITULO
    _nValor  := TMP->VLRTITULO                                                             
@@ -274,13 +300,13 @@ aAdd(aCampo,{'TOTAL',;
                  '',;
                  '',;
                  '',;
-                 '',;
                  Transform(nVLRBAIXA,'@E 999,999,999,999.99'),;
                  '',;
                  Transform(nCORRECAO,'@E 999,999,999,999.99'),;
                  Transform(nJUROS   ,'@E 999,999,999,999.99'),;
                  Transform(nDESCONTO,'@E 999,999,999,999.99'),;
-                 Transform(nSALDO   ,'@E 999,999,999,999.99') ;
+                 Transform(nSALDO   ,'@E 999,999,999,999.99'),;
+                 Transform(nSALDORS ,'@E 999,999,999,999.99') ;
     })
 
 
@@ -341,7 +367,7 @@ Static Function MontaQuery()
 
 			// Obtem os registros a serem processados
 			cQuery += "SELECT SE1.E1_PREFIXO AS PREFIXO, SE1.E1_NUM AS NUMTITULO, SE1.E1_TIPO AS TIPO, SE1.E1_PORTADO AS PORTADOR, SE1.E1_CLIENTE  AS CODCLI,  "+cENTER
-			cQuery += "       SE1.E1_LOJA  AS LOCAL,SE1.E1_VEND2 AS VEND2,SE1.E1_XGESTOR AS GESTOR,SE1.E1_EMISSAO AS EMISSAO, 		  "+cENTER
+			cQuery += "       SE1.E1_LOJA  AS LOCAL, E1_TXMOEDA AS TXMOEDA,SE1.E1_VEND2 AS VEND2,SE1.E1_XGESTOR AS GESTOR,SE1.E1_EMISSAO AS EMISSAO, 		  "+cENTER
 			cQuery += "       SE1.E1_VENCTO AS VENCTO, SE1.E1_VENCREA AS VENCTOREAL, SE1.E1_VALOR  AS VLRTITULO, SE1.E1_VLCRUZ AS VLREAL,SE1.E1_MOEDA AS MOEDA, "+cENTER
 			cQuery += "       SE1.E1_HIST AS HISTORICO, SE1.E1_BAIXA AS DTBAIXA, A.E5_DTDIGIT AS DIGBAIXA, "+cENTER
 			cQuery += "       A.VALOR AS VLRBAIXA, A.E5_MOTBX AS MOTBAIXA, A.E5_VLCORRE AS CORRECAO, A.E5_VLJUROS AS JUROS, A.E5_VLDESCO AS DESCONTO,SE1.E1_SALDO AS SALDO "+cENTER
@@ -766,6 +792,12 @@ Local _nValor     := 0
 Local cChave2     := ''
 Local cPrefixo    := ''
 Private cChave
+Private cCNPJ_CPF := ''
+Private cJF       := ''
+Private cPRICOM   := ''
+Private cMun      := ''
+Private cUF       := ''
+Private cNome     := ''
 
 nTVlrBaixa  := 0
 nTCorrecao  := 0 
@@ -779,7 +811,19 @@ While TMP->( ! EOF() )
     cChave := TMP->CODCLI
 
 	dbSelectArea('SA1')
-	dbSeek(xFilial('SA1')+TMP->CODCLI+TMP->LOCAL)
+	IF dbSeek(xFilial('SA1')+TMP->CODCLI+TMP->LOCAL)
+	      cCNPJ_CPF := SA1->A1_CGC
+	      cJF       := SA1->A1_PESSOA
+	      cPRICOM   := dtoc(SA1->A1_PRICOM)
+	      cMun      := SA1->A1_MUN
+	      cUF       := SA1->A1_EST
+	      cNome     := SA1->A1_NOME                 
+	      dbSeek(xFilial('SA1')+TMP->CODCLI+'01')         // Acrescentado 17/12/2012 - 11:50h, para buscar o risco sempre da loja 01
+	ELSE
+	      cCNPJ_CPF := 'NOT FOUND'
+	      cJF       := 'NOT FOUND'
+	      cPRICOM   := ''
+	ENDIF
 	
 	if (nLin > 1)
 		SubCabec(oPrint, nLin, oFont08b, cChave)
@@ -807,81 +851,90 @@ While TMP->( ! EOF() )
 		   nLin    := CabecCCAB(TITULO,cSubTit,cSubTit1,"", @oPrint, @lFirst, @ContFl)+20
 		   nLin    += 40
 		Endif  
-		                      
-		// Impressão Grafica
-	    oPrint:Line(nLin-10, aPosTitulo[01]-20,nLin+50,aPosTitulo[01]-20 ,oFont09)                    
-	    oPrint:Line(nLin-10, aPosTitulo[02]-20,nLin+50,aPosTitulo[02]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[03]-20,nLin+50,aPosTitulo[03]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[04]-20,nLin+50,aPosTitulo[04]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[05]-20,nLin+50,aPosTitulo[05]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[06]-20,nLin+50,aPosTitulo[06]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[07]-20,nLin+50,aPosTitulo[07]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[08]-20,nLin+50,aPosTitulo[08]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[09]-20,nLin+50,aPosTitulo[09]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[10]-20,nLin+50,aPosTitulo[10]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[11]-20,nLin+50,aPosTitulo[11]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[12]-20,nLin+50,aPosTitulo[12]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[13]-20,nLin+50,aPosTitulo[13]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[14]-20,nLin+50,aPosTitulo[14]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[15]-20,nLin+50,aPosTitulo[15]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[16]-20,nLin+50,aPosTitulo[16]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[17]-20,nLin+50,aPosTitulo[17]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[18]-20,nLin+50,aPosTitulo[18]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[19]-20,nLin+50,aPosTitulo[19]-20 ,oFont09)
-	    oPrint:Line(nLin-10, aPosTitulo[20]-20,nLin+50,aPosTitulo[20]-20 ,oFont09)
 
-		oPrint:Line(nLin-10,aPosTitulo[20]+170,nLin+50,aPosTitulo[20]+170,oFont09)
-		  
-	    // Impressão dos Dados
-		oPrint:say (nLin , aPosTitulo[01], TMP->PREFIXO							 		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[02], TMP->NUMTITULO                            		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[03], TMP->TIPO							     		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[04], TMP->PORTADOR			                 		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[05], TMP->VEND2			    				 		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[06], TMP->GESTOR								 		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[07], DTOC(STOD(TMP->EMISSAO))				 		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[08], DTOC(STOD(TMP->VENCTO))					 		  ,oFont08)	                   
-		oPrint:say (nLin , aPosTitulo[09], DTOC(STOD(TMP->VENCTOREAL))			 	 		  ,oFont08)	                   
 		if (cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99"))
-			oPrint:say (nLin , aPosTitulo[10]+160, Transform(TMP->VLRTITULO,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
-		else
-			oPrint:say (nLin , aPosTitulo[10]+160, Transform(0,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
-		endif
-		oPrint:say (nLin , aPosTitulo[11], STRZERO(TMP->MOEDA,2)					 		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[12], Substr(alltrim(TMP->HISTORICO),1,10)	 		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[13], DTOC(STOD(TMP->DTBAIXA))				 		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[14], DTOC(STOD(TMP->DIGBAIXA))				 		  ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[15]+120, Transform(TMP->VLRBAIXA,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
-		oPrint:say (nLin , aPosTitulo[16], cMOTBAIXA			   					 		 ,oFont08)	
-		oPrint:say (nLin , aPosTitulo[17]+130, Transform(TMP->CORRECAO,'@E 99,999,999.99'), oFont08,,,,1)	                   
-		oPrint:say (nLin , aPosTitulo[18]+120, Transform(TMP->JUROS   ,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
-		oPrint:say (nLin , aPosTitulo[19]+120, Transform(TMP->DESCONTO,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
-		oPrint:say (nLin , aPosTitulo[20]+160, Transform(TMP->SALDO   ,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
-		nLin += 40
+			                      
+			// Impressão Grafica
+		    oPrint:Line(nLin-10, aPosTitulo[01]-20,nLin+50,aPosTitulo[01]-20 ,oFont09)                    
+		    oPrint:Line(nLin-10, aPosTitulo[02]-20,nLin+50,aPosTitulo[02]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[03]-20,nLin+50,aPosTitulo[03]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[04]-20,nLin+50,aPosTitulo[04]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[05]-20,nLin+50,aPosTitulo[05]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[06]-20,nLin+50,aPosTitulo[06]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[07]-20,nLin+50,aPosTitulo[07]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[08]-20,nLin+50,aPosTitulo[08]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[09]-20,nLin+50,aPosTitulo[09]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[10]-20,nLin+50,aPosTitulo[10]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[11]-20,nLin+50,aPosTitulo[11]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[12]-20,nLin+50,aPosTitulo[12]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[13]-20,nLin+50,aPosTitulo[13]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[14]-20,nLin+50,aPosTitulo[14]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[15]-20,nLin+50,aPosTitulo[15]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[16]-20,nLin+50,aPosTitulo[16]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[17]-20,nLin+50,aPosTitulo[17]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[18]-20,nLin+50,aPosTitulo[18]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[19]-20,nLin+50,aPosTitulo[19]-20 ,oFont09)
+		    oPrint:Line(nLin-10, aPosTitulo[20]-20,nLin+50,aPosTitulo[20]-20 ,oFont09)
+	
+			oPrint:Line(nLin-10,aPosTitulo[20]+170,nLin+50,aPosTitulo[20]+170,oFont09)
+			  
+		    // Impressão dos Dados
+			oPrint:say (nLin , aPosTitulo[01], TMP->PREFIXO							 		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[02], TMP->NUMTITULO                            		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[03], TMP->TIPO							     		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[04], TMP->PORTADOR			                 		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[05], TMP->VEND2			    				 		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[06], TMP->GESTOR								 		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[07], DTOC(STOD(TMP->EMISSAO))				 		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[08], DTOC(STOD(TMP->VENCTO))					 		  ,oFont08)	                   
+			oPrint:say (nLin , aPosTitulo[09], DTOC(STOD(TMP->VENCTOREAL))			 	 		  ,oFont08)	                   
+			if (cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99"))
+				oPrint:say (nLin , aPosTitulo[10]+160, Transform(TMP->VLRTITULO,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[15]+120, Transform(TMP->VLRBAIXA,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[17]+130, Transform(TMP->CORRECAO,'@E 99,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[18]+120, Transform(TMP->JUROS   ,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[19]+120, Transform(TMP->DESCONTO,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[20]+160, Transform(TMP->SALDO   ,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+			else
+				oPrint:say (nLin , aPosTitulo[10]+160, Transform(0,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[15]+120, Transform(0,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[17]+130, Transform(0,'@E 99,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[18]+120, Transform(0,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[19]+120, Transform(0,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+				oPrint:say (nLin , aPosTitulo[20]+160, Transform(0,'@E 999,999,999,999.99'), oFont08,,,,1)	                   
+			endif
+			oPrint:say (nLin , aPosTitulo[11], STRZERO(TMP->MOEDA,2)					 		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[12], Substr(alltrim(TMP->HISTORICO),1,10)	 		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[13], DTOC(STOD(TMP->DTBAIXA))				 		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[14], DTOC(STOD(TMP->DIGBAIXA))				 		  ,oFont08)	
+			oPrint:say (nLin , aPosTitulo[16], cMOTBAIXA			   					 		 ,oFont08)	
+			nLin += 40
+	        
+        ENDIF
         
 	    cChave := TMP->CODCLI
 
 		// Total por grupo de clientes
 		if (cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99"))
 			nVlrTitulo += TMP->VLRTITULO
+			nVlrBaixa  += TMP->VLRBAIXA
+			nCorrecao  += TMP->CORRECAO
+			nJuros     += TMP->JUROS 
+			nDesconto  += TMP->DESCONTO
+			nSaldo     += TMP->SALDO
 		endif
 		nVlrReal   += 0
-		nVlrBaixa  += TMP->VLRBAIXA
-		nCorrecao  += TMP->CORRECAO
-		nJuros     += TMP->JUROS 
-		nDesconto  += TMP->DESCONTO
-		nSaldo     += TMP->SALDO
 
 		// Total Geral dos Titulos
 		if (cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99"))
 			nVlrTTitulo += TMP->VLRTITULO
+			nTVlrBaixa  += TMP->VLRBAIXA
+			nTCorrecao  += TMP->CORRECAO
+			nTJuros     += TMP->JUROS 
+			nTDesconto  += TMP->DESCONTO
+			nTSaldo     += TMP->SALDO                                      
 		endif
 		nVlrTReal   += 0
-		nTVlrBaixa  += TMP->VLRBAIXA
-		nTCorrecao  += TMP->CORRECAO
-		nTJuros     += TMP->JUROS 
-		nTDesconto  += TMP->DESCONTO
-		nTSaldo     += TMP->SALDO                                      
 		
 		cTitulo := TMP->NUMTITULO
 		_nValor := TMP->VLRTITULO                                                
@@ -965,16 +1018,17 @@ Return
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 Static Function SubCabec(oPrint_, nReturn, cCabFonte, cCLIENTE)
-   
+
+
 	oPrint_:Box(nReturn    ,aPosTitulo[1]-20,nReturn+110,aPosTitulo[20]+170)
-	oPrint_:say (nReturn+15, aPosTitulo[1] ,"CLIENTE: "+cCLIENTE+" - "+SA1->A1_NOME    ,cCabFonte)
-	oPrint_:say (nReturn+15, aPosTitulo[9] ,"CIDADE: "+SA1->A1_MUN    ,cCabFonte)
-	oPrint_:say (nReturn+15, aPosTitulo[14],"ESTADO: "+SA1->A1_EST    ,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[1] ,"CLIENTE: "+cCLIENTE+" - "+cNome    ,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[9] ,"CIDADE: "+cMun    ,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[14],"ESTADO: "+cUF    ,cCabFonte)
 	nReturn+=50
-	oPrint_:say (nReturn+15, aPosTitulo[1] ,"PJ / PF: "+SA1->A1_PESSOA,cCabFonte)
-	oPrint_:say (nReturn+15, aPosTitulo[4] ,"CNPJ/CPF: "+SA1->A1_CGC  ,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[1] ,"PJ / PF: "+cJF,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[4] ,"CNPJ/CPF: "+cCNPJ_CPF  ,cCabFonte)
 	oPrint_:say (nReturn+15, aPosTitulo[9] ,"RISCO CCAB: "+SA1->A1_XCLASSE,cCabFonte)
-	oPrint_:say (nReturn+15, aPosTitulo[14],"DT.1º COMPRA: "+DTOC(SA1->A1_PRICOM)  ,cCabFonte)
+	oPrint_:say (nReturn+15, aPosTitulo[14],"DT.1º COMPRA: "+cPRICOM  ,cCabFonte)
 	nReturn+=60
 	//oPrint_:Line(nReturn,aPosTitulo[1]-20,nReturn,aPosTitulo[20]+170)
 	// Sub Cabeçalho com os  titulos dos campos
