@@ -53,6 +53,7 @@ Private aTmp
 Private aCampo   		:= {}
 Private cPerg       	:= "CCABFR01"
 Private aMotBx          := ReadMotBx()    // Carrega todas descrições da baixa
+Private nTitReal        := 0
                                        
 //Criar o array com as perguntas e help
 aAdd(aP,{"Apresentar como         ?"      ,"N", 02,0,"C", "",""		     , "Relatório","Excel"	  , "Ambos",""   , ""})   //01
@@ -152,6 +153,7 @@ Local nSaldoR   := 0
 Local cTitulo   := ''
 Local cPrefixo  := '' 
 Local cChave2   := ''
+Local cCodCli   := ''
 Local nMostVlrTit  := 0
 Local nMostVlrRea  := 0         
 Local nMostSaldo   := 0
@@ -168,7 +170,7 @@ nSaldoRS   := 0
 nTaxa      := 0
 
 CursorWait()
-//nCnt := Conta("TMP","!Eof()")
+// Verifica Quantos registros tem
 dbEval( {|x| nCnt++ },,{|| TMP->( !EOF() )})
 
 ProcRegua(nCnt)
@@ -192,13 +194,22 @@ While !Eof()
 	      cPRICOM   := ''
 	ENDIF
 	             
+    cTitulo  := TMP->NUMTITULO
+    _nValor  := TMP->VLRTITULO                                                             
+    cPrefixo := TMP->PREFIXO                 
+    cCodCli  := TMP->CODCLI
+    cChave2  := TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
+    cChave   := TMP->NUMTITULO+TMP->PREFIXO
+    nMostVlrTit := TMP->VLRTITULO
+    nMostVlrRea := TMP->VLREAL
+    nMostSaldo  := TMP->SALDO
+    nTitReal    := TMP->VLREAL
 	
 	dbSelectArea('TMP')              
 	
-   if cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
-	  nMostVlrTit := TMP->VLRTITULO
-	  nMostVlrRea := TMP->VLREAL
-	  nMostSaldo  := TMP->SALDO
+	While !Eof() .and. (cChave = TMP->NUMTITULO+TMP->PREFIXO)
+	  
+
 	  if (TMP->MOEDA <> 1) .AND. (TMP->SALDO > 0) 
 		  	nTaxa       := (TMP->VLREAL / TMP->VLRTITULO)
 	  		nSaldoR     :=  (TMP->SALDO * nTaxa)
@@ -209,71 +220,72 @@ While !Eof()
 	    	nSaldoR :=  TMP->SALDO
 	    ENDIF
 	  endif
-   ELSE
-	   nMostVlrTit := 0
-	   nMostVlrRea := 0
-	   nMostSaldo  := 0
-	   nSaldoR     := 0
-   endif
-	            
-	
-	
-	nI        :=  Ascan(aMotBx, {|x| Substr(x,1,3) == Upper(TMP->MOTBAIXA) })   //Busca a Descrição do Motivo da Baixa
-	cMOTBAIXA := if( nI > 0,Substr(aMotBx[nI],07,10),"" )
-    
-    aAdd(aCampo,{chr(160)+TMP->PREFIXO,;
-                 chr(160)+TMP->NUMTITULO,;
-                 chr(160)+TMP->TIPO,;
-                 chr(160)+TMP->PORTADOR,;
-                 chr(160)+TMP->CODCLI,;
-                 chr(160)+TMP->LOCAL,;
-                 cNome,;
-                 cJF,;
-                 chr(160)+cCNPJ_CPF,;
-                 cMun,;
-                 cUF,;
-                 chr(160)+SA1->A1_XCLASSE,;
-                 cPRICOM,;
-                 chr(160)+TMP->VEND2,;
-                 chr(160)+TMP->GESTOR,;
-                 DTOC(STOD(TMP->EMISSAO)),;
-                 DTOC(STOD(TMP->VENCTO)),;
-                 DTOC(STOD(TMP->VENCTOREAL)),;
-                 Transform(nMostVlrTit,'@E 999,999,999,999.99'),;    
-                 Transform(nMostVlrRea,'@E 999,999,999,999.99'),;    
-                 chr(160)+STRZERO(TMP->MOEDA,2),;
-                 alltrim(TMP->HISTORICO),;
-                 DTOC(STOD(TMP->DIGBAIXA)),;
-                 Transform(TMP->VLRBAIXA,'@E 999,999,999,999.99'),;
-                 cMOTBAIXA,;
-                 Transform(TMP->CORRECAO,'@E 999,999,999,999.99'),;
-                 Transform(TMP->JUROS   ,'@E 999,999,999,999.99'),;
-                 Transform(TMP->DESCONTO,'@E 999,999,999,999.99'),;
-                 Transform(nMostSaldo   ,'@E 999,999,999,999.99'),;
-                 Transform(nSaldoR      ,'@E 999,999,999,999.99') ;
-    })
 
- 	// DTOC(STOD(TMP->DTBAIXA)),; - Removido por solicitação do Reinaldo 18/12/2012
+	  nI        :=  Ascan(aMotBx, {|x| Substr(x,1,3) == Upper(TMP->MOTBAIXA) })   //Busca a Descrição do Motivo da Baixa
+	  cMOTBAIXA := if( nI > 0,Substr(aMotBx[nI],07,10),"" )
+
+	  aAdd(aCampo,{chr(160)+TMP->PREFIXO,;
+	                 chr(160)+TMP->NUMTITULO,;
+	                 chr(160)+TMP->TIPO,;
+	                 chr(160)+TMP->PORTADOR,;
+	                 chr(160)+TMP->CODCLI,;
+	                 chr(160)+TMP->LOCAL,;
+	                 cNome,;
+	                 cJF,;
+	                 chr(160)+cCNPJ_CPF,;
+	                 cMun,;
+	                 cUF,;
+	                 chr(160)+SA1->A1_XCLASSE,;
+	                 cPRICOM,;
+	                 chr(160)+TMP->VEND2,;
+	                 chr(160)+TMP->GESTOR,;
+	                 DTOC(STOD(TMP->EMISSAO)),;
+	                 DTOC(STOD(TMP->VENCTO)),;
+	                 DTOC(STOD(TMP->VENCTOREAL)),;
+	                 Transform(nMostVlrTit,'@E 999,999,999,999.99'),;    
+	                 Transform(nMostVlrRea,'@E 999,999,999,999.99'),;    
+	                 chr(160)+STRZERO(TMP->MOEDA,2),;
+	                 alltrim(TMP->HISTORICO),;
+	                 DTOC(STOD(TMP->DIGBAIXA)),;
+	                 Transform(TMP->VLRBAIXA,'@E 999,999,999,999.99'),;
+	                 cMOTBAIXA,;
+	                 Transform( TMP->CORRECAO*(-1),'@E 999,999,999,999.99'),; 
+	                 Transform(TMP->JUROS   ,'@E 999,999,999,999.99'),;
+	                 Transform(TMP->DESCONTO,'@E 999,999,999,999.99'),;
+	                 Transform(nMostSaldo   ,'@E 999,999,999,999.99'),;
+	                 Transform(nSaldoR      ,'@E 999,999,999,999.99') ;
+	    })                    
+	    
+      nMostVlrTit := 0  
+      nMostVlrRea := 0
+
+	  dbSkip()
+
+	EndDo
                           
    	// Trata em caso de se repetir o titulo
-   	if cChave2 <> TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
-    	nVlrTitulo += TMP->VLRTITULO
-    	nVlrTReal  += TMP->VLREAL
-		nSaldo     += nMostSaldo                                   
-		nSaldoRS   += nSaldoR
-    endif     
+    nVlrTitulo += TMP->VLRTITULO
+    nVlrTReal  += TMP->VLREAL
+	nSaldo     += nMostSaldo                                   
+	nSaldoRS   += nSaldoR
+
+    // Atualiza Baixas com relação ao Titulo
+    AtualizaTitulo(cTitulo, cPrefixo, @nVlrBaixa, @nCorrecao, @nJuros, @nDesconto)
+
+    // Titulos Cancelados                                                              
+  	EstorTitulo(cTitulo, cPrefixo, cCodCli)
+
+    // Atualiza Variação Cambial
+	AtualizaVC(cPrefixo, cTitulo)               
+	
+	dbSelectArea('TMP')              
     
 	nVlrBaixa  += TMP->VLRBAIXA
 	nCorrecao  += TMP->CORRECAO
 	nJuros     += TMP->JUROS 
 	nDesconto  += TMP->DESCONTO
 
-   cTitulo  := TMP->NUMTITULO
-   _nValor  := TMP->VLRTITULO                                                             
-   cPrefixo := TMP->PREFIXO                 
-   cChave2  := TMP->NUMTITULO+TMP->PREFIXO+Transform(TMP->VLREAL,"@E 999,999,999.99")
 
-	dbSkip()
 EndDo                                
 
 // Total Geral
@@ -367,18 +379,18 @@ Static Function MontaQuery()
 
 			// Obtem os registros a serem processados
 			cQuery += "SELECT SE1.E1_PREFIXO AS PREFIXO, SE1.E1_NUM AS NUMTITULO, SE1.E1_TIPO AS TIPO, SE1.E1_PORTADO AS PORTADOR, SE1.E1_CLIENTE  AS CODCLI,  "+cENTER
-			cQuery += "       SE1.E1_LOJA  AS LOCAL, E1_TXMOEDA AS TXMOEDA,SE1.E1_VEND2 AS VEND2,SE1.E1_XGESTOR AS GESTOR,SE1.E1_EMISSAO AS EMISSAO, 		  "+cENTER
+			cQuery += "       SE1.R_E_C_N_O_ AS REG, SE1.E1_LOJA  AS LOCAL, E1_TXMOEDA AS TXMOEDA,SE1.E1_VEND2 AS VEND2,SE1.E1_XGESTOR AS GESTOR,SE1.E1_EMISSAO AS EMISSAO, "+cENTER
 			cQuery += "       SE1.E1_VENCTO AS VENCTO, SE1.E1_VENCREA AS VENCTOREAL, SE1.E1_VALOR  AS VLRTITULO, SE1.E1_VLCRUZ AS VLREAL,SE1.E1_MOEDA AS MOEDA, "+cENTER
 			cQuery += "       SE1.E1_HIST AS HISTORICO, SE1.E1_BAIXA AS DTBAIXA, A.E5_DTDIGIT AS DIGBAIXA, "+cENTER
 			cQuery += "       A.VALOR AS VLRBAIXA, A.E5_MOTBX AS MOTBAIXA, A.E5_VLCORRE AS CORRECAO, A.E5_VLJUROS AS JUROS, A.E5_VLDESCO AS DESCONTO,SE1.E1_SALDO AS SALDO "+cENTER
 			cQuery += "       FROM "+RETSQLNAME("SE1")+" SE1 "+cENTER
 			cQuery += "		LEFT OUTER JOIN (  "+cENTER
-			cQuery += "		            SELECT E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_MOTBX, E5_VLCORRE, E5_VLJUROS, E5_VLDESCO, SUM(SE5.E5_VALOR) AS VALOR FROM "+RETSQLNAME("SE5")+" SE5 "+cENTER
+			cQuery += "		            SELECT E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_MOTBX, E5_VLCORRE, E5_VLJUROS, E5_VLDESCO, SE5.E5_VALOR AS VALOR FROM "+RETSQLNAME("SE5")+" SE5 "+cENTER   //SUM(SE5.E5_VALOR)
 			cQuery += "					WHERE SE5.D_E_L_E_T_ = ' '  "+cENTER
 			cQuery += "					  AND SE5.E5_TIPODOC NOT IN ('RA','DC','D2','JR','J2','TL','MT','M2','CM','C2','TR','TE') "+cENTER
 			cQuery += "					  AND SE5.E5_SITUACA NOT IN ('C','E','X') "+cENTER
 			cQuery += "					  AND ((E5_TIPODOC = 'CD' AND E5_VENCTO <= E5_DATA) OR (E5_TIPODOC <> 'CD')) "+cENTER
-			cQuery += "					 GROUP BY E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_MOTBX, E5_VLCORRE, E5_VLJUROS, E5_VLDESCO "+cENTER
+			cQuery += "					 GROUP BY E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_MOTBX, E5_VLCORRE, E5_VLJUROS, E5_VLDESCO, E5_VALOR "+cENTER
 			cQuery += "				         ) A "+cENTER
 			cQuery += "		ON A.E5_NUMERO = SE1.E1_NUM AND A.E5_FILIAL = SE1.E1_FILIAL "+cENTER
 			cQuery += "		AND A.E5_PREFIXO = SE1.E1_PREFIXO "+cENTER
@@ -392,6 +404,7 @@ Static Function MontaQuery()
 			ENDIF
 			cQuery += "  AND SE1.E1_VEND2    BETWEEN '" + MV_PAR10       + "' AND '" + MV_PAR11       + "'  "+cENTER      // VENDEDOR 2 
 			cQuery += "  AND SE1.E1_XGESTOR  BETWEEN '" + MV_PAR12       + "' AND '" + MV_PAR13       + "'  "+cENTER      // GESTOR
+			//cQuery += "  AND SE1.E1_NUM = '000009696'  "+cENTER      // GESTOR
 			cQuery += "ORDER BY E1_CLIENTE, E1_PREFIXO,SE1.E1_NUM, E1_TIPO, E1_PORTADO,  E1_LOJA, E1_VEND2, E1_XGESTOR, E1_EMISSAO, E1_VENCTO, E1_VENCREA, E1_VALOR "+cENTER
 
 		ENDIF
@@ -1187,3 +1200,244 @@ Return( nReturn )
 // VALDEMIR - TRATAR TAMANHO DA FONTE
 Static Function Char2Pix(cTexto,oFont)
 Return(GetTextWidht(0,cTexto,oFont)*2)
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³CCABFINR01ºAutor  ³Valdemir José       º Data ³  19/12/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³                                                            º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function AtualizaTitulo(pNUMTITULO , pPREFIXO, pnVlrBaixa, pnCorrecao, pnJuros, pnDesconto)
+Local _nSaldo  := TMP->SALDO 
+Local nTMPBaixa:= 0//pnVlrBaixa
+Local nVlrBaixa:= 0//pnVlrBaixa+pnCorrecao+pnJuros
+Local lRET     := .F.
+Local cQuery   := ''
+Local cCliente := ''
+
+//nTitReal := TMP->VLREAL  
+
+
+		// Obtem os registros a serem processados
+		cQuery += "SELECT SE1.E1_PREFIXO AS PREFIXO, SE1.E1_NUM AS NUMTITULO, SE1.E1_TIPO AS TIPO, SE1.E1_PORTADO AS PORTADOR, SE1.E1_CLIENTE  AS CODCLI,  "+cENTER
+		cQuery += "       SE1.R_E_C_N_O_ AS REG, SE1.E1_LOJA  AS LOCAL, E1_TXMOEDA AS TXMOEDA,SE1.E1_VEND2 AS VEND2,SE1.E1_XGESTOR AS GESTOR,SE1.E1_EMISSAO AS EMISSAO, "+cENTER
+		cQuery += "       SE1.E1_VENCTO AS VENCTO, SE1.E1_VENCREA AS VENCTOREAL, SE1.E1_VALOR  AS VLRTITULO, SE1.E1_VLCRUZ AS VLREAL,SE1.E1_MOEDA AS MOEDA, "+cENTER
+		cQuery += "       SE1.E1_HIST AS HISTORICO, SE1.E1_BAIXA AS DTBAIXA, A.E5_DTDIGIT AS DIGBAIXA, "+cENTER
+		cQuery += "       A.VALOR AS VLRBAIXA, A.E5_MOTBX AS MOTBAIXA, A.E5_VLCORRE AS CORRECAO, A.E5_VLJUROS AS JUROS, A.E5_VLDESCO AS DESCONTO,SE1.E1_SALDO AS SALDO "+cENTER
+		cQuery += "       FROM "+RETSQLNAME("SE1")+" SE1 "+cENTER
+		cQuery += "		LEFT OUTER JOIN (  "+cENTER
+		cQuery += "		            SELECT E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_MOTBX, E5_VLCORRE, E5_VLJUROS, E5_VLDESCO, SUM(SE5.E5_VALOR) AS VALOR FROM "+RETSQLNAME("SE5")+" SE5 "+cENTER
+		cQuery += "					WHERE SE5.D_E_L_E_T_ = ' '  "+cENTER
+		cQuery += "					  AND SE5.E5_TIPODOC NOT IN ('RA','DC','D2','JR','J2','TL','MT','M2','CM','C2','TR','TE') "+cENTER
+		cQuery += "					  AND SE5.E5_SITUACA NOT IN ('C','E','X') "+cENTER
+		cQuery += "					  AND ((E5_TIPODOC = 'CD' AND E5_VENCTO <= E5_DATA) OR (E5_TIPODOC <> 'CD')) "+cENTER
+		cQuery += "					 GROUP BY E5_NUMERO, E5_FILIAL, E5_PREFIXO, E5_PARCELA, E5_DTDIGIT, E5_MOTBX, E5_VLCORRE, E5_VLJUROS, E5_VLDESCO "+cENTER
+		cQuery += "				         ) A "+cENTER
+		cQuery += "		ON A.E5_NUMERO = SE1.E1_NUM AND A.E5_FILIAL = SE1.E1_FILIAL "+cENTER
+		cQuery += "		AND A.E5_PREFIXO = SE1.E1_PREFIXO "+cENTER
+		cQuery += "		AND A.E5_PARCELA = SE1.E1_PARCELA "+cENTER
+		cQuery += "WHERE SE1.D_E_L_E_T_= ' ' "+cENTER 
+		cQuery += "  AND SE1.E1_EMISSAO  BETWEEN '" + DTOS(MV_PAR02) + "' AND '" + DTOS(MV_PAR03) + "' "+cENTER      // DATA DE EMISSAO
+		cQuery += "  AND SE1.E1_VENCTO   BETWEEN '" + DTOS(MV_PAR04) + "' AND '" + DTOS(MV_PAR05) + "' "+cENTER      // DATA DE VENCTO
+		cQuery += "  AND SE1.E1_CLIENTE  BETWEEN '" + MV_PAR06       + "' AND '" + MV_PAR08       + "'  "+cENTER      // CLIENTE 
+		IF !EMPTY(MV_PAR07)
+			cQuery += "  AND SE1.E1_LOJA >= '" + MV_PAR07+ "' AND SE1.E1_LOJA <= '" + MV_PAR09+ "'  			 "+cENTER      // LOJA 
+		ENDIF
+		cQuery += "  AND SE1.E1_VEND2    BETWEEN '" + MV_PAR10       + "' AND '" + MV_PAR11       + "'  "+cENTER      // VENDEDOR 2 
+		cQuery += "  AND SE1.E1_XGESTOR  BETWEEN '" + MV_PAR12       + "' AND '" + MV_PAR13       + "'  "+cENTER      // GESTOR
+		cQuery += "  AND SE1.E1_NUM = '"+pNUMTITULO+"' AND SE1.E1_PREFIXO = '"+pPREFIXO+"' "+cENTER
+		cQuery += "ORDER BY E1_CLIENTE, E1_PREFIXO,SE1.E1_NUM, E1_TIPO, E1_PORTADO,  E1_LOJA, E1_VEND2, E1_XGESTOR, E1_EMISSAO, E1_VENCTO, E1_VENCREA, E1_VALOR "+cENTER
+        
+        if pNUMTITULO = '000001650'    
+			Memowrite("CCABFINR01-2.SQL",cQuery)
+		endif
+		QryExec(cQuery, "ZTMP")
+ 
+      dbSelectArea('ZTMP')
+      dbGotop()
+	  Do While ZTMP->( !Eof() ) 
+
+    	IncProc('Gerando planilha.... Registro: Titulo: '+ZTMP->NUMTITULO)
+
+	     nTMPBaixa += ZTMP->VLRBAIXA + (ZTMP->CORRECAO*(-1)) + (ZTMP->JUROS*(-1))
+	     cCliente := ZTMP->CODCLI
+	         
+		 ZTMP->( dbSkip() )
+	
+	  EndDo
+	  
+
+	  // Adiciona registro se atender a condição a baixo.
+	  if ((nTMPBaixa < nTitReal) .and. (_nSaldo = 0)) .OR. ((nTMPBaixa > nTitReal) .and. (_nSaldo = 0)) 
+	    aAdd(aCampo,{ aCampo[Len(aCampo)][1],;     // Prefixo
+	                 aCampo[Len(aCampo)][2],;       // NumTitulo
+	                 aCampo[Len(aCampo)][3],; 	     // Tipo
+	                 aCampo[Len(aCampo)][4],;       // Portador
+	                 aCampo[Len(aCampo)][5],;       // CODCLI
+	                 aCampo[Len(aCampo)][6],;       // LOCAL
+	                 aCampo[Len(aCampo)][7],;       // NOME
+	                 aCampo[Len(aCampo)][8],;       // JF (JURIDICA / FISICA)
+	                 aCampo[Len(aCampo)][9],;       // CNPJ / CPF
+	                 aCampo[Len(aCampo)][10],;      // MUNICIPIO
+	                 aCampo[Len(aCampo)][11],;      // ESTADO
+	                 aCampo[Len(aCampo)][12],;      // RISCO
+	                 aCampo[Len(aCampo)][13],;      // DT. 1a. COMPRA
+	                 aCampo[Len(aCampo)][14],;      // VENDEDOR
+	                 aCampo[Len(aCampo)][15],;      // GESTOR
+	                 aCampo[Len(aCampo)][16],;      // EMISSAO
+	                 aCampo[Len(aCampo)][17],;      // VENCTO
+	                 aCampo[Len(aCampo)][18],;      // VENCTO.REAL
+	                 Transform(0,'@E 999,999,999,999.99'),;      // VLR.TITULO      - aCampo[Len(aCampo)][19]
+	                 Transform(0,'@E 999,999,999,999.99'),;      // VLR.REAL        //aCampo[Len(aCampo)][20]
+	                 aCampo[Len(aCampo)][21],; 	 // MOEDA
+	                 '',;					         // HISTORICO
+	                 aCampo[Len(aCampo)][23],;      // DT.BAIXA
+	                 Transform(nTitReal-nTMPBaixa,'@E 999,999,999,999.99'),;   // VALOR DA BAIXA
+	                 'VARIAÇÃO CAMBIAL',;										// MOTIVO BAIXA
+	                 Transform(0,'@E 999,999,999,999.99'),;           		    // CORRECAO
+	                 aCampo[Len(aCampo)][27],;           // JUROS
+	                 aCampo[Len(aCampo)][28],;           // DESCONTO
+	                 aCampo[Len(aCampo)][29],;           // SALDO
+	                 aCampo[Len(aCampo)][30] ;           // SALDO REAL
+	    })
+	    lRET     := .T.
+	  endif
+	                          
+	  ZTMP->( dbCloseArea() )
+
+Return lRET
+
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³CCABFINR01ºAutor  ³Microsiga           º Data ³  20/12/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Verifica os estornos de titulos que existiram              º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function EstorTitulo(pTITULO, pPREFIXO,  pCLIENTE)
+Local cQuery   := ''
+Local nPos     := 0       
+Local nAtuVal  := 0
+Local aArea    := GetArea()
+
+		// Obtem os registros a serem processados
+		cQuery += "SELECT * FROM  "+RETSQLNAME('SE51')+' SE5 '+cENTER
+		cQuery += "WHERE SE5.D_E_L_E_T_ = ' ' "+cENTER
+		cQuery += " AND SE5.E5_PREFIXO='"+pPREFIXO+"' AND SE5.E5_NUMERO = '"+pTITULO+"' AND SE5.E5_CLIENTE = '"+pCLIENTE+"' "+cENTER
+		cQuery += " AND SE5.E5_TIPODOC = 'ES' "+cENTER
+		cQuery += "ORDER BY E5_CLIENTE, E5_PREFIXO, E5_NUMERO"+cENTER
+		
+		Memowrite("CCABFINR01-3.SQL",cQuery)
+		
+		QryExec(cQuery, "ETMP")
+		
+        dbSelectArea('ETMP')
+        dbGotop()
+	    Do While ETMP->( !Eof() ) 
+	  
+		  	nI        :=  Ascan(aMotBx, {|x| Substr(x,1,3) == Upper(TMP->MOTBAIXA) })   //Busca a Descrição do Motivo da Baixa
+			cMOTBAIXA := if( nI > 0,Substr(aMotBx[nI],07,10),"" ) 
+	
+		    // Localiza Titulo                                                                                                                                                                                                   
+		    // PREFIXO + TITULO + CLIENTE + DATA + VALOR
+			nPos := aScan(aCampo,{|X|  ALLTRIM(X[1])+ALLTRIM(X[2])+ALLTRIM(X[5])+X[23]+ALLTRIM(X[24]) = CHR(160)+ ALLTRIM(ETMP->E5_PREFIXO)+CHR(160)+ALLTRIM(ETMP->E5_NUMERO)+CHR(160)+ALLTRIM(ETMP->E5_CLIENTE)+DTOC(STOD(ETMP->E5_DTDIGIT))+ALLTRIM(Transform(ETMP->E5_VALOR,"@E 999,999,999.99"))})
+			
+	  		IF nPos > 0
+				aCampo[nPos][24] := Transform(ETMP->E5_VALOR*(-1), "@E 999,999,999,999.99")
+				aCampo[nPos][26] := Transform(ETMP->E5_VLCORRE, "@E 999,999,999,999.99")
+				aCampo[nPos][25] := ETMP->E5_HISTOR
+				aCampo[nPos][22] := ''
+			endif                     
+		                          
+								         
+	    	dbSkip()
+	    
+	    EndDo              
+	    
+	    ETMP->( dbCloseArea() )                 
+
+	    RestArea( aArea )
+		
+Return
+
+      
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³CCABFINR01ºAutor  ³Microsiga           º Data ³  12/21/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³                                                            º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                        º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function AtualizaVC(pPrefixo, pTitulo)
+Local nPos      := aScan(aCampo,{|X| alltrim(X[1])+ALLTRIM(X[2])+alltrim(X[25])=CHR(160)+alltrim(pPrefixo)+CHR(160)+alltrim(pTitulo)+'VARIAÇÃO CAMBIAL'} )
+Local nLinha    := aScan(aCampo,{|X| alltrim(X[1])+alltrim(X[2]) =CHR(160)+alltrim(pPrefixo)+CHR(160)+alltrim(pTitulo)} )
+Local cCompara  := CHR(160)+pTitulo
+Local nValBaixa := 0     
+Local nBaiPos   := 0 
+Local nBaiNeg   := 0
+Local nCorPos   := 0
+Local nCorNeg   := 0       
+Local nVal      := 0
+    
+    IF (nPos > 0) .and. (nLinha > 0)
+		For nX := nLinha To Len(aCampo) 
+		  if aCampo[nX][2]= cCompara                  
+		   if nX <> nPos                     
+		     //if VAL(STRTRAN(STRTRAN(aCampo[nX][24],'.',''),',','.')) > 0
+ 			 //  nBaiPos += VAL(STRTRAN(STRTRAN(aCampo[nX][24],'.',','),',','.'))
+ 			 //else  
+ 			 //  nBaiNeg += VAL(STRTRAN(STRTRAN(aCampo[nX][24],'.',''),',','.'))
+ 			 //endif                                                         
+ 			 nValBaixa += VAL(STRTRAN(STRTRAN(aCampo[nX][24],'.',''),',','.'))
+ 			 //if VAL(STRTRAN(STRTRAN(aCampo[nX][26],'.',''),',','.')) > 0
+ 			 //	 nCorPos += VAL(STRTRAN(STRTRAN(aCampo[nX][26],'.',','),',','.'))
+ 			 //else
+	 		 //	 nCorNeg += VAL(STRTRAN(STRTRAN(aCampo[nX][26],'.',''),',','.'))
+ 			 //endif
+			 nValBaixa    += VAL(STRTRAN(STRTRAN(aCampo[nX][26],'.',''),',','.'))
+		   else
+ 			 //if VAL(STRTRAN(STRTRAN(aCampo[nX][26],'.',''),',','.')) > 0
+ 			 //	 nCorPos += VAL(STRTRAN(STRTRAN(aCampo[nX][26],'.',','),',','.'))
+ 			 //else
+	 		 //	 nCorNeg += VAL(STRTRAN(STRTRAN(aCampo[nX][26],'.',''),',','.'))
+ 			 //endif                                                             
+ 			 nValBaixa += VAL(STRTRAN(STRTRAN(aCampo[nX][26],'.',''),',','.'))
+		   endif
+		  ELSE
+		   nX := Len(aCampo)
+		  endif
+		Next
+		//nValBaixa :=  nVal
+		aCampo[nPos][24] := Transform(nTitReal-nValBaixa,"@E 999,999,999.99")
+    Endif
+      
+
+Return
