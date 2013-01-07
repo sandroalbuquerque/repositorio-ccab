@@ -1,0 +1,1028 @@
+#include "protheus.ch"
+#include "topconn.ch"
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³CCABR790  ºAutor  ³Felipe Aurélio de Melo º Data ³ 19/03/09 º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Relatorio de vendas por cliente, vendedor e produto         º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ MP8->SIGAFAT-RELATORIOS->FATURAMENTO                       º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+                               
+User Function CCABR79X()                          
+
+Private cProg     := "CCABR79X"
+Private cPerg     := "ABR79X"
+Private aRetor    := {}
+Private aEstru    := {}
+Private aItens    := {}
+Private aCtbMoeda := {}
+Private aSetOfBook:= {}
+Private oReport
+Private oSection1
+
+//Cria perguntas caso não exista
+fCriaSx1()
+
+//verifica se relatorios personalizaveis esta disponivel
+If TRepInUse(.F.)
+	Pergunte(cPerg,.F.)
+	oReport:=ReportDef()
+	oReport:PrintDialog()
+EndIf
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±
+±±³Fun‡…o	 ³ ReportDef³ Autor ³ Felipe Aurélio de Melo ³ Data ³ 19/03/09 ³±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±
+±±³Descri‡…o ³                                                             ³±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±
+±±³Retorno	 ³ Nenhum                                                      ³±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±
+±±³Parametros³ Nenhum                                                      ³±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function ReportDef()
+
+Local aOrd    := {"Descr. produto","Cod. produto"}
+Local cTitulo := "DEMONSTRATIVO DE FATURAMENTO POR VENDEDOR X CLIENTE X PRODUTOS"
+Local cDescri := "Este programa irá imprimir o Controle de pagamento de comissões"+Chr(10)+Chr(13)+"Será impresso de acordo com os parametros solicitados pelo usuario."
+Local bReport := { |oReport|	ReportPrint( oReport ) }
+
+oReport:= TReport():New(cProg, cTitulo, cPerg , bReport, cDescri,.T.,,.F.,,.T.)
+oSection1:= TRSection():New(oReport  ,OemToAnsi(""),{"",""},aOrd,,,,.T.)
+
+Return(oReport)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±
+±±³Fun‡…o	 ³ReportPrint³Autor ³ Felipe Aurélio de Melo ³ Data ³ 19/03/09 ³±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±
+±±³Descri‡…o ³                                                             ³±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±
+±±³Retorno	 ³ Nenhum                                                      ³±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±
+±±³Parametros³ Nenhum                                                      ³±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function ReportPrint(oReport)
+
+Local x := 0
+Local y := 0
+Local oBreak1
+Local oBreak2
+Local cItemAnt1 := ""
+Local cItemAnt2 := ""
+nTipoImpr := oReport:nDevice //"Arquivo"###"Spool"###"E-mail"###"Planilha"###"HTML"
+
+
+oReport:SetTitle(oReport:Title()+"   [ "+DtoC(mv_par05)+" - "+DtoC(mv_par06)+" ] [ "+IIf(mv_par20==1,"REAL","DOLAR")+" ]" )
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Grava registros do arquivo temporário num array              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+aRetor := fCriaArray()
+aEstru := aRetor[1]
+aItens := aRetor[2]
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria seção, cabeçalho                                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Len(aEstru) > 0
+	For x:=1 To Len(aEstru)
+		TRCell():New(oSection1,aEstru[x][1],"",aEstru[x][2],aEstru[x][5],aEstru[x][4],.T.,,IIf(aEstru[x][3]$"N|D","RIGHT","LEFT"),,IIf(aEstru[x][3]$"N|D","RIGHT","LEFT"),,,IIf(nTipoImpr==4,.F.,.T.),CLR_WHITE,CLR_BLACK)
+	Next x
+EndIf
+
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Oculta a 1º,2º e 3º coluna, responsável pela quebra          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nTipoImpr!=4
+	oSection1:Cell(aEstru[1][1]):Hide()
+	oSection1:Cell(aEstru[2][1]):Hide()
+	oSection1:Cell(aEstru[3][1]):Hide()
+	oSection1:Cell(aEstru[4][1]):Hide()
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria totalizador                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+x := Len(aItens) + 1
+If mv_par19 == 1
+	If Len(aEstru) > 0
+		If mv_par18 == 1
+			// Cria quebra
+			oBreak2 := TRBreak():New( oSection1, {|| IIf(Len(aItens)>=x,aItens[x][2],) } , {|| oReport:IncRow((-1)*oReport:nLineHeight) , "" })
+			For x:=1 To Len(aEstru)
+				//Totalizador das quebras
+				If aEstru[x][6]
+					TRFunction():New ( oSection1:Cell(aEstru[x][1]),,"SUM",oBreak2,"",,,.F.,.F.,.F.)
+				EndIf
+			Next x
+		EndIf
+		
+		// Cria quebra
+		oBreak1 := TRBreak():New( oSection1, {|| IIf(Len(aItens)>=x,aItens[x][1],) } , {|| oReport:IncRow((+1)*oReport:nLineHeight) , "" })
+		For x:=1 To Len(aEstru)
+			//Totalizador geral e da section
+			If aEstru[x][6]
+				TRFunction():New ( oSection1:Cell(aEstru[x][1]),,"SUM",oBreak1,"",,,.F.,.T.,.F.)
+			EndIf
+		Next x
+	EndIf
+Else
+	// Cria quebra
+	oBreak1 := TRBreak():New( oSection1, {|| IIf(Len(aItens)>=x,aItens[x][2],) } )
+	For x:=1 To Len(aEstru)
+		//Totalizador da section quando agrupado por vendador
+		If aEstru[x][6]
+			TRFunction():New ( oSection1:Cell(aEstru[x][1]),,"SUM",oBreak1,"",,,.F.,.F.,.F.)
+		EndIf
+	Next x
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Reinicia regua de impressão                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oReport:nMeter:=0
+oReport:oMeter:nTotal:=0
+oReport:oMeter:Refresh()
+
+oReport:SetMeter(Len(aItens))
+oReport:SetMsgPrint("Imprimindo")
+oSection1:Init()
+
+For x:=1 To Len(aItens)
+	If oReport:Cancel()
+		x:=Len(aItens)
+	EndIf
+	
+	If Empty(cItemAnt1)
+		If !Empty(aItens[x][1])
+			oSection1:PrintLine()
+			cItemAnt1 := aItens[x][1]
+			If nTipoImpr!=4
+				oReport:PrintText(Upper(aItens[x][1]))
+				oReport:ThinLine()
+			EndIf
+		EndIf
+		
+	ElseIf cItemAnt1 != aItens[x][1]
+		cItemAnt1 := aItens[x][1]
+		oReport:SkipLine(1)
+		If mv_par19 == 1
+			//Força impressão do Totalizador
+			For y:=1 To Len(aItens[x])
+				oSection1:Cell(oSection1:aCell[y]:cName):SetValue()
+			Next y
+			oSection1:PrintLine()
+		EndIf
+		//Imprime cabeçalho da seção
+		If nTipoImpr!=4
+			oReport:PrintText(Upper(aItens[x][1]))
+			oReport:ThinLine()
+		EndIf
+	EndIf
+	
+	If Empty(cItemAnt2)
+		If !Empty(aItens[x][2])
+			cItemAnt2 := aItens[x][2]
+			If nTipoImpr!=4
+				oReport:PrintText(Space(05)+Upper(aItens[x][2]))
+			EndIf
+		EndIf
+		
+	ElseIf cItemAnt2 != aItens[x][2]
+		cItemAnt2 := aItens[x][2]
+		oReport:SkipLine(1)
+		//Força impressão do Totalizador
+		For y:=1 To Len(aItens[x])
+			oSection1:Cell(oSection1:aCell[y]:cName):SetValue()
+		Next y
+		oSection1:PrintLine()
+		oReport:IncRow((-1)*oReport:nLineHeight)
+		
+		//Imprime cabeçalho da seção
+		If nTipoImpr!=4
+			oReport:PrintText(Space(05)+Upper(aItens[x][2]))
+		EndIf
+	EndIf
+	
+	
+	For y:=1 To Len(aItens[x])
+		oSection1:Cell(oSection1:aCell[y]:cName):SetValue(aItens[x][y])
+	Next y
+	
+	//Imprime definições realizadas acima
+	oSection1:PrintLine()
+	oReport:IncMeter()
+	
+	//Tratamento para ultima linha não ser sobreposta pelo totalizador
+	If x = Len(aItens)
+		oReport:SkipLine(1)
+	EndIf
+	
+Next x
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Finaliza seção de impressão                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oSection1:Finish()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Imprime mensagem caso não tenha registros a serem impressos  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Len(aItens) == 0
+	oReport:PrintText("Nao ha dados a serem exibidos")
+EndIf
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±
+±±³Fun‡…o	 ³fCriaArray³ Autor ³ Felipe Aurélio de Melo ³ Data ³ 02.02.09 ³±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±
+±±³Descri‡…o ³                                                             ³±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±
+±±³Retorno	 ³ Nenhum                                                      ³±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±
+±±³Parametros³ Nenhum                                                      ³±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function fCriaArray()
+
+Local aCabec    := {}
+Local aExibe    := {}
+Local aLinhas   := {}
+Local aStruct   := {}
+Local cQuery    := ""
+Local cFiltraTES:= ""
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta cabeçalho do relatorio     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+aAdd(aExibe,{"QUEBRA1     ","              ","C",00,"@!"                      ,.F.})
+aAdd(aExibe,{"QUEBRA2     ","              ","C",00,"@!"                      ,.F.})
+aAdd(aExibe,{"QUEBRA3     ","              ","C",00,"@!"                      ,.F.})
+aAdd(aExibe,{"QUEBRA4     ","              ","C",00,"@!"                      ,.F.})
+aAdd(aExibe,{"SPACE       ","              ","C",00,"@!"                      ,.F.}) //S20
+aAdd(aExibe,{"FILIAL      ","Fil           ","C",04,"@!"                      ,.F.})
+aAdd(aExibe,{"TIPO",  	  "Tipo          ","C",01,"@!"                      ,.F.})
+If mv_par19 == 1  // Mostra Produtos
+	aAdd(aExibe,{"CODPROD     ","Codigo Produto","C",25,"@!"                      ,.F.})
+	aAdd(aExibe,{"NOMEPROD    ","Nome Produto  ","C",40,"@!"                      ,.F.})
+EndIf                                                                               
+aAdd(aExibe,{"QTDVEND     ","Qtd Vendida   ","N",20,"@E 999999999999.99"       ,.T.})
+aAdd(aExibe,{"VLRVEND     ","Vlr Vendido   ","N",20,"@E 99,999,999,999.99"       ,.T.})        
+aAdd(aExibe,{"QTDDEV      ","Qtd Devolvido ","N",20,"@E 999999999999.99"       ,.T.})
+aAdd(aExibe,{"VLRDEV      ","Vlr Devolvido ","N",20,"@E 99,999,999,999.99"       ,.T.})        
+aAdd(aExibe,{"QTDLIQ      ","Qtd Líquido   ","N",20,"@E 999999999999.99"       ,.T.})
+aAdd(aExibe,{"VLRLIQ      ","Vlr Líquido   ","N",20,"@E 99,999,999,999.99"       ,.T.})
+If mv_par19 == 1  // Mostra Produtos
+	aAdd(aExibe,{"CUSTOPROD   ","Custo Produto","N",20,"@E 99,999,999,999.99"       ,.T.})
+EndIf                                                                               
+If !Empty(mv_par09) .Or. !Empty(mv_par10)
+	aAdd(aExibe,{"COMIVEND1   ","%Com.V1       ","N",13,"@E 99.999.99"               ,.F.})
+	aAdd(aExibe,{"VLORVEND1   ","Valor.V1      ","N",20,"@E 99,999,999,999.99"       ,.T.})
+EndIf
+If !Empty(mv_par11) .Or. !Empty(mv_par12)
+	aAdd(aExibe,{"COMIVEND2   ","%Com.V2       ","N",13,"@E 999.99"               ,.F.})
+	aAdd(aExibe,{"VLORVEND2   ","Valor.V2      ","N",20,"@E 999,999,999.99"       ,.T.})
+EndIf
+If !Empty(mv_par13) .Or. !Empty(mv_par14)
+	aAdd(aExibe,{"COMIVEND3   ","%Com.V3       ","N",13,"@E 999.99"               ,.F.})
+	aAdd(aExibe,{"VLORVEND3   ","Valor.V3      ","N",20,"@E 999,999,999.99"       ,.T.})
+EndIf
+If mv_par17 == 1 .And. mv_par19 == 1
+	aAdd(aExibe,{"EMISSAO     ","Dt Emissão    ","C",18,"@99/99/9999"             ,.F.})
+	aAdd(aExibe,{"DOC         ","Nota          ","C",15,"@!"                       ,.F.})
+	aAdd(aExibe,{"SERIE       ","Serie         ","C",5,"@!"                       ,.F.})
+	aAdd(aExibe,{"TES         ","TES           ","C",05,"@!"                      ,.F.})
+EndIf           
+aadd(aExibe,{"XSTDEV","St.Dev.","C",02,"@!",.F.})
+aAdd(aExibe,{"XOBSERV","Obs. Entrada   ","C",40,"@!"                      ,.T.})     
+If (nTipoImpr == 4)
+	aadd(aExibe,{"DESCSTAT","Descricao Status.Dev.","C",40,"@!",.F.})
+	aAdd(aExibe,{"XDESPER","% Desc. Pontualidade","N",20,"@E 999.9999"       ,.F.})
+	aAdd(aExibe,{"XDESFIN","Desc. Pontualidade ","N",20,"@E 999999999999.9999"       ,.T.})
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Desenvolvimento da query         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oReport:SetMsgPrint("Consultando banco de dados")
+
+cQuery    := " SELECT "
+If !Empty(mv_par09) .Or. !Empty(mv_par10)
+	cQuery    += " CODVEND1, "
+	cQuery    += " NOMEVEND1, "
+	cQuery    += " COMIVEND1, "
+EndIf
+If !Empty(mv_par11) .Or. !Empty(mv_par12)
+	cQuery    += " CODVEND2, "
+	cQuery    += " NOMEVEND2, "
+	cQuery    += " COMIVEND2, "
+EndIf
+If !Empty(mv_par13) .Or. !Empty(mv_par14)
+	cQuery    += " CODVEND3, "
+	cQuery    += " NOMEVEND3, "
+	cQuery    += " COMIVEND3, "
+EndIf
+cQuery    += " FILIAL, TIPO, "
+If mv_par19 == 1
+	cQuery    += " CODPROD, "
+	cQuery    += " ITEMPROD, "
+	cQuery    += " CUSTOPROD, "
+	cQuery    += " NOMEPROD, XDESPER, "
+EndIf
+cQuery    += " SUM(QTDVEND) QTDVEND, "
+cQuery    += " SUM(VLRVEND) VLRVEND, "
+cQuery    += " SUM(QTDDEV) QTDDEV, "
+cQuery    += " SUM(VLRDEV) VLRDEV, " 
+cQuery    += " XOBSERV, "
+cQuery    += " SUM(QTDVEND)-SUM(QTDDEV) QTDLIQ, "
+cQuery    += " SUM(VLRVEND)-SUM(VLRDEV) VLRLIQ, SUM(XDESFIN)XDESFIN "
+
+If mv_par17 == 1 .And. mv_par19 == 1
+	cQuery    += " ,EMISSAO "
+	cQuery    += " ,DOC "
+	cQuery    += " ,SERIE "
+	cQuery    += " ,TES, PEDIDO, CODCLI, LOJACLI, XSTDEV "
+ElseIf mv_par17 == 1 .And. mv_par19 == 2
+	cQuery    += " ,EMISSAO "
+	cQuery    += " ,DOC "
+	cQuery    += " ,SERIE "
+	cQuery    += " ,TES, PEDIDO "
+	cQuery    += " ,CODCLI "
+	cQuery    += " ,LOJACLI, MUNICLI, ESTCLI ,XSTDEV "
+EndIf
+
+If mv_par17 == 2 .And. mv_par20 == 2
+	cQuery    += " , PEDIDO, CODCLI, LOJACLI, MUNICLI, ESTCLI, EMISSAO, XSTDEV "
+EndIf
+
+
+If mv_par18 == 1 .And. mv_par19 == 1
+	cQuery    += " ,CODCLI "
+	cQuery    += " ,LOJACLI "
+	cQuery    += " ,NOMECLI " 
+	cQuery    += " ,MUNICLI "
+	cQuery    += " ,ESTCLI "
+	cQuery    += " ,NREDUZCLI "
+	cQuery    += " ,XSTDEV
+EndIf
+cQuery    += Chr(13)+Chr(10)+" FROM "
+cQuery    += Chr(13)+Chr(10)+" ( "
+
+//--------------------------------------------------------------------------------------------------------
+
+cQuery    += Chr(13)+Chr(10)+" SELECT * FROM ( "
+cQuery    += Chr(13)+Chr(10)+" SELECT  "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_FILIAL AS FILIAL, C5_TIPO TIPO, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_PEDIDO AS PEDIDO, "
+cQuery    += Chr(13)+Chr(10)+" SA31.A3_COD AS CODVEND1, "
+cQuery    += Chr(13)+Chr(10)+" SA31.A3_NOME AS NOMEVEND1, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS1 AS COMIVEND1, "
+cQuery    += Chr(13)+Chr(10)+" SA32.A3_COD AS CODVEND2, "
+cQuery    += Chr(13)+Chr(10)+" SA32.A3_NOME AS NOMEVEND2, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS2 AS COMIVEND2, "
+cQuery    += Chr(13)+Chr(10)+" SA33.A3_COD AS CODVEND3, "
+cQuery    += Chr(13)+Chr(10)+" SA33.A3_NOME AS NOMEVEND3, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS3 AS COMIVEND3, "
+cQuery    += Chr(13)+Chr(10)+" SA34.A3_COD AS CODVEND4, "
+cQuery    += Chr(13)+Chr(10)+" SA34.A3_NOME AS NOMEVEND4, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS4 AS COMIVEND4, "
+cQuery    += Chr(13)+Chr(10)+" SA35.A3_COD AS CODVEND5, "
+cQuery    += Chr(13)+Chr(10)+" SA35.A3_NOME AS NOMEVEND5, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS5 AS COMIVEND5, "
+cQuery    += Chr(13)+Chr(10)+" CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_COD ELSE SA1.A1_COD END AS CODCLI, "
+cQuery    += Chr(13)+Chr(10)+" CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_LOJA ELSE SA1.A1_LOJA END AS LOJACLI, "
+cQuery    += Chr(13)+Chr(10)+" CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_NOME ELSE SA1.A1_NOME END AS NOMECLI, "
+cQuery    += Chr(13)+Chr(10)+" CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_NREDUZ ELSE SA1.A1_NREDUZ END AS NREDUZCLI, "
+cQuery    += Chr(13)+Chr(10)+" CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_MUN ELSE SA1.A1_MUN END AS MUNICLI, "
+cQuery    += Chr(13)+Chr(10)+" CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_EST ELSE SA1.A1_EST END AS ESTCLI, "
+cQuery    += Chr(13)+Chr(10)+" SB1.B1_COD AS CODPROD, SC5.C5_XDESPER XDESPER, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_ITEM AS ITEMPROD,"
+If mv_par20 == 1
+	cQuery    += Chr(13)+Chr(10)+" SD2.D2_CUSTO1 AS CUSTOPROD, "
+Else
+	cQuery    += Chr(13)+Chr(10)+" SD2.D2_CUSTO2 AS CUSTOPROD, "
+Endif
+cQuery    += Chr(13)+Chr(10)+" SB1.B1_DESC AS NOMEPROD, "
+If mv_par20 == 1
+	cQuery    += Chr(13)+Chr(10)+" SD2.D2_QUANT AS QTDVEND, "
+	cQuery    += Chr(13)+Chr(10)+" SD2.D2_TOTAL AS VLRVEND, "
+	cQuery    += Chr(13)+Chr(10)+" 0 AS QTDDEV, "
+	cQuery    += Chr(13)+Chr(10)+" 0 AS VLRDEV, "
+	cQuery    += Chr(13)+Chr(10)+" '' AS XOBSERV, "	
+Else
+	cQuery    += Chr(13)+Chr(10)+" SD2.D2_QUANT AS QTDVEND, "
+	cQuery    += Chr(13)+Chr(10)+" SD2.D2_TOTAL AS VLRVEND, "
+	cQuery    += Chr(13)+Chr(10)+" 0 AS QTDDEV, "
+	cQuery    += Chr(13)+Chr(10)+" 0 AS VLRDEV, "
+	cQuery    += Chr(13)+Chr(10)+" '' AS XOBSERV, "		
+EndIf
+//cQuery    += Chr(13)+Chr(10)+" SC5.C5_EMISSAO AS EMISSAO, " 
+cQuery    += Chr(13)+Chr(10)+" SF2.F2_EMISSAO AS EMISSAO, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_DOC AS DOC, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_SERIE AS SERIE, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_TES AS TES, "
+cQuery    += Chr(13)+Chr(10)+" ' ' AS XSTDEV, SD2.D2_XDESFIN XDESFIN "
+cQuery    += Chr(13)+Chr(10)+" FROM "+RetSqlName("SD2")+" SD2 "
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SF2")+" SF2 ON  SF2.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_FILIAL  = SD2.D2_FILIAL "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_DOC     = SD2.D2_DOC "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_SERIE   = SD2.D2_SERIE "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_CLIENTE = SD2.D2_CLIENTE "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_LOJA    = SD2.D2_LOJA "
+cQuery    += Chr(13)+Chr(10)+"	LEFT JOIN "+RetSqlName("SC5")+" SC5 ON  SC5.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"				  		 AND SC5.C5_FILIAL  = SD2.D2_FILIAL "
+cQuery    += Chr(13)+Chr(10)+"                  	 AND SC5.C5_NUM     = SD2.D2_PEDIDO "
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA1")+" SA1 ON  SA1.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA1.A1_FILIAL  = '"+xFilial("SA1")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA1.A1_COD     = SD2.D2_CLIENTE "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA1.A1_LOJA    = SD2.D2_LOJA "
+                                                                 
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA2")+" SA2 ON  SA2.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA2.A2_FILIAL  = '"+xFilial("SA1")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA2.A2_COD     = SD2.D2_CLIENTE "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA2.A2_LOJA    = SD2.D2_LOJA "
+
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 01
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA31 ON SA31.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA31.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA31.A3_COD     = SF2.F2_VEND1 "
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 02
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA32 ON SA32.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA32.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA32.A3_COD     = SF2.F2_VEND2 "
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 03
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA33 ON SA33.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA33.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA33.A3_COD     = SF2.F2_VEND3 "
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 04
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA34 ON SA34.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA34.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA34.A3_COD     = SF2.F2_VEND4 "
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 05
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA35 ON SA35.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA35.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA35.A3_COD     = SF2.F2_VEND5 "
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SB1")+" SB1 ON SB1.D_E_L_E_T_  = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SB1.B1_FILIAL  = '"+xFilial("SB1")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SB1.B1_COD     = SD2.D2_COD "
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("CTP")+" CTP ON CTP.D_E_L_E_T_  = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND CTP.CTP_FILIAL = '"+xFilial("CTP")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND CTP.CTP_DATA   = SD2.D2_EMISSAO "
+cQuery    += Chr(13)+Chr(10)+"                      AND CTP.CTP_MOEDA  = '02' "
+
+cQuery    += Chr(13)+Chr(10)+" WHERE SD2.D_E_L_E_T_ = '' "
+
+cQuery    += Chr(13)+Chr(10)+" AND CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_COD ELSE SA1.A1_COD END  >= '"+mv_par01+"' "
+cQuery    += Chr(13)+Chr(10)+" AND CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_LOJA ELSE SA1.A1_LOJA END >= '"+mv_par02+"' "
+
+cQuery    += Chr(13)+Chr(10)+" AND CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_COD ELSE SA1.A1_COD END  <= '"+mv_par03+"' "
+cQuery    += Chr(13)+Chr(10)+" AND CASE WHEN SC5.C5_TIPO IN ('B','D') THEN SA2.A2_LOJA ELSE SA1.A1_LOJA END <= '"+mv_par04+"' "
+
+cQuery    += Chr(13)+Chr(10)+" AND SD2.D2_EMISSAO >= '"+DtoS(mv_par05)+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SD2.D2_EMISSAO <= '"+DtoS(mv_par06)+"' "
+
+cQuery    += Chr(13)+Chr(10)+" AND SB1.B1_COD  >= '"+mv_par07+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SB1.B1_COD  <= '"+mv_par08+"' "
+
+cQuery    += Chr(13)+Chr(10)+" AND SB1.B1_TIPO >= '"+mv_par25+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SB1.B1_TIPO <= '"+mv_par26+"' "
+
+If !Empty(mv_par09) .Or. !Empty(mv_par10)
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND1 >= '"+mv_par09+"' "
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND1 <= '"+mv_par10+"' "
+EndIf
+
+If !Empty(mv_par11) .Or. !Empty(mv_par12)
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND2 >= '"+mv_par11+"' "
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND2 <= '"+mv_par12+"' "
+EndIf
+
+If !Empty(mv_par13) .Or. !Empty(mv_par14)
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND3 >= '"+mv_par13+"' "
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND3 <= '"+mv_par14+"' "
+EndIf
+
+cQuery    += Chr(13)+Chr(10)+" AND SD2.D2_FILIAL >= '"+mv_par15+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SD2.D2_FILIAL <= '"+mv_par16+"' "
+
+If !Empty(mv_par21)
+	cFiltraTES:= fTrataQbra(mv_par21+" ;"+mv_par22+" ;"+mv_par23+" ;"+mv_par24+" ;")
+	cQuery    += Chr(13)+Chr(10)+" AND SD2.D2_TES IN ("+cFiltraTES+") "
+EndIf
+cQuery    += Chr(13)+Chr(10)+" ) TRB01 "
+
+//--------------------------------------------------------------------------------------------------------
+
+cQuery    += Chr(13)+Chr(10)+" UNION ALL "
+
+//--------------------------------------------------------------------------------------------------------
+
+cQuery    += Chr(13)+Chr(10)+" SELECT * FROM ( "
+cQuery    += Chr(13)+Chr(10)+" SELECT  "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_FILIAL AS FILIAL, '' TIPO, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_PEDIDO AS PEDIDO, "
+cQuery    += Chr(13)+Chr(10)+" SA31.A3_COD AS CODVEND1, "
+cQuery    += Chr(13)+Chr(10)+" SA31.A3_NOME AS NOMEVEND1, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS1 AS COMIVEND1, "
+cQuery    += Chr(13)+Chr(10)+" SA32.A3_COD AS CODVEND2, "
+cQuery    += Chr(13)+Chr(10)+" SA32.A3_NOME AS NOMEVEND2, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS2 AS COMIVEND2, "
+cQuery    += Chr(13)+Chr(10)+" SA33.A3_COD AS CODVEND3, "
+cQuery    += Chr(13)+Chr(10)+" SA33.A3_NOME AS NOMEVEND3, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS3 AS COMIVEND3, "
+cQuery    += Chr(13)+Chr(10)+" SA34.A3_COD AS CODVEND4, "
+cQuery    += Chr(13)+Chr(10)+" SA34.A3_NOME AS NOMEVEND4, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS4 AS COMIVEND4, "
+cQuery    += Chr(13)+Chr(10)+" SA35.A3_COD AS CODVEND5, "
+cQuery    += Chr(13)+Chr(10)+" SA35.A3_NOME AS NOMEVEND5, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_COMIS5 AS COMIVEND5, "
+cQuery    += Chr(13)+Chr(10)+" SA1.A1_COD AS CODCLI, "
+cQuery    += Chr(13)+Chr(10)+" SA1.A1_LOJA AS LOJACLI, "
+cQuery    += Chr(13)+Chr(10)+" SA1.A1_NOME AS NOMECLI, "
+cQuery    += Chr(13)+Chr(10)+" SA1.A1_NREDUZ AS NREDUZCLI, "
+cQuery    += Chr(13)+Chr(10)+" SA1.A1_MUN AS MUNICLI, "
+cQuery    += Chr(13)+Chr(10)+" SA1.A1_EST AS ESTCLI, "
+cQuery    += Chr(13)+Chr(10)+" SB1.B1_COD AS CODPROD, '' XDESPER, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_ITEM AS ITEMPROD,"
+If mv_par20 == 1
+	cQuery    += Chr(13)+Chr(10)+" 0 AS CUSTOPROD, "
+Else
+	cQuery    += Chr(13)+Chr(10)+" 0 AS CUSTOPROD, "
+Endif
+cQuery    += Chr(13)+Chr(10)+" SB1.B1_DESC AS NOMEPROD, "
+If mv_par20 == 1
+	cQuery    += Chr(13)+Chr(10)+" 0 AS QTDVEND, "
+	cQuery    += Chr(13)+Chr(10)+" 0 AS VLRVEND, "
+	cQuery    += Chr(13)+Chr(10)+" SD1.D1_QUANT AS QTDDEV, "
+	cQuery    += Chr(13)+Chr(10)+" (SD1.D1_TOTAL-SD1.D1_VALDESC) AS VLRDEV, "
+	cQuery    += Chr(13)+Chr(10)+" SD1.D1_XOBSERV AS XOBSERV, "	
+Else
+	cQuery    += Chr(13)+Chr(10)+" 0 AS QTDVEND, "
+	cQuery    += Chr(13)+Chr(10)+" 0 AS VLRVEND, "
+	cQuery    += Chr(13)+Chr(10)+" SD1.D1_QUANT AS QTDDEV, "
+	cQuery    += Chr(13)+Chr(10)+" (SD1.D1_TOTAL-SD1.D1_VALDESC)/CTP.CTP_TAXA AS VLRDEV, "
+	cQuery    += Chr(13)+Chr(10)+" SD1.D1_XOBSERV AS XOBSERV, "		
+EndIf
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_EMISSAO,"
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_DOC AS DOC, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_SERIE AS SERIE, "
+cQuery    += Chr(13)+Chr(10)+" SD2.D2_TES AS TES, "
+cQuery    += Chr(13)+Chr(10)+" SD1.D1_XSTDEV AS XSTDEV, 0 XDESFIN "
+cQuery    += Chr(13)+Chr(10)+" FROM "+RetSqlName("SD1")+" SD1 "
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SD2")+" SD2 ON  SD2.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SD2.D2_FILIAL  = SD1.D1_FILIAL "
+cQuery    += Chr(13)+Chr(10)+"                      AND SD2.D2_DOC     = SD1.D1_NFORI "
+cQuery    += Chr(13)+Chr(10)+"                      AND SD2.D2_SERIE   = SD1.D1_SERIORI "
+cQuery    += Chr(13)+Chr(10)+"                      AND SD2.D2_ITEM    = SD1.D1_ITEMORI "
+cQuery    += Chr(13)+Chr(10)+"                      AND SD2.D2_CLIENTE = SD1.D1_FORNECE "
+cQuery    += Chr(13)+Chr(10)+"                      AND SD2.D2_LOJA    = SD1.D1_LOJA "
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SF2")+" SF2 ON  SF2.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_FILIAL  = SD2.D2_FILIAL "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_DOC     = SD2.D2_DOC "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_SERIE   = SD2.D2_SERIE "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_CLIENTE = SD2.D2_CLIENTE "
+cQuery    += Chr(13)+Chr(10)+"                      AND SF2.F2_LOJA    = SD2.D2_LOJA "
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA1")+" SA1 ON  SA1.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA1.A1_FILIAL  = '"+xFilial("SA1")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA1.A1_COD     = SD2.D2_CLIENTE "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA1.A1_LOJA    = SD2.D2_LOJA "
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 01
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA31 ON SA31.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA31.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA31.A3_COD     = SF2.F2_VEND1 "
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 02
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA32 ON SA32.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA32.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA32.A3_COD     = SF2.F2_VEND2 "
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 03
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA33 ON SA33.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA33.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA33.A3_COD     = SF2.F2_VEND3 "
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 04
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA34 ON SA34.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA34.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA34.A3_COD     = SF2.F2_VEND4 "
+cQuery    += Chr(13)+Chr(10)+"" //VENDEDOR 05
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SA3")+" SA35 ON SA35.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA35.A3_FILIAL  = '"+xFilial("SA3")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SA35.A3_COD     = SF2.F2_VEND5 "
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("SB1")+" SB1 ON SB1.D_E_L_E_T_  = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SB1.B1_FILIAL  = '"+xFilial("SB1")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND SB1.B1_COD     = SD2.D2_COD "
+cQuery    += Chr(13)+Chr(10)+" LEFT JOIN "+RetSqlName("CTP")+" CTP ON CTP.D_E_L_E_T_  = '' "
+cQuery    += Chr(13)+Chr(10)+"                      AND CTP.CTP_FILIAL = '"+xFilial("CTP")+"' "
+cQuery    += Chr(13)+Chr(10)+"                      AND CTP.CTP_DATA   = SD2.D2_EMISSAO "
+cQuery    += Chr(13)+Chr(10)+"                      AND CTP.CTP_MOEDA  = '02' "
+
+cQuery    += Chr(13)+Chr(10)+" WHERE SD1.D_E_L_E_T_ = '' "
+cQuery    += Chr(13)+Chr(10)+" AND SD1.D1_TIPO In ('D')"
+
+//Alterado por Samir
+If !Empty(mv_par21)
+	cFiltraTES:= fTrataQbra(mv_par21+" ;"+mv_par22+" ;"+mv_par23+" ;"+mv_par24+" ;")
+	cQuery    += Chr(13)+Chr(10)+" AND SD1.D1_TES IN ("+cFiltraTES+") "
+EndIf
+
+
+cQuery    += Chr(13)+Chr(10)+" AND SA1.A1_COD  >= '"+mv_par01+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SA1.A1_LOJA >= '"+mv_par02+"' "
+
+cQuery    += Chr(13)+Chr(10)+" AND SA1.A1_COD  <= '"+mv_par03+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SA1.A1_LOJA <= '"+mv_par04+"' "
+
+cQuery    += Chr(13)+Chr(10)+" AND SD1.D1_DTDIGIT >= '"+DtoS(mv_par05)+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SD1.D1_DTDIGIT <= '"+DtoS(mv_par06)+"' "
+
+cQuery    += Chr(13)+Chr(10)+" AND SB1.B1_COD  >= '"+mv_par07+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SB1.B1_COD  <= '"+mv_par08+"' "
+
+cQuery    += Chr(13)+Chr(10)+" AND SB1.B1_TIPO >= '"+mv_par25+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SB1.B1_TIPO <= '"+mv_par26+"' "
+
+If !Empty(mv_par09) .Or. !Empty(mv_par10)
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND1 >= '"+mv_par09+"' "
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND1 <= '"+mv_par10+"' "
+EndIf
+
+If !Empty(mv_par11) .Or. !Empty(mv_par12)
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND2 >= '"+mv_par11+"' "
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND2 <= '"+mv_par12+"' "
+EndIf
+
+If !Empty(mv_par13) .Or. !Empty(mv_par14)
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND3 >= '"+mv_par13+"' "
+	cQuery    += Chr(13)+Chr(10)+" AND SF2.F2_VEND3 <= '"+mv_par14+"' "
+EndIf
+
+cQuery    += Chr(13)+Chr(10)+" AND SD2.D2_FILIAL >= '"+mv_par15+"' "
+cQuery    += Chr(13)+Chr(10)+" AND SD2.D2_FILIAL <= '"+mv_par16+"' "
+
+cQuery    += Chr(13)+Chr(10)+" ) TRB02 "
+
+//--------------------------------------------------------------------------------------------------------
+
+cQuery    += Chr(13)+Chr(10)+" ) TRB "
+cQuery    += Chr(13)+Chr(10)+" GROUP BY "
+cQuery    += Chr(13)+Chr(10)+"  CODVEND1,"
+If !Empty(mv_par09) .Or. !Empty(mv_par10)
+	cQuery    += Chr(13)+Chr(10)+" CODVEND1, "
+	cQuery    += Chr(13)+Chr(10)+" NOMEVEND1, "
+	cQuery    += Chr(13)+Chr(10)+" COMIVEND1, "
+EndIf
+
+If !Empty(mv_par11) .Or. !Empty(mv_par12)
+	cQuery    += Chr(13)+Chr(10)+" CODVEND2, "
+	cQuery    += Chr(13)+Chr(10)+" NOMEVEND2, "
+	cQuery    += Chr(13)+Chr(10)+" COMIVEND2, "
+EndIf
+
+If !Empty(mv_par13) .Or. !Empty(mv_par14)
+	cQuery    += Chr(13)+Chr(10)+" CODVEND3, "
+	cQuery    += Chr(13)+Chr(10)+" NOMEVEND3, "
+	cQuery    += Chr(13)+Chr(10)+" COMIVEND3, "
+EndIf
+
+If mv_par19 == 1
+	cQuery    += Chr(13)+Chr(10)+" FILIAL, TIPO, "
+	cQuery    += Chr(13)+Chr(10)+" CODPROD, XDESPER, "
+	cQuery    += Chr(13)+Chr(10)+" ITEMPROD,"
+	cQuery    += Chr(13)+Chr(10)+" CUSTOPROD, "
+	cQuery    += Chr(13)+Chr(10)+" NOMEPROD "
+Else
+	cQuery    += Chr(13)+Chr(10)+" FILIAL, TIPO "
+EndIf                                        
+	cQuery    += Chr(13)+Chr(10)+" ,XOBSERV " 
+If mv_par17 == 1 .And. mv_par19 == 1
+	cQuery    += Chr(13)+Chr(10)+" ,PEDIDO "
+	cQuery    += Chr(13)+Chr(10)+" ,EMISSAO "
+	cQuery    += Chr(13)+Chr(10)+" ,DOC "
+	cQuery    += Chr(13)+Chr(10)+" ,SERIE "
+	cQuery    += Chr(13)+Chr(10)+" ,TES, CODCLI, LOJACLI, MUNICLI, ESTCLI ,XSTDEV "
+ElseIf mv_par17 == 1 .And. mv_par19 == 2
+	cQuery    += Chr(13)+Chr(10)+" ,PEDIDO "
+	cQuery    += Chr(13)+Chr(10)+" ,EMISSAO "
+	cQuery    += Chr(13)+Chr(10)+" ,DOC "
+	cQuery    += Chr(13)+Chr(10)+" ,SERIE "
+	cQuery    += Chr(13)+Chr(10)+" ,TES, CODCLI, LOJACLI, MUNICLI, ESTCLI , XSTDEV "
+EndIf
+If mv_par17 == 2 .And. mv_par20 == 2
+	cQuery    += Chr(13)+Chr(10)+" ,PEDIDO , CODCLI, LOJACLI, MUNICLI, ESTCLI , EMISSAO, XSTDEV "
+EndIf
+If mv_par18 == 1 .And. mv_par19 == 1
+	cQuery    += Chr(13)+Chr(10)+" ,CODCLI "
+	cQuery    += Chr(13)+Chr(10)+" ,LOJACLI "
+	cQuery    += Chr(13)+Chr(10)+" ,NOMECLI "
+	cQuery    += Chr(13)+Chr(10)+" ,MUNICLI "
+	cQuery    += Chr(13)+Chr(10)+" ,ESTCLI "	
+	cQuery    += Chr(13)+Chr(10)+" ,NREDUZCLI, XSTDEV "
+EndIf
+
+cQuery    += Chr(13)+Chr(10)+" ORDER BY "
+If !Empty(mv_par09) .Or. !Empty(mv_par10)
+	cQuery    += Chr(13)+Chr(10)+" CODVEND1, "
+EndIf
+If !Empty(mv_par11) .Or. !Empty(mv_par12)
+	cQuery    += Chr(13)+Chr(10)+" CODVEND2, "
+EndIf
+If !Empty(mv_par13) .Or. !Empty(mv_par14)
+	cQuery    += Chr(13)+Chr(10)+" CODVEND3, "
+EndIf
+If mv_par18 == 1 .And. mv_par19 == 1
+	cQuery    += Chr(13)+Chr(10)+" CODCLI, "
+	cQuery    += Chr(13)+Chr(10)+" LOJACLI, "
+EndIf
+If mv_par19 == 1
+	If oSection1:GetOrder() == 1
+		cQuery    += Chr(13)+Chr(10)+" NOMEPROD, "
+	Else
+		cQuery    += Chr(13)+Chr(10)+" CODPROD,  "
+	EndIf
+EndIf
+cQuery    += Chr(13)+Chr(10)+" FILIAL, TIPO "
+If mv_par17 == 1 .And. mv_par19 == 1
+	cQuery    += Chr(13)+Chr(10)+" ,DOC "
+	cQuery    += Chr(13)+Chr(10)+" ,SERIE "
+	cQuery    += Chr(13)+Chr(10)+" ,TES "
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Fecha Alias se estiver em Uso ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !Empty(Select("SQL"))
+	dbSelectArea("SQL")
+	dbCloseArea()
+Endif
+
+MemoWrite("CCABR790.sql", cQuery)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta Area de Trabalho executando a Query ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+TCQuery cQuery ALIAS "SQL" NEW
+TcSetField("SQL","EMISSAO", "D", 8, 0)
+
+dbSelectArea("SQL")
+DbGoTop()
+Count To nRegua
+oReport:SetMeter(nRegua)
+oReport:SetMsgPrint("Tratando retorno da consulta")
+
+aStruct := SQL->(dbStruct())
+For x:=1 To Len(aExibe)
+	aAdd(aCabec,{aExibe[x,1],aExibe[x,2],aExibe[x,3],aExibe[x,4],aExibe[x,5],aExibe[x,6]})
+Next x
+
+dbSelectArea("SQL")
+dbGoTop()
+While SQL->(!Eof())
+	oReport:IncMeter()
+	
+	aAdd(aLinhas,Array(Len(aCabec)))
+	For x:=1 To Len(aStruct)
+		nScan := aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim(aStruct[x,1])) })
+		If nScan > 0
+			aLinhas[Len(aLinhas)][nScan] := &("SQL->("+aCabec[nScan][1]+")")
+		EndIf
+	Next x
+	
+	//Atualizada no array a coluna responsável pela quebra por VENDEDOR
+	nScan := aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("QUEBRA1")) })
+	aLinhas[Len(aLinhas)][nScan] := ""
+	If mv_par20 == 2
+		//=============================================================================================
+		// Personalização para atender as Notas de Exportação                       
+		// Favaro
+		xnMoeda := Posicione("SC5", 1, SQL->FILIAL + SQL->PEDIDO, "C5_MOEDA")
+		If xnMoeda > 2
+			cCampoM2 := "M2_MOEDA" + Alltrim(Str(xnMoeda))
+			_dEmissa := ""
+			_cDocOri := Posicione("SC6", 1, SQL->FILIAL + SQL->PEDIDO, "C6_XDOCORI")
+			_cSerOri := Posicione("SC6", 1, SQL->FILIAL + SQL->PEDIDO, "C6_XSERORI")			
+			//_dEmissa := Posicione("SF2", 1, SQL->FILIAL + _cDocOri + _cSerOri + SQL->CODCLI + SQL->LOJACLI, "F2_EMISSAO")
+			If !Empty(_cDocOri)
+				_dEmissa := Posicione("SC5", 1, SQL->FILIAL + SQL->PEDIDO, "C5_EMISSAO")	
+			EndIf
+			If !Empty(_dEmissa)
+				_nTaxa := Posicione("SM2", 1, DtoS(_dEmissa), cCampoM2)
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRVEND")) })] := SQL->VLRVEND / _nTaxa
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRLIQ")) })] := (SQL->VLRVEND / _nTaxa) - aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRDEV")) })]
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("XDESFIN")) })] := SQL->XDESFIN / _nTaxa							
+			Else				
+				_nTaxa := Posicione("SM2", 1, DTOS(SQL->EMISSAO), cCampoM2)
+				//_dEmissa := Posicione("SC5", 1, SQL->FILIAL + SQL->PEDIDO, "C5_EMISSAO")	
+				//_nTaxa := Posicione("SM2", 1, DTOS(_dEmissa), cCampoM2)
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRVEND")) })] := SQL->VLRVEND / _nTaxa
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRLIQ")) })] := (SQL->VLRVEND / _nTaxa) - aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRDEV")) })]
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("XDESFIN")) })] := SQL->XDESFIN / _nTaxa
+			EndIf
+        Else
+	       	_dEmissa := ""
+			_cDocOri := Posicione("SC6", 1, SQL->FILIAL + SQL->PEDIDO, "C6_XDOCORI")
+			_cSerOri := Posicione("SC6", 1, SQL->FILIAL + SQL->PEDIDO, "C6_XSERORI")
+			//_dEmissa := Posicione("SF2", 1, SQL->FILIAL + _cDocOri + _cSerOri + SQL->CODCLI + SQL->LOJACLI, "F2_EMISSAO")
+			If !Empty(_cDocOri)
+				_dEmissa := Posicione("SC5", 1, SQL->FILIAL + SQL->PEDIDO, "C5_EMISSAO")	
+			EndIf
+			If !Empty(_dEmissa)
+				_nTaxa := Posicione("SM2", 1, DtoS(_dEmissa), "M2_MOEDA2")
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRVEND")) })] := SQL->VLRVEND / _nTaxa
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRLIQ")) })] := (SQL->VLRVEND / _nTaxa) - aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRDEV")) })]
+				If nTipoImpr == 4
+					aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("XDESFIN")) })] := SQL->XDESFIN / _nTaxa
+				EndIf
+			Else
+				_nTaxa := Posicione("SM2", 1, DTOS(SQL->EMISSAO), "M2_MOEDA2")				
+				//_dEmissa := Posicione("SC5", 1, SQL->FILIAL + SQL->PEDIDO, "C5_EMISSAO")	
+				//_nTaxa := Posicione("SM2", 1, DTOS(_dEmissa), "M2_MOEDA2")				
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRVEND")) })] := SQL->VLRVEND / _nTaxa
+				aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRLIQ")) })] := (SQL->VLRVEND / _nTaxa) - aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRDEV")) })]
+				If nTipoImpr == 4
+					aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("XDESFIN")) })] := SQL->XDESFIN / _nTaxa
+				EndIf
+			EndIf
+        EndIf            
+	EndIf
+	//Vendedor 01
+	If !Empty(mv_par09) .Or. !Empty(mv_par10)
+		aLinhas[Len(	aLinhas)][nScan] += Space(02)+SQL->("VENDEDOR 01: "+CODVEND1+" / "+AllTrim(NOMEVEND1))+Space(06)
+		//Atualizada no array a coluna valor da comissão do VENDEDOR
+		aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLORVEND1")) })]  := ;
+		(aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRVEND"  )) })]  - ;
+		aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRDEV"   )) })]) * ;
+		(aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("COMIVEND1")) })] /100)
+	EndIf
+	//Vendedor 02
+	If !Empty(mv_par11) .Or. !Empty(mv_par12)
+		aLinhas[Len(aLinhas)][nScan] += Space(02)+SQL->("VENDEDOR 02: "+CODVEND2+" / "+AllTrim(NOMEVEND2))+Space(06)
+		//Atualizada no array a coluna valor da comissão do VENDEDOR
+		aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLORVEND2")) })] := ;
+		(aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRVEND"  )) })]  - ;
+		aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRDEV"   )) })]) * ;
+		(aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("COMIVEND2")) })] /100)
+	EndIf
+	//Vendedor 03
+	If !Empty(mv_par13) .Or. !Empty(mv_par14)
+		aLinhas[Len(aLinhas)][nScan] += Space(02)+SQL->("VENDEDOR 03: "+CODVEND3+" / "+AllTrim(NOMEVEND3))+Space(06)
+		//Atualizada no array a coluna valor da comissão do VENDEDOR
+		aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLORVEND3")) })] := ;
+		(aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRVEND"  )) })]  - ;
+		aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("VLRDEV"   )) })]) * ;
+		(aLinhas[Len(aLinhas)][aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("COMIVEND3")) })] /100)
+	EndIf
+	
+	//Atualizada no array a coluna responsável pela quebra por CLIENTES
+	nScan := aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("QUEBRA2")) })
+	aLinhas[Len(aLinhas)][nScan] := ""
+	
+	//Cliente
+	If mv_par18 == 1 .And. mv_par19 == 1
+		aLinhas[Len(aLinhas)][nScan] += Space(10)+SQL->("CLIENTE: "+CODCLI+"-"+LOJACLI+" / "+AllTrim(NOMECLI))
+	EndIf
+	
+	If nTipoImpr == 4 //.And. mv_par17 == 1
+		cAux := ""
+		nScan := aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("XSTDEV")) })
+		If nScan > 0
+			cAux := aLinhas[Len(aLinhas)][nScan]
+			Dbselectarea("SZF")
+			SZF->(Dbsetorder(1))
+			If valtype(cAux) <> "U"
+				IF SZF->(Dbseek(xFilial("SZF")+cAux))
+					nScan := aScan(aCabec,{|y| Upper(AllTrim(y[1])) == Upper(AllTrim("DESCSTAT")) })
+					aLinhas[Len(aLinhas)][nScan] := SZF->ZF_DESCR
+				Endif
+			EndIF
+		EndIf
+	Endif
+	
+	SQL->(DbSkip())
+End
+
+
+Return({aCabec,aLinhas})
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³fCriaSx1  ºAutor  ³Felipe Aurélio de Melo º Data ³ 19/03/09 º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Função responsável por criar os parametros do relatório    º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ CCABR790                                                   º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function fCriaSx1()
+
+Local aPergs := {}
+
+Aadd(aPergs,{"De Cliente"       , "De Cliente"       , "De Cliente"       , "mv_ch1"  , "C" , 06,00,00 ,"G", "", "mv_par01", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA1","","S","","",{},{},{}})
+Aadd(aPergs,{"Da Loja"          , "Da Loja"          , "Da Loja"          , "mv_ch2"  , "C" , 02,00,00 ,"G", "", "mv_par02", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA1","","S","","",{},{},{}})
+
+Aadd(aPergs,{"Ate Cliente"      , "Ate Cliente"      , "Ate Cliente"      , "mv_ch3"  , "C" , 06,00,00 ,"G", "", "mv_par03", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA1","","S","","",{},{},{}})
+Aadd(aPergs,{"Da Loja"          , "Da Loja"          , "Da Loja"          , "mv_ch4"  , "C" , 02,00,00 ,"G", "", "mv_par04", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA1","","S","","",{},{},{}})
+
+Aadd(aPergs,{"De Data"          , "De Data"          , "De Data"          , "mv_ch5"  , "D" , 08,00,00 ,"G", "", "mv_par05", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Ate a Data"       , "Ate a Data"       , "Ate a Data"       , "mv_ch6"  , "D" , 08,00,00 ,"G", "", "mv_par06", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+
+Aadd(aPergs,{"De Produto"       , "De Produto"       , "De Produto"       , "mv_ch7"  , "C" , 15,00,00 ,"G", "", "mv_par07", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SB1","","S","","",{},{},{}})
+Aadd(aPergs,{"Ate o Produto"    , "Ate o Produto"    , "Ate o Produto"    , "mv_ch8"  , "C" , 15,00,00 ,"G", "", "mv_par08", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SB1","","S","","",{},{},{}})
+
+Aadd(aPergs,{"Do Vendedor01"    , "Do Vendedor01"    , "Do Vendedor01"    , "mv_ch9"  , "C" , 06,00,00 ,"G", "", "mv_par09", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA3","","S","","",{},{},{}})
+Aadd(aPergs,{"Ate Vendedor01"   , "Ate Vendedor01"   , "Ate Vendedor01"   , "mv_ch10" , "C" , 06,00,00 ,"G", "", "mv_par10", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA3","","S","","",{},{},{}})
+Aadd(aPergs,{"Do Vendedor02"    , "Do Vendedor02"    , "Do Vendedor02"    , "mv_ch11" , "C" , 06,00,00 ,"G", "", "mv_par11", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA3","","S","","",{},{},{}})
+Aadd(aPergs,{"Ate Vendedor02"   , "Ate Vendedor02"   , "Ate Vendedor02"   , "mv_ch12" , "C" , 06,00,00 ,"G", "", "mv_par12", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA3","","S","","",{},{},{}})
+Aadd(aPergs,{"Do Vendedor03"    , "Do Vendedor03"    , "Do Vendedor03"    , "mv_ch13" , "C" , 06,00,00 ,"G", "", "mv_par13", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA3","","S","","",{},{},{}})
+Aadd(aPergs,{"Ate Vendedor03"   , "Ate Vendedor03"   , "Ate Vendedor03"   , "mv_ch14" , "C" , 06,00,00 ,"G", "", "mv_par14", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","SA3","","S","","",{},{},{}})
+
+Aadd(aPergs,{"Filial de"        , "Filial de"        , "Filial de"        , "mv_ch15" , "C" , 02,00,00 ,"G", "", "mv_par15", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Filial até"       , "Filial até"       , "Filial até"       , "mv_ch16" , "C" , 02,00,00 ,"G", "", "mv_par16", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+
+Aadd(aPergs,{"Tipo de relatório", "Tipo de relatório", "Tipo de relatório", "mv_ch17" , "N" , 01,00,00 ,"C", "", "mv_par17", "Analítico"   , "Analítico"   , "Analítico"   , "", "", "Sintético"    , "Sintético"    , "Sintético"    , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Quebra Cliente"   , "Quebra Cliente"   , "Quebra Cliente"   , "mv_ch18" , "N" , 01,00,00 ,"C", "", "mv_par18", "Sim"         , "Sim"         , "Sim"         , "", "", "Nao"          , "Nao"          , "Nao"          , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Mostra produto"   , "Mostra produto"   , "Mostra produto"   , "mv_ch19" , "N" , 01,00,00 ,"C", "", "mv_par19", "Sim"         , "Sim"         , "Sim"         , "", "", "Nao"          , "Nao"          , "Nao"          , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+aAdd(aPergs,{"Moeda"            , "Moeda"            , "Moeda"            , "mv_ch20" , "N" , 01,00,00, "C", "", "mv_par20", "Real"        , "Real"        , "Real"        , "", "", "Dolar"        , "Dolar"        , "Dolar"        , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+
+aAdd(aPergs,{"Filtrar os TES(;)", "Filtrar os TES(;)", "Filtrar os TES(;)", "mv_ch21" , "C" , 99,00,00, "G", "", "mv_par21", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+aAdd(aPergs,{"Filtrar os TES(;)", "Filtrar os TES(;)", "Filtrar os TES(;)", "mv_ch22" , "C" , 99,00,00, "G", "", "mv_par22", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+aAdd(aPergs,{"Filtrar os TES(;)", "Filtrar os TES(;)", "Filtrar os TES(;)", "mv_ch23" , "C" , 99,00,00, "G", "", "mv_par23", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+aAdd(aPergs,{"Filtrar os TES(;)", "Filtrar os TES(;)", "Filtrar os TES(;)", "mv_ch24" , "C" , 99,00,00, "G", "", "mv_par24", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","",""   ,"","S","","",{},{},{}})
+
+Aadd(aPergs,{"Topo Prod. de"    , "Topo Prod. de"    , "Topo Prod. de"    , "mv_ch25" , "C" , 02,00,00 ,"G", "", "mv_par25", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","02" ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Topo Prod. até"   , "Topo Prod. até"   , "Topo Prod. até"   , "mv_ch26" , "C" , 02,00,00 ,"G", "", "mv_par26", ""            , ""            , ""            , "", "", ""             , ""             , ""             , "", "", ""        , ""        , ""        , "", "", ""        , ""        , ""        , "","","","","","","02" ,"","S","","",{},{},{}})
+
+AjustaSx1(cPerg,aPergs)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³fTrataQbraºAutor  ³Felipe Aurélio de Melo º Data ³ 23/03/09 º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Função responsável por tratar as quebras numa string       º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ CCABR790                                                   º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function fTrataQbra(cTrataStr)
+
+Local cRet := ""
+Local i    := 0
+
+cTrataStr  := StrTran(cTrataStr," ","")
+
+cRet += "'"
+If Len(cTrataStr) > 3
+	For i:=1 to Len(cTrataStr)
+		If SubStr(cTrataStr,i,1) $ "/\;-|,.:*"
+			cRet  += "','"
+		Else
+			cRet  += SubStr(cTrataStr,i,1)
+		EndIf
+	Next
+Else
+	cRet  += AllTrim(cTrataStr)
+EndIf
+cRet += "'"
+
+Return(cRet)                 
