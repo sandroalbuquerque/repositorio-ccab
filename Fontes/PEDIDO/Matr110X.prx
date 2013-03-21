@@ -609,7 +609,7 @@ Static Function ImpCabec(pxTipo, pTipo)
 		   aAreaSZ1 := GetArea()
 		   dbSelectArea('SZ1')
 		   dbSetOrder(1)
-		   IF dbSeek(xFilial('SZ1')+cCodEnt)
+		   IF (!Empty(cCodEnt)) .And. dbSeek(xFilial('SZ1')+cCodEnt)
 			oPrint:Say(nProw,  100, ALLTRIM(SZ1->Z1_END)+" - "+ALLTRIM(SZ1->Z1_BAIRRO)+" - "+ALLTRIM(SZ1->Z1_MUN)+' - '+ALLTRIM(SZ1->Z1_CEP)+" - "+ALLTRIM(SZ1->Z1_EST)  , oFont5b)
 		   ELSE
 			oPrint:Say(nProw,  100, ALLTRIM(SM0->M0_ENDENT)+" - "+ALLTRIM(SM0->M0_BAIRENT)+" - "+ALLTRIM(SM0->M0_CIDENT)+" - "+ALLTRIM(SM0->M0_ESTENT)  , oFont5b)

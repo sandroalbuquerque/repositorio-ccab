@@ -86,9 +86,9 @@ Local aRetServ 		:= {}
 Local aRetirada		:= {}
 Local aMotivoCont 	:= {}
 Local aTotal    	:= {0,0}
-Local aNatOper      := {} // CCAB - Incluido por Rodrigo em 16/02/2011
+Local aNatOper      := {} 		// CCAB - Incluido por Rodrigo em 16/02/2011
 Local aIPICST		:= {}
-Local aOrigExt      := {}     // Adicionado por Valdemir JOse 18/01/2013
+Local aOrigExt      := {}     	// Adicionado por Valdemir JOse 18/01/2013
 
 Local cString    	:= ""
 Local cNatOper   	:= ""
@@ -195,8 +195,8 @@ Local nDesconto 	:= 0   			// Desconto no total da NF sobre cupom
 Local nDescRed  	:= 0   			// Valores dos descontos
 Local nDescIcm  	:= 0   			// Valor do desconto do ICMS-Quando TES configurada com AGREGA Valor = D
 Local nDescZF	  	:= 0   			// Valores dos descontos Zona Franca
-Local nPercLeite	:= 0   //Percentual da redução do Leite	
-Local nValLeite		:= 0   //Valor da reduçao do Leite
+Local nPercLeite	:= 0   			// Percentual da redução do Leite	
+Local nValLeite		:= 0   			// Valor da reduçao do Leite
 Local nPrTotal		:= 0   
 Local nCont	 		:= 0
 Local nValBse		:= 0
@@ -359,7 +359,6 @@ If cTipo == "1"
 				If SB1->(FieldPos("B1_TRIBMUN"))>0
 					cTribMun:= SB1->B1_TRIBMUN
 				EndIf
-				
 				
 				dbSelectArea("SD2")
 				dbSetOrder(3)
