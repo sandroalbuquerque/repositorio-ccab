@@ -185,7 +185,7 @@ Static Function CarregaSZ1()
 	Local aRET      := {}                            
 	Local aArea     := GetArea()	
 	Local cCondicao := ''              
-	Local cCODSZ1   := SuperGetMV('ES_CODSZ1',.F.,'550001')
+	Local cCODSZ1   := SuperGetMV('ES_CODSZ1',.F.,'555001')
 		
 	dbSelectArea('SZ1')
 	                                          
