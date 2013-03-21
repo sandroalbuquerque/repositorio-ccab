@@ -267,7 +267,16 @@ If Pergunte("NFENEW",.T.)
 				BeginSql Alias cAliasSF3
 					
 					COLUMN F3_ENTRADA AS DATE
-					COLUMN F3_DTCANC AS DATE
+					COLUMN F3_DTCANC AS DATE     
+					// ---------------------------------------- A T E N Ç Ã O -------------------------------------- Valdemir Jose
+					// Quando levar para o ambiente de produção, não esquecer de adicionar no SX1
+					// Cliente De:
+					// Loja De:
+					// Cliente Até:
+					// Loja Até:
+					// Emissão De: 
+					// Emissão Até
+					//----------------------------------------------------------------------------------------------
 					
 					SELECT	F3_FILIAL,F3_ENTRADA,F3_NFELETR,F3_CFO,F3_FORMUL,F3_NFISCAL,F3_SERIE,F3_CLIEFOR,F3_LOJA,F3_ESPECIE,F3_DTCANC
 					FROM %Table:SF3% SF3
@@ -276,7 +285,10 @@ If Pergunte("NFENEW",.T.)
 					SF3.F3_SERIE = %Exp:MV_PAR03% AND
 					SF3.F3_NFISCAL >= %Exp:MV_PAR01% AND
 					SF3.F3_NFISCAL <= %Exp:MV_PAR02% AND
-					SF3.F3_DTCANC = %Exp:Space(8)% AND
+					SF3.F3_DTCANC = %Exp:Space(8)% AND 
+					SF3.F3_CLIEFOR BETWEEN %Exp:MV_PAR06% AND %Exp:MV_PAR08% AND    // VALDEMIR JOSE 15/03/2013
+					SF3.F3_LOJA BETWEEN %Exp:MV_PAR07% AND %Exp:MV_PAR09% AND      // VALDEMIR JOSE 15/03/2013
+					SF3.F3_EMISSAO BETWEEN %Exp:MV_PAR10% AND %Exp:MV_PAR11% AND   // VALDEMIR JOSE 15/03/2013
 					SF3.%notdel%
 				EndSql
 				
@@ -295,6 +307,9 @@ If Pergunte("NFENEW",.T.)
 					SF3.F3_NFISCAL <= %Exp:MV_PAR02% AND
 					%Exp:cWhere% AND
 					SF3.F3_DTCANC = %Exp:Space(8)% AND
+					SF3.F3_CLIEFOR BETWEEN %Exp:MV_PAR06% AND %Exp:MV_PAR08% AND    // VALDEMIR JOSE 15/03/2013
+					SF3.F3_LOJA BETWEEN %Exp:MV_PAR07% AND %Exp:MV_PAR09% AND      // VALDEMIR JOSE 15/03/2013
+					SF3.F3_EMISSAO BETWEEN %Exp:MV_PAR10% AND %Exp:MV_PAR11% AND   // VALDEMIR JOSE 15/03/2013
 					SF3.%notdel%
 				EndSql
 				
@@ -307,7 +322,8 @@ If Pergunte("NFENEW",.T.)
 			cCondicao 		+= 'SF3->F3_SERIE =="'+ MV_PAR03+'" .And. '
 			cCondicao 		+= 'SF3->F3_NFISCAL >="'+ MV_PAR01+'" .And. '
 			cCondicao		+= 'SF3->F3_NFISCAL <="'+ MV_PAR02+'" .And. '
-			cCondicao		+= 'Empty(SF3->F3_DTCANC)'
+			cCondicao		+= 'Empty(SF3->F3_DTCANC)'    
+			
 			IndRegua(cAliasSF3, cIndex, cChave, , cCondicao)
 			nIndex := RetIndex(cAliasSF3)
 		            DBSetIndex(cIndex + OrdBagExt())
