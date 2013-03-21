@@ -15,13 +15,14 @@
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 User Function MT103FIM()
-Local nOpcao    := PARAMIXB[1] // Opção Escolhida pelo usuario no aRotina 
-Local nConfirma := PARAMIXB[2] //
+Local nOpcao    := PARAMIXB[1] 		// Opção Escolhida pelo usuario no aRotina 
+Local nConfirma := PARAMIXB[2] 		//
 Local _cArea	:= GetArea()
 Local _cQry     := ''
 Local aVencto   := {}
 Local lTrue     := .T.   
-Local nI        := 1
+Local nI        := 1 
+Local nCnt      := 0
 
 
 	IF (!EMPTY(SD1->D1_PEDIDO)) .AND. (nConfirma = 1) .and. (nOpcao = 3 .or. nOpcao = 4)                                                           
@@ -36,13 +37,17 @@ Local nI        := 1
 	      if Len(aVencto)=0
 	      	Return
 	      endif
-	   Endif
+	   Endif  
+	   
+	   IF  "TMPSE2") > 0
+	      TMPSE2->( dbCloseArea() )
+	   ENDIF     
+	   
 		// Verifica Titulos Gerado
 		_cQry += "SELECT * FROM "+RETSQLNAME('SE2')+" SE2 "+cENTER
 		_cQry += "WHERE SE2.D_E_L_E_T_ = ' '         "+cENTER
-//		_cQry += " AND SE2.E2_FILIAL = '"+SF1->F1_FILIAL+"'   "	+cENTER
 		_cQry += " AND SE2.E2_NUM='"+SF1->F1_DOC+"'	 "+cENTER
-		_cQry += " AND SE2.E2_PREFIXO = '"+SF1->F1_PREFIXO+"' "	+cENTER
+		_cQry += " AND SE2.E2_PREFIXO = '"+SF1->F1_PREFIXO+"' "+cENTER
 		_cQry += " AND SE2.E2_FORNECE = '"+SF1->F1_FORNECE+"' "+cENTER
 		_cQry += " AND SE2.E2_LOJA = '"+SF1->F1_LOJA+"'       "+cENTER
 	                                                                        
@@ -50,20 +55,36 @@ Local nI        := 1
 		dbUseArea(.T., "TOPCONN", TCGenQry(,,_cQry), "TMPSE2", .F., .T.)
 		
 		dbSelectArea("TMPSE2")   
-		WHILE !TMPSE2->( EOF() )
+		// Verifica Quantos registros tem
+		dbEval( {|x| nCnt++ },,{|| TMPSE2->( !EOF() )}) 
+		TMPSE2->( dbGotop() ) 
+		
+		if nCnt > 1
+			WHILE !TMPSE2->( EOF() )
+			    SE2->( dbSetOrder(1) )
+			    if SE2->( dbSeek(xFilial('SE2')+TMPSE2->E2_PREFIXO+TMPSE2->E2_NUM+ALLTRIM(STR(nI))) )
+			      if nI <= Len(aVencto) .And. (!Empty(aVencto[nI]))
+			    	Reclock('SE2',.F.)  
+			    	SE2->E2_VENCTO  := ctod(aVencto[nI])
+			    	SE2->E2_VENCREA := SE2->E2_VENCTO
+			    	MsUnlock()                                     
+			      Endif	
+			      nI += 1
+			    Endif
+				TMPSE2->( dbSkip() )
+			ENDDO
+		Else 
+		    nI := 1     // Adicionado Valdemir José 13/03/13
 		    SE2->( dbSetOrder(1) )
-		    if SE2->( dbSeek(xFilial('SE2')+TMPSE2->E2_PREFIXO+TMPSE2->E2_NUM+ALLTRIM(STR(nI))) )
-		      if nI <= Len(aVencto) .And. (!Empty(aVencto[nI]))
+		    if SE2->( dbSeek(xFilial('SE2')+TMPSE2->E2_PREFIXO+TMPSE2->E2_NUM) ) .and. (nCnt > 0)
+		      if nI <= Len(aVencto) .And. (!Empty(aVencto[1]))
 		    	Reclock('SE2',.F.)  
-		    	SE2->E2_VENCTO  := ctod(aVencto[nI])
+		    	SE2->E2_VENCTO  := ctod(aVencto[1])
 		    	SE2->E2_VENCREA := SE2->E2_VENCTO
 		    	MsUnlock()                                     
 		      Endif	
-		      nI += 1
 		    Endif
-			TMPSE2->( dbSkip() )
-		ENDDO
-		
+		Endif
     Endif
 
 	RestArea(_cArea)
@@ -102,7 +123,7 @@ While Len(cString) > 0
        Exit
     endif
 	cTMP    := Substr(cString,nPosIni,8)
-	cString := Alltrim(Substr(cString,nPosIni+9,Len(cString)))
+	cString := Alltrim(Substr(cString,nPosIni+9,Len(cString)) )
 	if !Empty(cTMP)
 		aRET[nI] := cTMP
 		cTMP     := ''
@@ -110,5 +131,8 @@ While Len(cString) > 0
 	Endif
 EndDo
 
-
+IF Empty(cString) .And. (!Empty(dtoc(SC7->C7_XDTENCC)))      // Valdemir Jose 13/03/13
+   aRET[nI] := dtoc(SC7->C7_XDTENCC)
+Endif
+  
 Return aRET

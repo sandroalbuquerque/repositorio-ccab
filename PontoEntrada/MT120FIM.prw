@@ -20,7 +20,7 @@ IF (INCLUI .OR. ALTERA) .AND. (alltrim(FUNNAME()) <> "MATA103") .AND. (!EMPTY(ca
 	@ 25,10 Say "Tipo de vencimento"
 	@ 25,100 COMBOBOX cTp ITEMS aTp SIZE 55,08
 	@ 40,10 Say "Data Vencto."
-	@ 40,100 GET dData SIZE 55,08
+	@ 40,100 GET dData VALID VALIDDATA(Substr(UPPER(cTp),1,1), dData) SIZE 55,08 
 	
 	@ 60,140 BMPBUTTON TYPE 01 ACTION Close(oDlg1)
 	ACTIVATE DIALOG oDlg1 CENTER
@@ -50,3 +50,30 @@ IF (INCLUI .OR. ALTERA) .AND. (alltrim(FUNNAME()) <> "MATA103") .AND. (!EMPTY(ca
 EndIf                        
 
 Return .T.
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณMT120FIM  บAutor  ณValdemir Jose       บ Data ณ  19/03/13   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Valida o tipo e se a data esta vazia                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                        บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+STATIC FUNCTION VALIDDATA(pTipo, dData)
+	Local lRET := .T.
+	
+	if pTipo != 'N'
+		if Empty(dData)
+			Alert('A data nใo pode ser em branco, por favor verifique.')
+			lRET := .F.
+		endif
+	Endif
+	
+Return lRET
