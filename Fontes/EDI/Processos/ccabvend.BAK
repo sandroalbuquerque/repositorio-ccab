@@ -1,0 +1,95 @@
+#include "rwmake.ch"        // incluido pelo assistente de conversao do AP5 IDE em 13/12/01
+#include "topconn.ch"
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³NOVO18    ºAutor  ³Microsiga           º Data ³  06/14/10   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³                                                            º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                        º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+
+
+User function Valvend()                              ?
+
+
+Local area 		:= GetArea()
+Local cPesqui1	:= ""
+Local cPesqui2	:= ""
+Local cPesqui3	:= ""
+Local lVal    	:= .T.
+Local nCampo 	:= 0
+
+//Se veio pelo execauto.. retorna
+If AllTrim(ProcName(3))='A410INCLUI'
+	Return
+Endif
+
+IF alltrim(FunName(2)) = "MATA410"
+	
+	cPesqui1 := M->C5_VEND1
+	cPesqui2 := M->C5_VEND2
+	CPesqui3 := M->C5_VEND3
+	
+Elseif alltrim(FunName(2)) = "CCABM410"
+	
+//	cPesqui1 := M->Z2_VEND1
+//	cPesqui2 := M->Z2_VEND2
+//	CPesqui3 := M->Z2_VEND3
+Else
+	
+	Return
+	
+Endif
+
+
+
+
+dbSelectArea("SA3")
+dbSetOrder(1)
+If dbseek(xFilial("SA3")+cPesqui1)
+	if SA3->A3_MSBLQL = '1'
+		nCampo := 1
+		cvend := cPesqui1
+		lVal := .F.
+	End
+	DBGOTOP()
+	
+	
+END
+If dbseek(xFilial("SA3")+cPesqui2)
+	if SA3->A3_MSBLQL = '1'
+		nCampo := 2
+		cvend := cPesqui2
+		lVal := .F.
+	End
+	DBGOTOP()
+	
+	
+END
+If dbseek(xFilial("SA3")+cPesqui3)
+	if SA3->A3_MSBLQL = '1'
+		nCampo := 3
+		cvend := cPesqui3
+		lVal := .F.
+	End
+	DBGOTOP()
+	
+	
+END
+
+If  lVal =.F.
+	ShowHelpDlg("Valvend",   {"O vendedor "+cvend+" esta bloqueado" },5,;
+	{"Favor alterar o cadastro de vendedores,","alterando o campo BLOQUEADO"},5)	
+Endif
+
+
+Restarea(area)
+Return(lVal)
