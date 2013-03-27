@@ -1,0 +1,5875 @@
+#Include "protheus.ch"
+#Include "rwmake.ch"
+#Include "topconn.ch"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ CCABM410 บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ ES-CCAB-0164V01 - Centraliza็ใo Controle Pedido de Vendas  บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User function CCABM410()
+
+Private cPerg     := "RLM410B"
+Private cStrCad   := "SZ2"
+Private cTitCad   := "Pr้-Pedido de Vendas"
+Private cCadastro := cTitCad+" ["+cStrCad+"]"
+Private cRevisPre := AllTrim(SuperGetMV("MV_PREPVRV",.F.,"0")) //0=Nenhum ## 1=Todos ## 2=Originados do Portal ## 3=Originados do Microsiga
+Private aRotina   := M410Mnu()
+Private aCores    := 	{{' Empty(Z2_NUMSFA) .And.  Empty(Z2_BLQ) .And.   Empty(Z2_LIBEROK)' ,'BR_VERDE'    },;	//[SIGA] Pre-Pedido em Aberto
+						 {' Empty(Z2_NUMSFA) .And.    Z2_BLQ=="0" .And.   Empty(Z2_LIBEROK)' ,'BR_PINK'     },;							//[SIGA] Pre-Pedido Bloqueado para Revisใo
+						 {' Empty(Z2_NUMSFA) .And.    Z2_BLQ=="1" .And.   Empty(Z2_LIBEROK)' ,'BR_AMARELO'  },;							//[SIGA] Pre-Pedido Atendido Parcial
+						 {' Empty(Z2_NUMSFA) .And.                       !Empty(Z2_LIBEROK)' ,'BR_VERMELHO' },;							//[SIGA] Pre-Pedido Atendido Total
+						 {'!Empty(Z2_NUMSFA) .And.  Empty(Z2_BLQ) .And.   Empty(Z2_LIBEROK)' ,'BR_AZUL'     },;							//[SFA]  Pre-Pedido em Aberto
+						 {'!Empty(Z2_NUMSFA) .And.    Z2_BLQ=="0" .And.   Empty(Z2_LIBEROK)' ,'BR_BRANCO'   },;							//[SFA]  Pre-Pedido Bloqueado para Revisใo
+						 {'!Empty(Z2_NUMSFA) .And.    Z2_BLQ=="1" .And.   Empty(Z2_LIBEROK)' ,'BR_LARANJA'  },;							//[SFA]  Pre-Pedido Atendido Parcial
+						 {'!Empty(Z2_NUMSFA) .And.                       !Empty(Z2_LIBEROK)' ,'BR_MARROM'   }} 							//[SFA]  Pre-Pedido Atendido Total   
+PUBLIC CFA_TOTDIF := 0
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณ Cria estrutura da rotina                                     ณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+fAtuSX1()
+fAtuSX2()
+fAtuSX3()
+fAtuSX6()
+fAtuSX7()
+fAtuSIX()
+fAtuSXB()
+
+SetKey( VK_F5, {|| Processa({|| U_SndMail(.T.)},"Enviando e-mails","Aguarde , enviando e-mails...",.F.) })
+
+Dbselectarea("ZZ3")
+
+dbSelectArea(cStrCad)
+dbSetOrder(1)
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณ Endereca a funcao de BROWSE                                  ณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+mBrowse(06,01,22,75,cStrCad,,,,,,aCores)
+dbSelectArea(cStrCad)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ M410Cad  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function M410Cad(cAlias,nReg,nOpc)
+
+Local nOpEch      	:= 0
+
+Private oEnchc
+Private oRodap
+Private oDialg
+Private oGdItm
+Private aExibe    	:= {}
+
+Private aGets     	:= {}
+Private aTela     	:= {}
+Private aButtons  	:= {}
+Private nOpcao	  	:= 0
+Private bOk       	:= { || IIf(nOpc==3.Or.nOpc==4.Or.nOpc==6,IIf(Obrigatorio(aGets,aTela) .And. U_M410Vld("CABEC",INCLUI)  .And. /*U_VALVEND() .AND. */oGdItm:TudoOk() , (nOpcao:=1,oDialg:End()) , nOpcao := 0),(nOpcao:=1,oDialg:End())) }
+Private bCancel   	:= { || nOpcao:=0 , oDialg:End() }
+Private nSuperior 	:= 0
+Private nEsquerda 	:= 0
+Private nInferior 	:= 0
+Private nDireita  	:= 0
+Private aSizeAut  	:= {}
+Private aObjects  	:= {}
+Private aInfo     	:= {}
+Private aPosGet   	:= {}
+Private aPosObj   	:= {}
+
+//Rodap้
+Private oGet
+Private aSay      	:= {}
+Private oScrollRpd
+Private oVlrTotItm
+Private oQtdTotItm
+Private oQtdTotLib
+Private oQtdTotPen
+Private nVlrTotItm	:= 0
+Private nQtdTotItm	:= 0
+Private nQtdTotLib	:= 0
+Private nQtdTotPen	:= 0
+
+Default nReg      	:= IIf(nOpc==3,Nil,SZ2->(Recno()))
+Default cAlias    	:= "SZ2"
+
+// Maximizacao da tela em rela็ใo a area de trabalho
+aSizeAut := MsAdvSize()
+aInfo     := {aSizeAut[1],aSizeAut[2],aSizeAut[3],aSizeAut[4],3,3}
+
+aAdd(aObjects,{100,083,.T.,.F.})
+aAdd(aObjects,{100,100,.T.,.T.})
+aAdd(aObjects,{100,023,.T.,.F.})
+aPosObj   := MsObjSize(aInfo,aObjects)
+
+//Botใo pra imprimir relat๓rio de historico
+aAdd(aButtons,{"NOTE"     ,{|| U_CFATR001() },"Hist๓rico"  })
+
+Do Case
+	Case nOpc == 2	//Visualiza็ใo
+		nOpEch:= 2
+		aExibe:= fInitVarX3(cAlias,.F.,"")
+		
+	Case nOpc == 3	//Inclusใo
+		nOpEch:= 3
+		aExibe:= fInitVarX3(cAlias,.T.,"")
+		
+	Case nOpc == 4	//Altera็ใo
+		If fTemRevisao(cRevisPre,SZ2->Z2_BLQ,SZ2->Z2_NUMSFA)
+			Alert("ษ necessario revisar antes de alterar.")
+			Return
+		EndIf
+		nOpEch:= 3
+		aExibe:= fInitVarX3(cAlias,.F.,"")
+		
+	Case nOpc == 5	//Exclusใo
+		nOpEch:= 5
+		aExibe:= fInitVarX3(cAlias,.F.,"")
+		
+	Case nOpc == 6	//Revisar
+		If !fTemRevisao(cRevisPre,SZ2->Z2_BLQ,SZ2->Z2_NUMSFA)
+			Alert("Nใo tem revisใo a ser realizada.")
+			Return
+		EndIf
+		If !fVldUser(SZ2->Z2_USERLGI,SZ2->Z2_USERLGA)
+			Alert("A revisใo tem que ser realizada por outro usuแrio.")
+			Return
+		EndIf
+		nOpEch:= 3
+		aExibe:= fInitVarX3(cAlias,.F.,"")
+		
+	Otherwise //Outras situa็๕es
+		nOpEch:= 2
+		aExibe:= fInitVarX3(cAlias,.F.,"")
+EndCase
+
+// Montagem da tela que serah apresentada para usuario (lay-out)
+Define MsDialog oDialg Title cCadastro From aSizeAut[7],0 To aSizeAut[6],aSizeAut[5] Of oMainWnd Pixel
+
+/*Cabe็alho		*/ oEnchc := Msmget():New(cAlias,nReg,nOpEch,,,,aExibe,aPosObj[1],aExibe,,,,,oDialg,,.T.)
+/*Itens			*/ fGDItens(nOpc,oDialg,nReg)
+/*Cabe็alho		*/ fGTRodap(nOpc,oDialg)
+
+Activate MsDialog oDialg On Init EnchoiceBar(oDialg,bOk,bCancel,,aButtons)
+
+Do Case
+	//Se for inclusao e foi confirmado
+	Case nOpc == 3 .And. nOpcao == 1
+		ConfirmSX8()
+		fSalvaTudo(nOpc,aExibe)
+		If SZ5->(FieldPos("Z5_EHPREPV")) > 0
+			U_EspelhoPV(SZ2->Z2_FILIAL,SZ2->Z2_NUM,'I',,.T.)
+		EndIf
+		
+		//Se for inclusao e foi cancelado
+	Case nOpc == 3 .And. nOpcao != 1
+		RollBackSxe()
+		
+		//Se for alteracao e foi confirmado
+	Case nOpc == 4 .And. nOpcao == 1
+		If SZ5->(FieldPos("Z5_EHPREPV")) > 0
+			U_EspelhoPV(SZ2->Z2_FILIAL,SZ2->Z2_NUM,'A',,.T.)
+		EndIf
+		fSalvaTudo(nOpc,aExibe)
+		
+		//Se for exclusao e foi confirmado
+	Case nOpc == 5 .And. nOpcao == 1
+		If SZ5->(FieldPos("Z5_EHPREPV")) > 0
+			U_EspelhoPV(SZ2->Z2_FILIAL,SZ2->Z2_NUM,'E',,.T.)
+		EndIf
+		fExcluiTudo()
+		
+		//Se for revisใo e foi confirmado
+	Case nOpc == 6 .And. nOpcao == 1
+		Reclock("SZ2",.F.)
+		SZ2->Z2_BLQ := " "
+		SZ2->(MsUnlock())
+		
+		If SZ5->(FieldPos("Z5_EHPREPV")) > 0
+			U_EspelhoPV(SZ2->Z2_FILIAL,SZ2->Z2_NUM,'A',,.T.)
+		EndIf
+		fSalvaTudo(nOpc,aExibe)
+EndCase
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บfGTRodap  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fGTRodap(nOpc,oDefTela)
+
+Local n   := 0
+Local y   := 0
+Local nTop:= 5
+
+//Atualiza Rodap้
+fAtuRodape()
+
+aSay      := {}
+aAdd(aSay,{"Vlr.Tot.Itens"    ,"N",18,2,"nVlrTotItm"   ,"@E 999,999,999,999.99"})
+aAdd(aSay,{"Qtd.Tot.Itens"    ,"N",18,2,"nQtdTotItm"   ,"@E 999,999,999,999.99"})
+aAdd(aSay,{"Qtd.Tot.Lib."     ,"N",18,2,"nQtdTotLib"   ,"@E 999,999,999,999.99"})
+aAdd(aSay,{"Qtd.Tot.Sld."     ,"N",18,2,"nQtdTotPen"   ,"@E 999,999,999,999.99"})
+
+//scroll box
+@ aPosObj[3][1],aPosObj[3][2] ScrollBox oScrollRpd Horizontal Vertical Size aPosObj[3][3]-aPosObj[3][1],aPosObj[3][4]-3 Of oDefTela Border
+For n:=1 To Len(aSay)
+	bGet := &("{|| '"+aSay[n][1]+"'}")
+	cVar := aSay[n][5]
+	cObj := "o"+SubStr(aSay[n][5],2,Len(aSay[n][5]))
+	cGet  := "{|u| iif(PCount()>0,"+cVar+":=u,"+cVar+")}"
+	cPict := aSay[n][6]
+	TSay():New(7,nTop,bGet,oScrollRpd,,,.F.,.F.,.F.,.T.,,,GetTextWidth(0,Trim(aSay[n][1])),15,.F.,.F.,.F.,.F.,.F.)
+	&cObj:=TGet():New(5,nTop+35,&cGet,oScrollRpd,,7,cPict,,,,,.F.,,.T.,,.F.,{||.F.},.F.,.F.,,.T.,.F.,,(cVar),,,,.T.)
+	nTop+=120
+Next n
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บfAtuRodapeบAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fAtuRodape()
+
+Local cString := ""
+nVlrTotItm    := 0
+nQtdTotItm    := 0
+nQtdTotLib    := 0
+nQtdTotPen    := 0
+
+For y:=1 To Len(oGdItm:aCols)
+	If !(oGdItm:aCols[y][Len(oGdItm:aHeader)+1])
+		nVlrTotItm += oGdItm:aCols[y,aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_VALOR"})]
+		nQtdTotItm += oGdItm:aCols[y,aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_QTDVEN"})]
+		nQtdTotLib += oGdItm:aCols[y,aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_QTDLIB"})]
+		nQtdTotPen += oGdItm:aCols[y,aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_QTDPEN"})]
+	EndIf
+Next y
+
+If Type("oVlrTotItm") == "O"
+	oVlrTotItm:Refresh()
+	oQtdTotItm:Refresh()
+	oQtdTotLib:Refresh()
+	oQtdTotPen:Refresh()
+EndIf
+
+Return(.T.)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บfExcluiTudoบAutor บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fExcluiTudo()
+
+If SimNao("Confirma exclusใo do pr้-pedido de venda "+SZ2->Z2_NUM+" ?") == "S"
+	TCSQLExec("UPDATE "+RetSQLName("SZ3")+" SET D_E_L_E_T_ = '*' WHERE Z3_FILIAL = '"+xFilial("SZ3")+"' AND Z3_NUM = '"+SZ2->Z2_NUM+"'")
+	
+	RecLock("SZ2",.F.)
+	dbDelete()
+	MsUnLock()
+EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บfSalvaTudoบAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fSalvaTudo(nOpc,aExbCpo)
+
+// Declara variaveis
+Local x        := 1
+Local nOrdSeek := 1
+Local aGrvGD   := {}
+Local aGrvEnch := {}
+Local cAliasEc := "SZ2"
+Local cAliasGD := "SZ3"
+Local cCpoItem := "Z3_ITEM"
+Local cCndSeek := "xFilial('SZ2')+M->Z2_NUM"
+Local lHouveLib:= .F.
+Local lTemPende:= .F.
+Local lBloqTemp:= .F.
+Local lFoiRevis:= .F.
+Local aAreaSZ2 := {}
+Local aAreaSZ3 := {}
+
+//Trata campos do Enchoice
+aAdd(aGrvEnch,{"Z2_FILIAL"	,"xFilial('SZ2')"   })
+
+For x:=1 To Len(aExbCpo)
+	aAdd(aGrvEnch,{"SZ2->"+aExbCpo[x] ,"M->"+aExbCpo[x]	})
+Next x
+
+//Trata campos extras do MsNewGetDados
+aAdd(aGrvGD,{"Z3_FILIAL"   ,"xFilial('SZ3')"   })
+aAdd(aGrvGD,{"Z3_ITEM"     ,"cCodItem"         })
+aAdd(aGrvGD,{"Z3_NUM"      ,"M->Z2_NUM"        })
+aAdd(aGrvGD,{"Z3_CLI"      ,"M->Z2_CLIENTE"    })
+aAdd(aGrvGD,{"Z3_LOJA"     ,"M->Z2_LOJACLI"    })
+aAdd(aGrvGD,{"Z3_XTABELA"  ,"M->Z2_TABELA"     })
+
+/*
+//Tratamento de revisใo
+If nOpc == 3
+//Volta Status para ser revisado
+//S๓ voltarแ status caso parametro definido para controlar status
+If fTemRevisao(cRevisPre,"0",M->Z2_NUMSFA)
+aAdd(aGrvGD,{"Z2_BLQ"  ,"'0'"   })
+Else
+lFoiRevis := .T.
+EndIf
+ElseIf nOpc == 4
+//Volta Status para ser revisado
+//S๓ voltarแ status caso parametro definido para controlar status
+If fTemRevisao(cRevisPre,"0",M->Z2_NUMSFA)
+aAdd(aGrvGD,{"Z2_BLQ"  ,"'0'"   })
+Else
+lFoiRevis := .T.
+EndIf
+ElseIf nOpc == 6
+//Zera status e flag para atualiza็ใo de status abaixo
+nOpc      := 4
+lFoiRevis := .T.
+aAdd(aGrvGD,{"Z2_BLQ"  ,"' '"   })
+EndIf
+*/
+
+//Executa rotina pra tratar grava็ใo das variaveis acima e do MsNewGetDados
+fGravaGD(oGdItm,cAliasGD,aGrvGD,nOpc,nOrdSeek,cCndSeek,cCpoItem)
+
+//Executa rotina pra tratar grava็ใo das variaveis acima e do Enchoice
+fGravaEnch(cAliasEc,aGrvEnch,nOpc)
+
+//Grava posicao das tabelas SZ2 e SZ3
+aAreaSZ2 := SZ2->(GetArea())
+aAreaSZ3 := SZ3->(GetArea())
+
+//Trata status - Verificar todos os itens
+SZ3->(DbSetOrder(1))
+If SZ3->(DbSeek(xFilial("SZ3")+M->Z2_NUM))
+	While SZ3->(!Eof()) .And.  SZ3->(Z3_FILIAL+Z3_NUM) == xFilial("SZ3")+M->Z2_NUM
+		If AllTrim(SZ3->Z3_BLQ) $ "R/S/C"
+			lHouveLib := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN != SZ3->Z3_QTDPEN
+			lHouveLib := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN == SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA == "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C")
+			lTemPende := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN != SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA == "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C") .And. SZ3->Z3_QTDPEN > 0
+			lTemPende := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN == SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA != "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C")
+			lBloqTemp := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN != SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA != "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C") .And. SZ3->Z3_QTDPEN > 0
+			lBloqTemp := .T.
+		EndIf
+		
+		SZ3->(DbSkip())
+	End
+	
+	SZ2->(DbSetOrder(1))
+	If SZ2->(DbSeek(xFilial("SZ2")+M->Z2_NUM))
+		RecLock("SZ2",.F.)
+		If lHouveLib
+			SZ2->Z2_BLQ     := IIf(lFoiRevis,"1",SZ2->Z2_BLQ)
+			If lTemPende .Or. lBloqTemp
+				SZ2->Z2_LIBEROK := " "
+			Else
+				SZ2->Z2_LIBEROK := "1"
+			EndIf
+		Else
+			SZ2->Z2_LIBEROK := " "
+			SZ2->Z2_BLQ     := IIf(lFoiRevis," ",SZ2->Z2_BLQ)
+		EndIf
+		SZ2->(MsUnLock())
+	EndIf
+EndIf
+RestArea(aAreaSZ2)
+RestArea(aAreaSZ3)
+
+//Dispara email caso inclusใo
+If nOpc == 3
+	U_M410Mail(M->Z2_NUM)
+EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บfGravaEnchบAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fGravaEnch(cAlias,aCposAdd,nTpOper)
+
+DbSelectArea(cAlias)
+
+If nTpOper == 3
+	RecLock(cAlias,.T.)
+Else
+	RecLock(cAlias,.F.)
+EndIf
+
+For k:=1 To Len(aCposAdd)
+	&(aCposAdd[k,1]) := &(aCposAdd[k,2])
+Next k
+
+MsUnLock(cAlias)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fGravaGD บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fGravaGD(oObjct,cAlias,aCposAdd,nTpOper,nOrdSeek,cCndSeek,cCpoItm)
+
+Local x := 1
+Local y := 1
+Local k := 1
+Local nReg := 1
+Private cCodItem := StrZero(1,Len(CriaVar(cCpoItm)))
+
+DbSelectArea(cAlias)
+If  nTpOper == 3		// VALDEMIR JOSE 27/03/2013 - Farแ a valida็ใo antes de efetuar a grava็ใo
+    M->Z2_NUM := ValidSXENum()
+	DbSelectArea(cAlias)
+	DbSetOrder(nOrdSeek)
+	While dbSeek( &(cCndSeek) )
+	   M->Z2_NUM := StrZero(Val(M->Z2_NUM)+nReg, 6)
+	   nReg++
+	enddo
+Endif
+
+For x:=1 To Len(oObjct:aCols)
+	If !oObjct:aCols[x,Len(oObjct:aHeader)+1]
+		
+		DbSelectArea(cAlias)
+		DbSetOrder(nOrdSeek)
+		
+		If nTpOper == 3
+			RecLock(cAlias,.T.)
+		ElseIf DbSeek(&(cCndSeek)+oObjct:aCols[x][aScan(oObjct:aHeader,{|x|Alltrim(x[2])==cCpoItm})])
+			RecLock(cAlias,.F.)
+		Else
+			RecLock(cAlias,.T.)
+		EndIf
+		
+		For y:=1 To Len(oObjct:aHeader)
+			&(oObjct:aHeader[y,2]) := oObjct:aCols[x][aScan(oObjct:aHeader,{|x|Alltrim(x[2])==AllTrim(oObjct:aHeader[y,2])})]
+		Next y
+		
+		For k:=1 To Len(aCposAdd)
+			&(aCposAdd[k,1]) := &(aCposAdd[k,2])
+		Next k
+		
+		cCodItem := Soma1(cCodItem)
+		MsUnLock()
+	Else
+		DbSelectArea(cAlias)
+		DbSetOrder(nOrdSeek)
+		If nTpOper != 3
+			If DbSeek(&(cCndSeek)+oObjct:aCols[x][aScan(oObjct:aHeader,{|x|Alltrim(x[2])==cCpoItm})])
+				RecLock(cAlias,.F.)
+				dbDelete()
+				MsUnLock()
+			EndIf
+		EndIf
+	EndIf
+Next x
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fGDItens บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fGDItens(nOpc,oDefTela,nReg)
+
+// Posicao do elemento do vetor aRotina que a MsNewGetDados usara como referencia
+Local cGetOpc        := IIf(nOpc==2,Nil,GD_INSERT+GD_DELETE+GD_UPDATE)  // GD_INSERT+GD_DELETE+GD_UPDATE
+Local cLinhaOk       := "U_M410LOk"                                     // Funcao executada para validar o contexto da linha atual do aCols
+Local cTudoOk        := "U_M410TOk"                                     // Funcao executada para validar o contexto geral da MsNewGetDados (todo aCols)
+Local cIniCpos       := "+Z3_ITEM,Z3_XLIBERA"//,Z3_ENTREG               // Nome dos campos do tipo caracter que utilizarao incremento automatico.
+Local nFreeze        := Nil                                             // Campos estaticos na GetDados.
+Local nMax           := 999                                             // Numero maximo de linhas permitidas. Valor padrao 99
+Local cCampoOk       := "U_M410CPO"                                     // Funcao executada na validacao do campo
+Local cSuperApagar   := Nil                                             // Funcao executada quando pressionada as teclas <Ctrl>+<Delete>
+Local cApagaOk       := Nil                                             // Funcao executada para validar a exclusao de uma linha do aCols
+Local aHead          := {}                                              // Array do aHeader
+Local aCols          := {}                                              // Array do aCols
+
+// Valor das variaveis que as rotinas faCols e faHead irแ utilizar como referencia
+Local x       := 1                                                 //Variavel usada no For/Next
+Local cGetAls := "SZ3"                                             //Alias usado na fun็ใo para montar o aHeader e o Acols
+Local nGetOpc := nOpc                                              //Op็ใo da opera็ใo que estแ sendo executada
+Local cGetOrd := 1                                                 //Ordem do Indice utilizado na fun็ใo que carrega o aCols
+Local nGetQtd := 1                                                 //Quantidade de linhas iniciadas no aCols quando inclusใo
+
+Local cGetCnd := "xFilial('SZ2')+M->Z2_NUM"
+Local cGetCpo := "SZ3->Z3_FILIAL+SZ3->Z3_NUM"
+Local cExbCpo := ""                                                //For็ar mostrar no MsNewGetDados apenas os campos definidos nesta variavel
+Local aTrtCpo := {}                                                //Array contendo campos com valores que serใo usadas no aCols quando inclusใo
+
+//Montando um array conforme parametros acima para ser usada na fun็ใo que montas o aCols
+For x:=1 To nGetQtd
+	aAdd(aTrtCpo,{"Z3_ITEM"    ,StrZero(x,Len(CriaVar("Z3_ITEM"))),.F.})
+	aAdd(aTrtCpo,{"Z3_NUM"     ,M->Z2_NUM                         ,.F.})
+	aAdd(aTrtCpo,{"Z3_ENTREG"  ,dDataBase                         ,.F.})
+Next x
+
+//Execu็ใo das rotinas
+aHead := faHead(cGetAls,cExbCpo)
+aCols := faCols(aHead,cGetAls,nGetQtd,nGetOpc,cGetOrd,cGetCnd,cGetCpo,cExbCpo,aTrtCpo)
+oGdItm:=MsNewGetDados():New(aPosObj[2,1],aPosObj[2,2],aPosObj[2,3],aPosObj[2,4],cGetOpc,cLinhaOk,cTudoOk,cIniCpos,,nFreeze,nMax,cCampoOk,cSuperApagar,cApagaOk,oDefTela,aHead,aCols)
+
+//Reposiciona a seta no registro inicial
+If nOpc != 3 ; DbGoTo(nReg) ; EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ faHead   บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function faHead(cAlias,cExibeCpos)
+
+Local aHead := {}
+
+// Montagem do aHeader
+SX3->(dbSetOrder(1))
+SX3->(dbSeek(cAlias))
+While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == cAlias
+	If (X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL)
+		If Empty(cExibeCpos) .Or. AllTrim(SX3->X3_CAMPO) $ cExibeCpos
+			aAdd(aHead, { AllTrim(X3Titulo()),;
+			SX3->X3_CAMPO,;
+			SX3->X3_PICTURE,;
+			SX3->X3_TAMANHO,;
+			SX3->X3_DECIMAL,;
+			SX3->X3_VALID,;
+			SX3->X3_USADO,;
+			SX3->X3_TIPO,;
+			SX3->X3_F3,;
+			SX3->X3_CONTEXT,;
+			SX3->X3_CBOX,;
+			SX3->X3_RELACAO,;
+			SX3->X3_WHEN,;
+			SX3->X3_VISUAL,;
+			SX3->X3_VLDUSER,;
+			SX3->X3_PICTVAR,;
+			SX3->X3_OBRIGAT})
+		EndIf
+	EndIf
+	SX3->(DbSkip())
+End
+
+Return(aHead)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ faCols   บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function faCols(aHead,cGetAls,nGetQtd,nGetOpc,cGetOrd,cGetCnd,cGetCpo,cExbCpo,aTrtCpo)
+
+Local lFoiTratado := .F.
+Local aCol        := {}
+Local y           := 1
+Local k           := 1
+
+//Reinicializa status dos campos trataveis
+For y:=1 To Len(aTrtCpo)
+	aTrtCpo[y,Len(aTrtCpo[y])]:=.F.
+Next y
+
+If nGetOpc == 3
+	// Montagem do aCols em Branco
+	For y := 1 To nGetQtd
+		AADD(aCol,Array(Len(aHead)+1))
+		nLin	:= Len(aCol)
+		//Sempre reposicionar a set para o alias correto
+		SX3->(DbSetOrder(1))
+		SX3->(DbSeek(cGetAls))
+		While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == cGetAls
+			If X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL
+				//Faz tratamento para montagem do acols somente com campos especificos ou com todos habilitados via sigacfg
+				If Empty(cExbCpo) .Or. AllTrim(SX3->X3_CAMPO) $ cExbCpo
+					//Faz tratamento de campos especificas caso seja necessario
+					lFoiTratado := .F.
+					For k := 1 To Len(aTrtCpo)
+						If aTrtCpo[k,1] $ SX3->X3_CAMPO .And. !aTrtCpo[k,3]
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := aTrtCpo[k,2]
+							aTrtCpo[k,3] := .T.
+							lFoiTratado := .T.
+							k := Len(aTrtCpo)
+						EndIf
+					Next k
+					//Caso nใo seja um tratamento especifico seguirแ o padrใo
+					If !lFoiTratado
+						If Empty(SX3->X3_RELACAO)
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := CriaVar(SX3->X3_CAMPO)
+						Else
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := &(SX3->X3_RELACAO)
+						EndIf
+					EndIf
+				EndIf
+			EndIf
+			SX3->(DbSkip())
+		End
+		aCol[nLin,Len(aHead)+1] := .F.
+	Next y
+Else
+	// Montagem do aCols com registros caso tenha
+	DbSelectArea(cGetAls)
+	DbSetOrder(cGetOrd)
+	If DbSeek(&(cGetCnd))
+		While !EOF() .And. &(cGetCnd) == &(cGetCpo)
+			
+			//Embaralha
+			//cCtrlUser  := Substr(cUsuario,7,15)
+			//cCtrlData  := Save4in2(MsDate()-Ctod("01/01/96"))
+			//cCtrlLog   := Embaralha(cCtrlUser+cCtrlData,0)
+			
+			//Desembaralha
+			//cCtrlLog   := Embaralha(SZ3->Z3_USERLGI,1)
+			//cCtrlUser  := Substr(cCtrlLog,1,15)
+			//cCtrlData  := CTOD("01/01/96") + Load2in4(Substr(cString,16))
+			
+			aAdd(aCol,Array(Len(aHead)+1))
+			nLin	:= Len(aCol)
+			
+			SX3->(DbSetOrder(1))
+			SX3->(DbSeek(cGetAls))
+			While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == cGetAls
+				If X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL
+					//Faz tratamento para montagem do acols somente com campos especificos ou com todos habilitados via sigacfg
+					If Empty(cExbCpo) .Or. AllTrim(SX3->X3_CAMPO) $ cExbCpo
+						If SX3->X3_CONTEXT = "V"
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := &(SX3->X3_RELACAO)
+						Else
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := &(SX3->X3_CAMPO)
+						End
+					EndIf
+				EndIf
+				SX3->(DbSkip())
+			End
+			
+			aCol[nLin,Len(aHead)+1] := .F.
+			DbSkip()
+		End
+	EndIf
+EndIf
+
+Return(aCol)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บfInitVarX3บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fInitVarX3(cAlias,lInitVarX3,cExibeCpos)
+
+Local aExibLst := {}
+Local nRecSx3  := 0
+
+SX3->(DbSetOrder(1))
+SX3->(DbSeek(cAlias))
+While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == cAlias
+	If X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL
+		If Empty(cExibeCpos) .Or. AllTrim(SX3->X3_CAMPO) $ cExibeCpos
+			nRecSx3 := SX3->(Recno())
+			If !("U_M410Vld" $ SX3->X3_VALID)
+				RecLock("SX3",.F.)
+				If Empty(SX3->X3_VALID)
+					SX3->X3_VALID := "U_M410Vld('"+AllTrim(SX3->X3_CAMPO)+"',INCLUI)"
+				Else
+					SX3->X3_VALID := AllTrim(SX3->X3_VALID)+".And.U_M410Vld('"+AllTrim(SX3->X3_CAMPO)+"',INCLUI)"
+				EndIf
+				MsUnLock()
+			EndIf
+			SX3->(DbGoTo(nRecSx3))
+			If lInitVarX3
+				_SetOwnerPrvt(Trim(SX3->X3_CAMPO),CriaVar(Trim(SX3->X3_CAMPO),.T.))
+			Else
+				If SX3->X3_CONTEXT != "V"
+					If !Empty(SX3->X3_RELACAO) .And. SX3->X3_VISUAL == "V"
+						_SetOwnerPrvt(Trim(SX3->X3_CAMPO),(cAlias)->&(SX3->X3_RELACAO))
+					Else
+						_SetOwnerPrvt(Trim(SX3->X3_CAMPO),(cAlias)->&(SX3->X3_CAMPO))
+					EndIf
+				Else
+					_SetOwnerPrvt(Trim(SX3->X3_CAMPO),(cAlias)->&(SX3->X3_RELACAO))
+				EndIf
+			EndIf
+			AADD(aExibLst,SX3->X3_CAMPO)
+		EndIf
+	EndIf
+	SX3->(DbSkip())
+End
+
+//Inicializa Z2_NUM -> Num pr้-pedido
+If lInitVarX3
+	//M->Z2_NUM := GetSXENum("SZ2","Z2_NUM")//StrZero(NUM->NUMERO, 6)         - Removido por Valdemir Jose 26/03/2013
+	_cNumZ2   := ValidSXENum()    // Valdemir Jose 26/03/2013
+	if Empty(Alltrim(_cNumZ2))
+	   Return
+	endif
+	M->Z2_NUM := _cNumZ2
+EndIf
+
+Return(aExibLst)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ M410Vld  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User Function M410Vld(cCpoVld,lInclui)
+
+Local   lRet    := .T.
+Default lInclui := .T.
+Default cCpoVld := ""
+
+
+aAreaSA1 := GetArea()
+
+Do Case
+	Case AllTrim(cCpoVld) == "CABEC"
+		If lRet                                                
+			// Verifica a condicao de pagamento informada
+			SE4->(DbSetOrder(1))
+			If !SE4->(DbSeek(xFilial("SE4") + M->Z2_CONDPAG))
+				lRet := .F.
+				ShowHelpDlg("CONDPAG",   {"A condi็ใo de pagamento informada nใo" ,"existe no cadastro!!!"},5,;
+				{"Favor corrigir a condi็ใo de pagamento,","colocando um c๓digo que exista no","cadastro."},5)
+			Else
+				If SE4->E4_TIPO="9"
+					
+					If Alltrim(SE4->E4_COND)=="%"
+						If M->Z2_PARC1+M->Z2_PARC2+M->Z2_PARC3+M->Z2_PARC4+M->Z2_PARC5+M->Z2_PARC6 <> 100
+							lRet := .F.
+							ShowHelpDlg("CONDPAG",   {"A quantidade total das parcelas nใo","totalizam 100%!!!"},5,;
+							{"Favor corrigir a quantidade das parcelas,","para totalizar 100% a soma de todas ","as parcelas."},5)
+						Endif
+						
+					ElseIf Alltrim(SE4->E4_COND)=="0"
+						nTotPrePed := 0
+						For y:=1 To Len(oGdItm:aCols)
+							nTotPrePed += oGdItm:aCols[y,aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_VALOR"})]
+						Next y
+						
+						If M->Z2_PARC1+M->Z2_PARC2+M->Z2_PARC3+M->Z2_PARC4+M->Z2_PARC5+M->Z2_PARC6 <> nTotPrePed
+							lRet := .F.
+							ShowHelpDlg("CONDPAG",   {"A quantidade total das parcelas nใo","totalizam com o total do pr้-pedido!!!"},5,;
+							{"Favor corrigir a quantidade das parcelas,","para totalizar com a soma dos itens ","deste pr้-pedido."},5)
+						Endif
+					Endif
+					
+					// Daniel - 15/02/11 - validacao de vencimentos
+					For _c:=1 to 6
+					
+						_cCampoP := "M->Z2_PARC"+Alltrim(Str(_c))
+						_cCampoD := "M->Z2_DATA"+Alltrim(Str(_c))
+					
+						If &_cCampoP>0
+							If Empty(&_cCampoD)
+								lRet := .F.
+								ShowHelpDlg("DATAVENC",  {"Data de vencimento da parcela "+Alltrim(Str(_c))+" nใo foi informada ",""},5,;
+								{"Favor corrigir a data de vencimento da  ","parcela "+Alltrim(Str(_c))+" para que a mesma seja maior ","que a data de emissใo do pr้-pedido."},5) 
+							Else                 
+								If &_cCampoD < M->Z2_EMISSAO
+									lRet := .F.
+									ShowHelpDlg("DATAVENC",  {"Data de vencimento da parcela "+Alltrim(Str(_c))+" ้ menor ","que a data de emissใo!!!"},5,;
+									{"Favor corrigir a data de vencimento da  ","parcela "+Alltrim(Str(_c))+" para que a mesma seja maior ","que a data de emissใo do pr้-pedido."},5)
+								Endif 
+							Endif						
+						Endif					
+					Next
+				Endif
+			Endif
+		EndIf
+	
+		
+		If lRet
+			Posicione('SA1',1,xFilial('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI,'A1_MSBLQL')
+			If SA1->A1_MSBLQL == "1"
+				Help(" ",1,"REGBLOQ")
+				lRet := .F.
+			Endif
+		EndIf
+		
+		If lRet
+			Posicione('SA1',1,xFilial('SA1')+M->Z2_CLIENT+M->Z2_LOJAENT,'A1_MSBLQL')
+			If SA1->A1_MSBLQL == "1"
+				Help(" ",1,"REGBLOQ")
+				lRet := .F.
+			Endif
+		EndIf
+		
+	Case AllTrim(cCpoVld) $ "Z2_CLIENTE/Z2_LOJACLI"
+		Posicione('SA1',1,xFilial('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI,'A1_MSBLQL')
+		If SA1->A1_MSBLQL == "1"
+			Help(" ",1,"REGBLOQ")
+			lRet := .F.
+		Endif
+		
+	Case AllTrim(cCpoVld) $ "Z2_CLIENT/Z2_LOJAENT"
+		Posicione('SA1',1,xFilial('SA1')+M->Z2_CLIENT+M->Z2_LOJAENT,'A1_MSBLQL')
+		If SA1->A1_MSBLQL == "1"
+			Help(" ",1,"REGBLOQ")
+			lRet := .F.
+		Endif
+		
+	Case AllTrim(cCpoVld) == "Z2_MOEDA"
+		If lRet
+			lRet := M->Z2_MOEDA > 0
+		EndIf
+		If lRet
+			lRet := M->Z2_MOEDA <= MOEDFIN()
+		EndIf
+		If !lRet
+			ShowHelpDlg("MOEDA",   {"A moeda informada nใo ้ valida!!!"},5,;
+			{"Favor informar uma moeda vแlida."},5)
+		EndIf
+		
+EndCase          
+
+RestArea(aAreaSA1)
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ M410LOk  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function M410LOk()
+
+Local nGDLin := 1
+Local nGDCol := 1
+Local lRet := .T.
+
+//Valida campos obrigatorios do MsNewGetDados
+For nGDCol:=1 To Len(oGdItm:aHeader)
+	If X3OBRIGAT(oGdItm:aHeader[nGDCol,2]) .And. Empty(oGdItm:aCols[oGdItm:oBrowse:nAt,nGDCol])
+		lRet := .F.
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle(oGdItm:aHeader[nGDCol,2])),3,1)
+		nGDCol:=Len(oGdItm:aHeader)
+	EndIf
+Next nGDCol
+
+//Atualiza Rodap้
+fAtuRodape()
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ M410CPO  บAutor  บFelipe Aur้lio de Melo บ Data บ 01/06/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function M410CPO()
+
+Local lRet := .T.
+Local nPosPrcUnit := aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_PRCVEN"  })
+Local nPosQtdeVen := aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_QTDVEN"  })
+Local nPosProduto := aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_PRODUTO" })
+Local nLinhaEdita := oGdItm:oBrowse:nAt
+
+If oGdItm:oBrowse:ColPos == nPosPrcUnit
+	//Trata Pre็o Unitแrio conforme tabela de pre็o
+	If lRet .And. !Empty(M->Z2_TABELA)
+		DA0->(DbSetOrder(1))
+		If DA0->(dbSeek(xFilial("DA0")+M->Z2_TABELA))
+			DA1->(DbSetOrder(1))
+			If DA1->(dbSeek(xFilial("DA1")+M->Z2_TABELA+oGdItm:aCols[nLinhaEdita,nPosProduto]))
+				nValMaxPerm := xMoeda(DA1->DA1_PRCVEN,DA1->DA1_MOEDA,M->Z2_MOEDA,dDataBase)
+				nValMaxPerm := nValMaxPerm +(nValMaxPerm*(DA0->DA0_PERMAX/100))
+				nValMinPerm := xMoeda(DA1->DA1_PRCVEN,DA1->DA1_MOEDA,M->Z2_MOEDA,dDataBase)
+				nValMinPerm := nValMinPerm -(nValMinPerm*(DA0->DA0_PERMAX/100))
+				
+				//Apenas de um alerta
+				If M->Z3_PRCVEN > nValMaxPerm
+					ShowHelpDlg("fValidGet", {"O pre็o unitแrio ultrapassou o percentual","mแximo definido no cadastro da","tabela de pre็o!!!"},5,;
+					{"ATENวรO !!!","Esta ้ apenas uma mensagem de alerta."},5)
+				ElseIf M->Z3_PRCVEN < nValMinPerm
+					ShowHelpDlg("fValidGet", {"O pre็o unitแrio ้ inferior ao percentual","mํnimo definido no cadastro da","tabela de pre็o!!!"},5,;
+					{"ATENวรO !!!","Esta ้ apenas uma mensagem de alerta."},5)
+				EndIf
+			EndIf
+			DA0->DA0_PERMAX
+		Endif
+	EndIf
+EndIf
+
+If oGdItm:oBrowse:ColPos == nPosQtdeVen
+	//Trata quantidade por embalagem
+	
+	If lRet .And. M->Z3_QTDVEN > 0
+		M->Z3_QTDVEN := fCtrQtdPrd(M->Z3_QTDVEN,oGdItm:aCols[nLinhaEdita][nPosProduto])
+		If M->Z3_QTDVEN == 0
+			lRet := .F.
+			ShowHelpDlg("fValidGet", {"A quantidade a liberar estแ quebrada","conforme defini็ใo da embalagem!!!"},5,;
+			{"Favor corrigir a quantidade a liberar,","colocando um valor que nใo seja","quebrado por embalagem."},5)
+		EndIf
+	EndIf
+
+EndIf
+
+If oGdItm:oBrowse:ColPos == nPosProduto
+	//Valida se produtos existem na tabela de pre็o
+	If lRet .And. !Empty(M->Z2_TABELA)
+		lAchou := .F.
+		DA0->(DbSetOrder(1))
+		If DA0->(dbSeek(xFilial("DA0")+M->Z2_TABELA))
+			DA1->(DbSetOrder(1))
+			//If DA1->(dbSeek(xFilial("DA1")+M->Z2_TABELA+oGdItm:aCols[nLinhaEdita,nPosProduto]))
+			If DA1->(dbSeek(xFilial("DA1")+M->Z2_TABELA+M->Z3_PRODUTO))
+				lAchou := .T.
+			EndIf
+		Endif
+		If !lAchou
+			//ShowHelpDlg("TABPRECO", {"O produto '"+oGdItm:aCols[nLinhaEdita,nPosProduto]+"' nใo consta na tabela de pre็o '"+M->Z2_TABELA+"'!!!"},5,;
+			ShowHelpDlg("TABPRECO", {"O produto '"+M->Z3_PRODUTO+"' nใo consta na tabela de pre็o '"+M->Z2_TABELA+"'!!!"},5,;
+			{"Favor usar um produto que consta na tabela de pre็o '"+M->Z2_TABELA+"'."},5)
+			nGDLin:= Len(oGdItm:aCols)
+			lRet  := .F.
+		EndIf
+	EndIf
+EndIf
+
+//Atualiza Rodap้
+fAtuRodape()
+
+Return(lRet)
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ M410TOk  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function M410TOk()
+
+Local nGDLin      :=  1
+Local nGDCol      :=  1
+Local lAchou      := .F.
+Local lRet        := .T.
+Local nPosProduto := aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_PRODUTO" })
+Local nPosSldLibr := aScan(oGdItm:aHeader,{|x|AllTrim(x[2])=="Z3_QTDPEN"  })
+
+
+
+//Valida campos obrigatorios do MsNewGetDados
+For nGDLin:=1 To Len(oGdItm:aCols)
+	//Valida campos obrigatorios
+	For nGDCol:=1 To Len(oGdItm:aHeader)
+		If lRet .And. X3OBRIGAT(oGdItm:aHeader[nGDCol,2]) .And. Empty(oGdItm:aCols[nGDLin,nGDCol])
+			lRet := .F.
+			Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle(oGdItm:aHeader[nGDCol,2])),3,1)
+			nGDLin:=Len(oGdItm:aCols)
+			nGDCol:=Len(oGdItm:aHeader)
+		EndIf
+	Next nGDCol
+	
+	//Saldo a Liberar nunca pode ser negativo
+	If lRet .And. oGdItm:aCols[nGDLin,nPosSldLibr] < 0
+		lRet  := .F.
+		ShowHelpDlg("SLDLIB",  {"O saldo a liberar do produto '"+oGdItm:aCols[nGDLin,nPosProduto]+"' ","estแ negativo!!!"},5,;
+		{"Favor corrigir a quantidade do produto para","que o saldo a liberar nใo fique negativo."},5)
+		
+	EndIf
+	
+	//Valida se produtos existem na tabela de pre็o
+	If lRet .And. !Empty(M->Z2_TABELA)
+		lAchou := .F.
+		DA0->(DbSetOrder(1))
+		If DA0->(dbSeek(xFilial("DA0")+M->Z2_TABELA))
+			DA1->(DbSetOrder(1))
+			If DA1->(dbSeek(xFilial("DA1")+M->Z2_TABELA+oGdItm:aCols[nGDLin,nPosProduto]))
+				lAchou := .T.
+			EndIf
+		Endif
+		If !lAchou
+			ShowHelpDlg("TABPRECO", {"O produto '"+oGdItm:aCols[nGDLin,nPosProduto]+"' nใo consta na tabela de pre็o '"+M->Z2_TABELA+"'!!!"},5,;
+			{"Favor usar um produto que consta na tabela de pre็o '"+M->Z2_TABELA+"'."},5)
+			nGDLin:= Len(oGdItm:aCols)
+			lRet  := .F.
+		EndIf
+	EndIf
+	
+Next nGDLin
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ M410Mnu  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function M410Mnu()
+
+Local aRotina := {;
+{ OemToAnsi("Pesquisar") ,"AxPesqui" , 0 , 1},;
+{ OemToAnsi("Visualizar"),"U_M410Cad", 0 , 2},;
+{ OemToAnsi("Incluir")   ,"U_M410Cad", 0 , 3},;
+{ OemToAnsi("Alterar")   ,"U_M410Cad", 0 , 4},;
+{ OemToAnsi("Excluir")   ,"U_M410Cad", 0 , 5},;
+{ OemToAnsi("Revisar")   ,"U_M410Cad", 0 , 6},;
+{ OemToAnsi("Liberar")   ,"U_M410Lib", 0 , 4},;
+{ OemToAnsi("Legenda")   ,"U_M410Leg", 0 , 3} }
+
+Return(aRotina)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ M410Leg  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function M410Leg()
+
+Local cCadLeg	:= "Status do pr้-pedido de venda"
+Local aLegenda	:= {{"BR_VERDE    ", "[SIGA] Pre-Pedido em Aberto"              },;
+{"BR_AMARELO  ", "[SIGA] Pre-Pedido Atendido Parcial"       },;
+{"BR_VERMELHO ", "[SIGA] Pre-Pedido Atendido Total"         },;
+{"BR_PINK     ", "[SIGA] Pre-Pedido Bloqueado para Revisใo" },;
+{"BR_AZUL     ", "[SFA]  Pre-Pedido em Aberto"              },;
+{"BR_LARANJA  ", "[SFA]  Pre-Pedido Atendido Parcial"       },;
+{"BR_MARROM   ", "[SFA]  Pre-Pedido Atendido Total"         },;
+{"BR_BRANCO   ", "[SFA]  Pre-Pedido Bloqueado para Revisใo" } }
+
+BrwLegenda(cCadLeg,"Legenda",aLegenda)
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fAtuSX1  บAutor  บFelipe Aur้lio de Melo บ Data บ 01/05/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fAtuSX1
+
+Local aPergs := {}
+
+Aadd(aPergs,{"De Cliente"       , "De Cliente"       , "De Cliente"       , "mv_ch1"  , "C" , 06,00,00 ,"G", "", "mv_par01", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SA1","","S","","",{},{},{}})
+Aadd(aPergs,{"Da Loja"          , "Da Loja"          , "Da Loja"          , "mv_ch2"  , "C" , 02,00,00 ,"G", "", "mv_par02", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Ate Cliente"      , "Ate Cliente"      , "Ate Cliente"      , "mv_ch3"  , "C" , 06,00,00 ,"G", "", "mv_par03", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SA1","","S","","",{},{},{}})
+Aadd(aPergs,{"Da Loja"          , "Da Loja"          , "Da Loja"          , "mv_ch4"  , "C" , 02,00,00 ,"G", "", "mv_par04", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"De Produto"       , "De Produto"       , "De Produto"       , "mv_ch5"  , "C" , 15,00,00 ,"G", "", "mv_par05", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SB1","","S","","",{},{},{}})
+Aadd(aPergs,{"Ate o Produto"    , "Ate o Produto"    , "Ate o Produto"    , "mv_ch6"  , "C" , 15,00,00 ,"G", "", "mv_par06", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SB1","","S","","",{},{},{}})
+Aadd(aPergs,{"Marca Comercial"  , "Marca Comercial"  , "Marca Comercial"  , "mv_ch7"  , "C" , 15,00,00 ,"G", "", "mv_par07", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SB1PA","","S","","",{},{},{}})
+Aadd(aPergs,{"De Fabricante"    , "De Fabricante"    , "De Fabricante"    , "mv_ch8"  , "C" , 06,00,00 ,"G", "", "mv_par08", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SA2","","S","","",{},{},{}})
+Aadd(aPergs,{"Ate Fabricante"   , "Ate Fabricante"   , "Ate Fabricante"   , "mv_ch9"  , "C" , 06,00,00 ,"G", "", "mv_par09", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SA2","","S","","",{},{},{}})
+Aadd(aPergs,{"Da Data Entrega"  , "Da Data Entrega"  , "Da Data Entrega"  , "mv_ch10" , "D" , 08,00,00 ,"G", "", "mv_par10", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Ate Data Entrega" , "Ate Data Entrega" , "Ate Data Entrega" , "mv_ch11" , "D" , 08,00,00 ,"G", "", "mv_par11", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Cond.Pagtos (;)"  , "Cond.Pagtos (;)"  , "Cond.Pagtos (;)"  , "mv_ch12" , "C" , 99,00,00 ,"G", "", "mv_par12", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Cond.Pagtos (;)"  , "Cond.Pagtos (;)"  , "Cond.Pagtos (;)"  , "mv_ch13" , "C" , 99,00,00 ,"G", "", "mv_par13", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Vencim. 1"        , "Vencim. 1"        , "Vencim. 1"        , "mv_ch14" , "D" , 99,00,00 ,"G", "", "mv_par14", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Vencim. 2"        , "Vencim. 2"        , "Vencim. 2"        , "mv_ch15" , "D" , 99,00,00 ,"G", "", "mv_par15", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Estados (;)"      , "Estados (;)"      , "Estados (;)"      , "mv_ch16" , "C" , 99,00,00 ,"G", "", "mv_par16", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Estados (;)"      , "Estados (;)"      , "Estados (;)"      , "mv_ch17" , "C" , 99,00,00 ,"G", "", "mv_par17", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Vendedores 1 (;)" , "Vendedores 1 (;)" , "Vendedores 1 (;)" , "mv_ch18" , "C" , 99,00,00 ,"G", "", "mv_par18", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Vendedores 1 (;)" , "Vendedores 1 (;)" , "Vendedores 1 (;)" , "mv_ch19" , "C" , 99,00,00 ,"G", "", "mv_par19", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Vendedores 2 (;)" , "Vendedores 2 (;)" , "Vendedores 2 (;)" , "mv_ch20" , "C" , 99,00,00 ,"G", "", "mv_par20", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Vendedores 2 (;)" , "Vendedores 2 (;)" , "Vendedores 2 (;)" , "mv_ch21" , "C" , 99,00,00 ,"G", "", "mv_par21", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Vendedores 3 (;)" , "Vendedores 3 (;)" , "Vendedores 3 (;)" , "mv_ch22" , "C" , 99,00,00 ,"G", "", "mv_par22", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Vendedores 3 (;)" , "Vendedores 3 (;)" , "Vendedores 3 (;)" , "mv_ch23" , "C" , 99,00,00 ,"G", "", "mv_par23", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"De Qtdes"         , "De Qtdes"         , "De Qtdes"         , "mv_ch24" , "N" , 14,02,00, "G", "", "mv_par24", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"At้ Qtdes"        , "At้ Qtdes"        , "At้ Qtdes"        , "mv_ch25" , "N" , 14,02,00, "G", "", "mv_par25", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"De Vlr Total"     , "De Vlr Total"     , "De Vlr Total"     , "mv_ch26" , "N" , 14,02,00, "G", "", "mv_par26", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"At้ Vlr Total"    , "At้ Vlr Total"    , "At้ Vlr Total"    , "mv_ch27" , "N" , 14,02,00, "G", "", "mv_par27", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Moeda"            , "Moeda"            , "Moeda"            , "mv_ch28" , "N" , 01,00,00, "C", "", "mv_par28", "Real"            , "Real"            , "Real"            , "", "", "Dolar"           , "Dolar"           , "Dolar"           , "", "", "Ambos"           , "Ambos"           , "Ambos"                , "", "", ""           , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"(%)Qtde A Liberar", "(%)Qtde A Liberar", "(%)Qtde A Liberar", "mv_ch29" , "N" , 03,00,00, "G", "", "mv_par29", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Listar por Ordem" , "Listar por Ordem" , "Listar por Ordem" , "mv_ch30" , "N" , 01,00,00, "C", "", "mv_par30", "C๓digo Cliente"  , "C๓digo Cliente"  , "C๓digo Cliente"  , "", "", "Descr. Produto"  , "Descr. Produto"  , "Descr. Produto"  , "", "", "Data Entrega"    , "Data Entrega"    , "Data Entrega"    , "", "", "Vlr Decrescente" , "Vlr Decrescente" , "Vlr Decrescente" , "", "", "Qtd Decrescente" , "Qtd Decrescente" , "Qtd Decrescente" , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Do Num.Pr้-PV"    , "Do Num.Pr้-PV"    , "Do Num.Pr้-PV"    , "mv_ch31" , "C" , 06,00,00 ,"G", "", "mv_par31", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"At้ Num.Pr้-PV"   , "At้ Num.Pr้-PV"   , "At้ Num.Pr้-PV"   , "mv_ch32" , "C" , 06,00,00 ,"G", "", "mv_par32", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Priorizar Manual" , "Priorizar Manual" , "Priorizar Manual" , "mv_ch33" , "N" , 01,00,00, "C", "", "mv_par33", "Nao"             , "Nao"             , "Nao"             , "", "", "Sim"             , "Sim"             , "Sim"             , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Prior.01 Filial"  , "Prior.01 Filial"  , "Prior.01 Filial"  , "mv_ch34" , "C" , 02,00,00 ,"G", "", "mv_par34", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Prior.01 Armaz."  , "Prior.01 Armaz."  , "Prior.01 Armaz."  , "mv_ch35" , "C" , 02,00,00 ,"G", "", "mv_par35", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Prior.02 Filial"  , "Prior.02 Filial"  , "Prior.02 Filial"  , "mv_ch36" , "C" , 02,00,00 ,"G", "", "mv_par36", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Prior.02 Armaz."  , "Prior.02 Armaz."  , "Prior.02 Armaz."  , "mv_ch37" , "C" , 02,00,00 ,"G", "", "mv_par37", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Estados Difer.(;)", "Estados Difer.(;)", "Estados Difer.(;)", "mv_ch38" , "C" , 99,00,00 ,"G", "", "mv_par38", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Estados Difer.(;)", "Estados Difer.(;)", "Estados Difer.(;)", "mv_ch39" , "C" , 99,00,00 ,"G", "", "mv_par39", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Produto Difer.01" , "Produto Difer.01 ", "Produto Difer.01 ", "mv_ch40" , "C" , 15,00,00 ,"G", "", "mv_par40", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SB1","","S","","",{},{},{}})
+Aadd(aPergs,{"Produto Difer.02" , "Produto Difer.02" , "Produto Difer.02" , "mv_ch41" , "C" , 15,00,00 ,"G", "", "mv_par41", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SB1","","S","","",{},{},{}})
+Aadd(aPergs,{"Produto Difer.03" , "Produto Difer.03" , "Produto Difer.03" , "mv_ch42" , "C" , 15,00,00 ,"G", "", "mv_par42", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SB1","","S","","",{},{},{}})
+Aadd(aPergs,{"Marca Com.Dif.01" , "Marca Com.Dif.01" , "Marca Com.Dif.01" , "mv_ch43" , "C" , 15,00,00 ,"G", "", "mv_par43", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SB1PA","","S","","",{},{},{}})
+Aadd(aPergs,{"Marca Com.Dif.02" , "Marca Com.Dif.02" , "Marca Com.Dif.02" , "mv_ch44" , "C" , 15,00,00 ,"G", "", "mv_par44", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SB1PA","","S","","",{},{},{}})
+Aadd(aPergs,{"Marca Com.Dif.03" , "Marca Com.Dif.03" , "Marca Com.Dif.03" , "mv_ch45" , "C" , 15,00,00 ,"G", "", "mv_par45", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", "SB1PA","","S","","",{},{},{}})
+Aadd(aPergs,{"Gera PV Tipo Esp.", "Gera PV Tipo Esp.", "Gera PV Tipo Esp.", "mv_ch46" , "N" , 01,00,00 ,"C", "", "mv_par46", "Entrega Futura"  , "Entrega Futura"  , "Entrega Futura"  , "", "", "Conta e Ordem"   , "Conta e Ordem"   , "Conta e Ordem"   , "", "", "Normal"          , "Normal"          , "Normal"          , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Considera Estoque", "Considera Estoque", "Considera Estoque", "mv_ch47" , "N" , 01,00,00 ,"C", "", "mv_par47", "Somente c/Saldo" , "Somente c/Saldo" , "Somente c/Saldo" , "", "", "Somente Zerados" , "Somente Zerados" , "Somente Zerados" , "", "", "Listar Todos"    , "Listar Todos"    , "Listar Todos"    , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+Aadd(aPergs,{"Filtra Prod. Ind.", "Filtra Prod. Ind.", "Filtra Prod. Ind.", "mv_ch48" , "N" , 01,00,00 ,"C", "", "mv_par48", "Nao" , "Nao" , "Nao" , "", "", "Sim" , "Sim" , "Sim" , "", "", ""    , ""    , ""    , "", "", ""                , ""                , ""                , "", "", ""                , ""                , ""                , "", ""   ,"","S","","",{},{},{}})
+
+AjustaSx1(cPerg,aPergs)
+
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fAtuSX2  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fAtuSX2()
+
+Local cPath  := ""
+Local cNome  := ""
+Local aEstrut:= {}
+Local aSX2   := {}
+Local i      := 0
+Local j      := 0
+
+aEstrut:= {"X2_CHAVE","X2_PATH"   ,"X2_ARQUIVO","X2_NOME"                        ,"X2_NOMESPA"                    ,"X2_NOMEENG"                     ,"X2_DELET","X2_MODO","X2_TTS","X2_ROTINA","X2_PYME","X2_UNICO"}
+Aadd(aSX2,{"SZ2"     ,"\DADOSADV\","SZ2010"    ,"Pr้-Pedidos de Venda"           ,"Pr้-Pedidos de Venda"          ,"Pr้-Pedidos de Venda"           ,0         ,"C"      ,""      ,""         ,"N"      ,""})
+Aadd(aSX2,{"SZ3"     ,"\DADOSADV\","SZ3010"    ,"Itens dos Pr้-Pedidos de Venda" ,"Itens dos Pr้-Pedidos de Venda","Itens dos Pr้-Pedidos de Venda" ,0         ,"C"      ,""      ,""         ,"N"      ,""})
+Aadd(aSX2,{"SZA"     ,"\DADOSADV\","SZA010"    ,"Controle de pedidos gerados"    ,"Controle de pedidos gerados"   ,"Controle de pedidos gerados"    ,0         ,"C"      ,""      ,""         ,"N"      ,""})
+
+dbSelectArea("SX2")
+dbSetOrder(1)
+dbSeek("SA1")
+cPath := SX2->X2_PATH
+cNome := Substr(SX2->X2_ARQUIVO,4,5)
+
+For i:= 1 To Len(aSX2)
+	If !Empty(aSX2[i][1])
+		If !dbSeek(aSX2[i,1])
+			RecLock("SX2",.T.)
+			For j:=1 To Len(aSX2[i])
+				If FieldPos(aEstrut[j]) > 0
+					FieldPut(FieldPos(aEstrut[j]),aSX2[i,j])
+				EndIf
+			Next j
+			SX2->X2_PATH    := cPath
+			SX2->X2_ARQUIVO := aSX2[i,1]+cNome
+			dbCommit()
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fAtuSX3  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fAtuSX3()
+
+Local aSX3       := {}
+Local aEstrut    := {}
+Local i          := 0
+Local j          := 0
+Local X3RelMoeda := "Posicione('CTO',1,xFilial('CTO')+StrZero(M->Z2_MOEDA,2),'CTO_DESC')" //Conte๚do do X3_RELACAO do campo Z2_XDMOEDA
+Local X3RelTbPrc := "Posicione('DA0',1,xFilial('DA0')+M->Z2_TABELA,'DA0_DESCRI')"         //Conte๚do do X3_RELACAO do campo Z2_DESCTAB
+Local X3RelCndPg := "Posicione('SE4',1,xFilial('SE4')+M->Z2_CONDPAG,'E4_DESCRI')"         //Conte๚do do X3_RELACAO do campo Z2_DESCOND
+
+aEstrut :={ "X3_ARQUIVO","X3_ORDEM","X3_CAMPO"   ,"X3_TIPO","X3_TAMANHO","X3_DECIMAL","X3_TITULO"    ,"X3_TITSPA"    ,"X3_TITENG"    ,"X3_DESCRIC"               ,"X3_DESCSPA"               ,"X3_DESCENG"              ,"X3_PICTURE"         ,"X3_VALID"                              ,"X3_USADO"          ,"X3_RELACAO" ,"X3_F3"  ,"X3_NIVEL","X3_RESERV" ,"X3_CHECK"  ,"X3_TRIGGER","X3_PROPRI" ,"X3_BROWSE"  ,"X3_VISUAL","X3_CONTEXT" ,"X3_OBRIGAT","X3_VLDUSER" ,"X3_CBOX"                                                                                    ,"X3_CBOXSPA"                                                                                 ,"X3_CBOXENG"                                                                                 ,"X3_PICTVAR","X3_WHEN","X3_INIBRW","X3_GRPSXG","X3_FOLDER","X3_PYME","X3_CONDSQL"}
+//        { "X3_ARQUIVO","X3_ORDEM","X3_CAMPO"   ,"X3_TIPO","X3_TAMANHO","X3_DECIMAL","X3_TITULO"    ,"X3_TITSPA"    ,"X3_TITENG"    ,"X3_DESCRIC"               ,"X3_DESCSPA"               ,"X3_DESCENG"              ,"X3_PICTURE"         ,"X3_VALID"                              ,"X3_USADO"          ,"X3_RELACAO" ,"X3_F3"  ,"X3_NIVEL","X3_RESERV" ,"X3_CHECK"  ,"X3_TRIGGER","X3_PROPRI" ,"X3_BROWSE"  ,"X3_VISUAL","X3_CONTEXT" ,"X3_OBRIGAT","X3_VLDUSER" ,"X3_CBOX"                                                                                    ,"X3_CBOXSPA"                                                                                 ,"X3_CBOXENG"                                                                                 ,"X3_PICTVAR","X3_WHEN","X3_INIBRW","X3_GRPSXG","X3_FOLDER","X3_PYME","X3_CONDSQL"}
+Aadd(aSX3,{	"SZ2"       ,"01"      ,"Z2_FILIAL  ","C"      ,           2,           0,"Filial       ","Sucursal     ","Branch       ","Filial do Sistema        ","Sucursal del Sistema     ","System Branch           ","@!                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"5วว       ","          ","          ","P         ","N          ","         ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"02"      ,"Z2_NUM     ","C"      ,           6,           0,"N.Pre-Pedido ","Numero       ","Number       ","Numero do Pedido         ","Numero del Pedido        ","Order Number            ","@X                  ","U_M410Vld('Z2_NUM',INCLUI)            ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"03"      ,"Z2_NUMSFA  ","C"      ,           8,           0,"N.Portal     ","Numero       ","Number       ","Numero do Pedido         ","Numero del Pedido        ","Order Number            ","@X                  ","U_M410Vld('Z2_NUM',INCLUI)            ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"04"      ,"Z2_CLIENTE ","C"      ,           6,           0,"Cliente      ","Cliente      ","Customer     ","Codigo do Cliente        ","Codigo del Cliente       ","Customer Code           ","@!                  ","U_M410Vld('Z2_CLIENTE',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","SA1    ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","001      ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"05"      ,"Z2_LOJACLI ","C"      ,           2,           0,"Loja         ","Tienda       ","Unit         ","Loja do Cliente          ","Tienda del Cliente       ","Customer's Unit         ","@!                  ","U_M410Vld('Z2_LOJACLI',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","002      ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"06"      ,"Z2_CLIENT  ","C"      ,           6,           0,"Cli.Entrega  ","Cli.Entrega  ","Cus.Delivery ","Cliente da Entrega       ","Cliente de la entrega    ","Customer Delivery       ","@!                  ","U_M410Vld('Z2_CLIENT',INCLUI)         ","€€€€€€€€€€€€€€    ","           ","SA1    ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","001      ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"07"      ,"Z2_LOJAENT ","C"      ,           2,           0,"Loja Entrega ","Tda. Entrega ","Deliv. Unit  ","Codigo da Loja de Entrega","Codigo Tienda de Entrega ","Code of Delivery Unit   ","@!                  ","U_M410Vld('Z2_LOJAENT',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","002      ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"08"      ,"Z2_XCLIENT ","C"      ,          40,           0,"Razao Social ","Razao Social ","Razao Social ","Razao Social             ","Razao Social             ","Razao Social            ","@!                  ","U_M410Vld('Z2_XCLIENT',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","V        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"09"      ,"Z2_XESTCLI ","C"      ,           2,           0,"UF Cliente F ","UF Cliente F ","UF Cliente F ","UF Cliente Faturamento   ","UF Cliente Faturamento   ","UF Cliente Faturamento  ","@!                  ","U_M410Vld('Z2_XESTCLI',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","V        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"10"      ,"Z2_TIPOCLI ","C"      ,           1,           0,"Tipo Cliente ","Tipo Cliente ","Customer Ty. ","Tipo do Cliente          ","Tipo de Cliente          ","Type of Customer        ","@!                  ","U_M410Vld('Z2_TIPOCLI',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","N          ","V        ","R          ","ว         ","           ","F=Cons.Final;L=Prod.Rural;R=Revendedor;S=Solidario;X=Exportacao/Importacao                 ","F=Cons.Final;L=Prod.Rural;R=Revendedor;S=Solidario;X=Exportacion/Importacion               ","F=Final Cons.;L=Rural Prod.;R=Reseller;S=Solidary;X=Export/Import                          ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"11"      ,"Z2_TPFRETE ","C"      ,           1,           0,"Tipo Frete   ","Tipo Frete   ","Tipo Frete   ","Tipo do Frete Utilizado  ","Tipo do Frete Utilizado  ","Tipo do Frete Utilizado ","                    ","U_M410Vld('Z2_TPFRETE',INCLUI)        ","€€€€€€€€€€€€€€    ","'C'        ","       ",1         ,"5ๅว       ","          ","          ","P         ","N          ","A        ","R          ","ว         ","           ","C=CIF;F=FOB                                                                                ","C=CIF;F=FOB                                                                                ","C=CIF;F=FOB                                                                                ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"12"      ,"Z2_XESPECI ","C"      ,           5,           0,"Especie NF   ","Especie NF   ","Especie NF   ","Especie NF de Saida      ","Especie NF de Saida      ","Especie NF de Saida     ","                    ","U_M410Vld('Z2_XESPECI',INCLUI)        ","€€€€€€€€€€€€€€    ","'NF'       ","42     ",1         ,"5ๅว       ","          ","          ","P         ","N          ","V        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"13"      ,"Z2_XTPPED  ","C"      ,           1,           0,"Tp Ped Espec ","Tp Ped Espec ","Tp Ped Espec ","Tipo Pedido Especial     ","Tipo Pedido Especial     ","Tipo Pedido Especial    ","                    ","U_M410Vld('Z2_XTPPED',INCLUI)         ","€€€€€€€€€€€€€€    ","'3'        ","       ",1         ,"5ๅว       ","          ","          ","P         ","N          ","A        ","R          ","ว         ","           ","3=Normal                                                                                   ","3=Normal                                                                                   ","3=Normal                                                                                   ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"14"      ,"Z2_TIPO    ","C"      ,           1,           0,"Tipo Pedido  ","Tipo Pedido  ","Order Type   ","Tipo de Pedido           ","Tipo de Pedido           ","Type of Order           ","@!                  ","U_M410Vld('Z2_TIPO',INCLUI)           ","€€€€€€€€€€€€€€    ","'N'        ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","N=Normal                                                                                   ","N=Normal                                                                                   ","N=Normal                                                                                   ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"15"      ,"Z2_XDESPER ","N"      ,           7,           4,"(%)Desc.Pont.","(%)Desc.Pont.","(%)Desc.Pont.","Desconto Pontualidade    ","Desconto Pontualidade    ","Desconto Pontualidade   ","@E 99.9999          ","U_M410Vld('Z2_XDESPER',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"16"      ,"Z2_EMISSAO ","D"      ,           8,           0,"DT Emissao   ","Fch Emision  ","Issue Date   ","Data da Emissao          ","Fecha de la Emision      ","Issue Date              ","                    ","U_M410Vld('Z2_EMISSAO',INCLUI)        ","€€€€€€€€€€€€€€    ","Date()     ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","V        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"17"      ,"Z2_MOEDA   ","N"      ,           2,           0,"Moeda        ","Moneda       ","Currency     ","Moeda do Pedido de Venda ","Moneda del Pedid.de Venta","Currency of Sales Order ","@E 99               ","U_M410Vld('Z2_MOEDA',INCLUI)          ","€€€€€€€€€€€€€€    ","2          ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"18"      ,"Z2_XDMOEDA ","C"      ,          20,           0,"Descr.Moeda  ","Descr.Moeda  ","Descr.Moeda  ","Descr.Moeda Pedido Venda ","Descr.Moeda Pedido Venda ","Descr.Moeda Pedido Venda","@!                  ","U_M410Vld('Z2_XDMOEDA',INCLUI)        ","€€€€€€€€€€€€€€    ",X3RelMoeda   ,"       ",1         ,"€        ","          ","          ","P         ","S          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"19"      ,"Z2_TABELA  ","C"      ,           3,           0,"Tabela Pre็o ","Tabela Pre็o ","Tabela Pre็o ","Codigo da Tabela de Preco","Codigo Tabla de Precios  ","Price List Code         ","@!                  ","U_M410Vld('Z2_TABELA',INCLUI)         ","€€€€€€€€€€€€€€    ","           ","DA0    ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"20"      ,"Z2_DESCTAB ","C"      ,          30,           0,"Descr.Tabela ","Descr.Tabela ","Descr.Tabela ","Descr. da Tabela de Preco","Descr. Tabla de Precios  ","Price List Code         ","@!                  ","U_M410Vld('Z2_DESCTAB',INCLUI)        ","€€€€€€€€€€€€€€    ",X3RelTbPrc   ,"       ",1         ,"€        ","          ","          ","P         ","S          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"21"      ,"Z2_CONDPAG ","C"      ,           3,           0,"Cond. Pagto  ","Cond. Pago   ","Payment Term ","Condicao de Pagamento    ","Condicion de Pago        ","Payment Term            ","@!                  ","U_M410Vld('Z2_CONDPAG',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","SE4    ",1         ,"5ๅว       ","          ","          ","P         ","N          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"22"      ,"Z2_DESCOND ","C"      ,          20,           0,"Descr.Cond.  ","Descr.Cond.  ","Payment Term ","Descr. Cond. Pagamento   ","Descr. Cond. Pagamento   ","Payment Term            ","@!                  ","U_M410Vld('Z2_DESCOND',INCLUI)        ","€€€€€€€€€€€€€€    ",X3RelCndPg   ,"       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"23"      ,"Z2_PARC1   ","N"      ,          12,           2,"Parcela 1    ","Cuota 1      ","Installment1 ","Valor da Parcela 1       ","Valor de la Cuota 1      ","Value of Installment 1  ","@E 999,999,999.99   ","U_M410Vld('Z2_PARC1',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"24"      ,"Z2_DATA1   ","D"      ,           8,           0,"Vencimento 1 ","Vencimiento1 ","Maturity Dt1 ","Vencimento da Parcela 1  ","Vencimiento de la Cuota 1","Installment Due Date1   ","                    ","U_M410Vld('Z2_DATA1',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"25"      ,"Z2_PARC2   ","N"      ,          12,           2,"Parcela 2    ","Cuota 2      ","Installment2 ","Valor da Parcela 2       ","Valor de la Cuota 2      ","Value of Installment 2  ","@E 999,999,999.99   ","U_M410Vld('Z2_PARC2',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"26"      ,"Z2_DATA2   ","D"      ,           8,           0,"Vencimento 2 ","Vencimiento2 ","Maturity Dt2 ","Vencimento da Parcela 2  ","Vencimiento de la Cuota 2","Installment Due Date2   ","                    ","U_M410Vld('Z2_DATA2',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"27"      ,"Z2_PARC3   ","N"      ,          12,           2,"Parcela 3    ","Cuota 3      ","Installment3 ","Valor da Parcela 3       ","Valor de la Cuota 3      ","Value of Installment 3  ","@E 999,999,999.99   ","U_M410Vld('Z2_PARC3',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"28"      ,"Z2_DATA3   ","D"      ,           8,           0,"Vencimento 3 ","Vencimiento3 ","Maturity Dt3 ","Vencimento da Parcela 3  ","Vencimiento de la Cuota 3","Installment Due Date3   ","                    ","U_M410Vld('Z2_DATA3',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"29"      ,"Z2_PARC4   ","N"      ,          12,           2,"Parcela 4    ","Cuota 4      ","Installment4 ","Valor da Parcela 4       ","Valor de la Cuota 4      ","Value of Installment 4  ","@E 999,999,999.99   ","U_M410Vld('Z2_PARC4',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"30"      ,"Z2_DATA4   ","D"      ,           8,           0,"Vencimento 4 ","Vencimiento4 ","Maturity Dt4 ","Vencimento da Parcela 4  ","Vencimiento de la Cuota 4","Installment Due Date4   ","                    ","U_M410Vld('Z2_DATA4',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"31"      ,"Z2_PARC5   ","N"      ,          12,           2,"Parcela 5    ","Cuota 5      ","Installment5 ","Valor da Parcela 5       ","Valor de la Cuota 5      ","Value of Installment 5  ","@E 999,999,999.99   ","U_M410Vld('Z2_PARC5',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"32"      ,"Z2_DATA5   ","D"      ,           8,           0,"Vencimento 5 ","Vencimiento5 ","Maturity Dt5 ","Vencimento da Parcela 5  ","Vencimiento de la Cuota 5","Installment Due Date5   ","                    ","U_M410Vld('Z2_DATA5',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"33"      ,"Z2_PARC6   ","N"      ,          12,           2,"Parcela 6    ","Cuota 6      ","Installment6 ","Valor da Parcela 6       ","Valor de la Cuota 6      ","Value of Installment 6  ","@E 999,999,999.99   ","U_M410Vld('Z2_PARC6',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"34"      ,"Z2_DATA6   ","D"      ,           8,           0,"Vencimento 6 ","Vencimiento6 ","Maturity Dt6 ","Vencimento da Parcela 6  ","Vencimiento de la Cuota 6","Installment Due Date6   ","                    ","U_M410Vld('Z2_DATA6',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"35"      ,"Z2_VEND1   ","C"      ,           6,           0,"Vendedor 1   ","Vendedor 1   ","Seller 1     ","Codigo de Vendedor 1     ","Codigo del Vendedor 1    ","Seller Code 1           ","@X                  ","U_M410Vld('Z2_VEND1',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","SA3VD1 ",1         ,"5ๅว       ","          ","          ","P         ","N          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"36"      ,"Z2_COMIS1  ","N"      ,           5,           2,"% comissao 1 ","Comision 1   ","Commission 1 ","Comissao do Vendedor 1   ","Comision del Vendedor 1  ","Commission of Seller 1  ","@E 99.99            ","U_M410Vld('Z2_COMIS1',INCLUI)         ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"37"      ,"Z2_VEND2   ","C"      ,           6,           0,"Vendedor 2   ","Vendedor 2   ","Seller 2     ","Codigo do Vendedor 2     ","Codigo del Vendedor 2    ","Seller Code 2           ","@X                  ","U_M410Vld('Z2_VEND2',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","SA3VD2 ",1         ,"5ๅว       ","          ","          ","P         ","N          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"38"      ,"Z2_COMIS2  ","N"      ,           5,           2,"% comissao 2 ","Comision 2   ","Commission 2 ","Comissao do Vendedor 2   ","Comision del Vendedor 2  ","Commission of Seller 2  ","@E 99.99            ","U_M410Vld('Z2_COMIS2',INCLUI)         ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"39"      ,"Z2_VEND3   ","C"      ,           6,           0,"Vendedor 3   ","Vendedor 3   ","Seller 3     ","Codigo do Vendedor 3     ","Codigo del Vendedor 3    ","Seller Code 3           ","@X                  ","U_M410Vld('Z2_VEND3',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","SA3VD3 ",1         ,"5ๅว       ","          ","          ","P         ","N          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"40"      ,"Z2_COMIS3  ","N"      ,           5,           2,"% comissao 3 ","Comision 3   ","Commission 3 ","Comissao do Vendedor 3   ","Comision del Vendedor 3  ","Commission of Seller 3  ","@E 99.99            ","U_M410Vld('Z2_COMIS3',INCLUI)         ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"41"      ,"Z2_VEND4   ","C"      ,           6,           0,"Vendedor 4   ","Vendedor 4   ","Seller 4     ","Codigo do Vendedor 4     ","Codigo del Vendedor 4    ","Seller Code 4           ","@X                  ","U_M410Vld('Z2_VEND4',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","SA3VD3 ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"42"      ,"Z2_COMIS4  ","N"      ,           5,           2,"% comissao 4 ","Comision 4   ","Commission 4 ","Comissao do Vendedor 4   ","Comision del Vendedor 4  ","Commission of Seller 4  ","@E 99.99            ","U_M410Vld('Z2_COMIS4',INCLUI)         ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"43"      ,"Z2_VEND5   ","C"      ,           6,           0,"Vendedor 5   ","Vendedor 5   ","Seller 5     ","Codigo do Vendedor 5     ","Codigo del Vendedor 5    ","Seller Code 5           ","@X                  ","U_M410Vld('Z2_VEND5',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","SA3VD3 ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"44"      ,"Z2_COMIS5  ","N"      ,           5,           2,"% comissao 5 ","Comision 5   ","Commission 5 ","Comissao do Vendedor 5   ","Comision del Vendedor 5  ","Commission of Seller 5  ","@E 99.99            ","U_M410Vld('Z2_COMIS5',INCLUI)         ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"45"      ,"Z2_PESOL   ","N"      ,          11,           4,"Peso Liquido ","Peso Neto    ","Net Weight   ","Peso Liquido             ","Peso Neto                ","Net Weight              ","@E 999,999.9999     ","U_M410Vld('Z2_PESOL',INCLUI)          ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"46"      ,"Z2_PBRUTO  ","N"      ,          11,           4,"Peso Bruto   ","Peso Bruto   ","Gross Weight ","Peso Bruto               ","Peso Bruto               ","Gross Weight            ","@E 999,999.9999     ","U_M410Vld('Z2_PBRUTO',INCLUI)         ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"47"      ,"Z2_VOLUME1 ","N"      ,           5,           0,"Volume 1     ","Volumen 1    ","Package 1    ","Qtde de Volumes tipo 1   ","Ctd. de Volumenes Tipo 1 ","Qty. of type 1 packages ","99999               ","U_M410Vld('Z2_VOLUME1',INCLUI)        ","€€€€€€€€€€€€€€    ","0          ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"48"      ,"Z2_ESPECI1 ","C"      ,          10,           0,"Especie 1    ","Especie 1    ","Class 1      ","Especie do Volume tipo 1 ","Especie de Volumen Tipo 1","Packing Type 1          ","@X                  ","U_M410Vld('Z2_ESPECI1',INCLUI)        ","€€€€€€€€€€€€€€    ","'VOLUMES'  ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"49"      ,"Z2_XOBSERV ","C"      ,          60,           0,"Obs.Pedido   ","Obs.Pedido   ","Obs.Pedido   ","Observacao do Pedido     ","Observacao do Pedido     ","Observacao do Pedido    ","@!                  ","U_M410Vld('Z2_XOBSERV',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"50"      ,"Z2_MENNOTA ","C"      ,         128,           0,"Mens.1 P/NF  ","Mens.1 P/NF  ","Mens.1 P/NF  ","Mensagem 1 p/ N.Fiscal   ","Mensagem 1 p/ N.Fiscal   ","Mensagem 1 p/ N.Fiscal  ","@!                  ","U_M410Vld('Z2_MENNOTA',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"51"      ,"Z2_MENNOT1 ","C"      ,         128,           0,"Mens.2 P/NF  ","Mens.2 P/NF  ","Mens.2 P/NF  ","Mensagem 2 p/ N.Fiscal   ","Mensagem 2 p/ N.Fiscal   ","Mensagem 2 p/ N.Fiscal  ","@!                  ","U_M410Vld('Z2_MENNOT1',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"52"      ,"Z2_XHISTCO ","M"      ,          10,           0,"Historico    ","Historico    ","Historico    ","Historico                ","Historico                ","Historico               ","                    ","U_M410Vld('Z2_XHISTCO',INCLUI)        ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"53"      ,"Z2_LIBEROK ","C"      ,           1,           0,"Liber. Total ","Aprueba Tot. ","Total Releas ","Pedido Liberado Total    ","Pedido Total Aprobado    ","Order Totally Approved  ","@!                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"54"      ,"Z2_BLQ     ","C"      ,           1,           0,"Blq. Regras  ","Blq. Reglas  ","Rul. Lock    ","Bloqueio de Regras       ","Bloqueo de Reglas        ","Rule Lock               ","@!                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"55"      ,"Z2_USERLGI ","C"      ,          17,           0,"Log de Inclu ","Log de Inclu ","Log de Inclu ","Log de Inclusao          ","Log de Inclusao          ","Log de Inclusao         ","                    ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ2"       ,"56"      ,"Z2_USERLGA ","C"      ,          17,           0,"Log de Alter ","Log de Alter ","Log de Alter ","Log de Alteracao         ","Log de Alteracao         ","Log de Alteracao        ","                    ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+
+
+//        { "X3_ARQUIVO","X3_ORDEM","X3_CAMPO"   ,"X3_TIPO","X3_TAMANHO","X3_DECIMAL","X3_TITULO"    ,"X3_TITSPA"    ,"X3_TITENG"    ,"X3_DESCRIC"               ,"X3_DESCSPA"               ,"X3_DESCENG"              ,"X3_PICTURE"         ,"X3_VALID"                              ,"X3_USADO"          ,"X3_RELACAO" ,"X3_F3"  ,"X3_NIVEL","X3_RESERV" ,"X3_CHECK"  ,"X3_TRIGGER","X3_PROPRI" ,"X3_BROWSE"  ,"X3_VISUAL","X3_CONTEXT" ,"X3_OBRIGAT","X3_VLDUSER" ,"X3_CBOX"                                                                                    ,"X3_CBOXSPA"                                                                                 ,"X3_CBOXENG"                                                                                 ,"X3_PICTVAR","X3_WHEN","X3_INIBRW","X3_GRPSXG","X3_FOLDER","X3_PYME","X3_CONDSQL"}
+Aadd(aSX3,{	"SZ3"       ,"01"      ,"Z3_FILIAL  ","C"      ,           2,           0,"Filial       ","Sucursal     ","Branch       ","Filial do Sistema        ","Sucursal del Sistema     ","System Branch           ","@!                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"5วว       ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"02"      ,"Z3_ITEM    ","C"      ,           2,           0,"Item         ","Item         ","Item         ","Numero do Item no Pedido ","Numero del Item del Pedid","Item Number in Order    ","@!                  ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","V        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"03"      ,"Z3_PRODUTO ","C"      ,          15,           0,"Produto      ","Producto     ","Product      ","Codigo do Produto        ","Codigo del Producto      ","Code of Product         ","@!                  ","                                      ","€€€€€€€€€€€€€€    ","           ","SB1    ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"04"      ,"Z3_DESCRI  ","C"      ,          30,           0,"Descricao    ","Descripcion  ","Description  ","Descricao Auxiliar       ","Descripcion Auxiliar     ","Support Description     ","@X                  ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","N          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"05"      ,"Z3_UM      ","C"      ,           2,           0,"Unidade      ","Unidad       ","Measure Unit ","Unidade de Medida Primar.","Unidad de Medida Primaria","Unit of Measure         ","@!                  ","                                      ","€€€€€€€€€€€€€€    ","           ","SAH    ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"06"      ,"Z3_QTDVEN  ","N"      ,          14,           2,"Qtd.Pedido   ","Cantidad     ","Quantity     ","Quantidade Vendida       ","Cantidad Vendida         ","Quantity Sold           ","@E 99999999999.99   ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"07"      ,"Z3_PRUNIT  ","N"      ,          15,           6,"Prc Lista    ","Precio Lista ","Price List   ","Preco Unitario de Tabela ","Precio Unitario de Tabla ","Unit List Price         ","@E 9999,999.999999  ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"08"      ,"Z3_PRCVEN  ","N"      ,          15,           6,"Prc Unitario ","Prc.Unitario ","Unit Price   ","Preco Unitario Liquido   ","Precio Unitario Neto     ","Net Unit Price          ","@E 9999,999.999999  ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"09"      ,"Z3_VALOR   ","N"      ,          14,           2,"Vlr.Total    ","Valor Total  ","Grand Total  ","Valor Total do Item      ","Valor Total del Item     ","Item Grand Total        ","@E 999,999,999.99   ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","S          ","V        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"10"      ,"Z3_ENTREG  ","D"      ,           8,           0,"Entrega      ","Entrega      ","Delivery     ","Data da Entrega          ","Fecha de la Entrega      ","Delivery Date           ","@D                  ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"5ๅว       ","          ","          ","P         ","N          ","A        ","R          ","ว         ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"11"      ,"Z3_XDESFIN ","N"      ,          13,           4,"($)Desc.Pont.","($)Desc.Pont.","($)Desc.Pont.","($)Desconto Pontualidade ","($)Desconto Pontualidade ","($)Desconto Pontualidade","@E 9999,999.9999   ","                                       ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"12"      ,"Z3_XDESPER ","N"      ,           7,           4,"(%)Desc.Pont.","(%)Desc.Pont.","(%)Desc.Pont.","(%)Desconto Pontualidade ","(%)Desconto Pontualidade ","(%)Desconto Pontualidade","@E 99.9999         ","                                       ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"13"      ,"Z3_XLIBERA ","C"      ,           1,           0,"Flag Libera  ","Flag Libera  ","Flag Libera  ","Flag p/ Liberacao Pedido ","Flag p/ Liberacao Pedido ","Flag p/ Liberacao Pedido","@!                  ","Vazio() .or. Pertence('1234567')      ","€€€€€€€€€€€€€€    ","'1'        ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","1=libera;2=sol.client;3=bloq.credit;4=fat.terc;5=sol.interna;6=outros;7=prod.kit           ","1=libera;2=sol.client;3=bloq.credit;4=fat.terc;5=sol.interna;6=outros;7=prod.kit           ","1=libera;2=sol.client;3=bloq.credit;4=fat.terc;5=sol.interna;6=outros;7=prod.kit           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"14"      ,"Z3_BLQ     ","C"      ,           2,           0,"Status Blq   ","Est. Bloqueo ","Status Block ","Status do Bloqueio Pedido","Estatus Bloqueo Pedido   ","Order Block Status      ","@!                  ","ExistCpo('SX5','F1'+M->Z3_BLQ)        ","€€€€€€€€€€€€€€    ","           ","F1     ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"15"      ,"Z3_QTDLIB  ","N"      ,          14,           2,"Qtd.Liberada ","Qtd.Liberada ","Qtd.Liberada ","Quantidade Liberada      ","Cantidad Aprobada        ","Quantity Released       ","@E 99999999999.99   ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"16"      ,"Z3_QTDPEN  ","N"      ,          14,           2,"Sld.Liberar  ","Sld.Liberar  ","Sld.Liberar  ","Saldo เ Liberar          ","Saldo เ Liberar          ","Saldo เ Liberar         ","@E 99999999999.99   ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"17"      ,"Z3_XTABELA ","C"      ,           3,           0,"Tabela Preco ","Tabela Preco ","Tabela Preco ","Codigo tabela de Preco   ","Codigo tabela de Preco   ","Codigo tabela de Preco  ","@!                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"18"      ,"Z3_COMIS1  ","N"      ,           5,           2,"Comissao 1   ","Comision 1   ","Commission 1 ","Percentual Comissao 1    ","Porcentaje de Comision 1 ","Percentage Commission 1 ","@E 99.99            ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"19"      ,"Z3_COMIS2  ","N"      ,           5,           2,"Comissao 2   ","Comision 2   ","Commission 2 ","Percentual Comissao 2    ","Porcentaje de Comision 2 ","Percentage Commission 2 ","@E 99.99            ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"20"      ,"Z3_COMIS3  ","N"      ,           5,           2,"Comissao 3   ","Comision 3   ","Commission 3 ","Percentual Comissao 3    ","Porcentaje de Comision 3 ","Percentage Commission 3 ","@E 99.99            ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"21"      ,"Z3_COMIS4  ","N"      ,           5,           2,"Comissao 4   ","Comision 4   ","Commission 4 ","Percentual Comissao 4    ","Porcentaje de Comision 4 ","Percentage Commission 4 ","@E 99.99            ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"22"      ,"Z3_COMIS5  ","N"      ,           5,           2,"Comissao 5   ","Comision 5   ","Commission 5 ","Percentual Comissao 5    ","Porcentaje de Comision 5 ","Percentage Commission 5 ","@E 99.99            ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"23"      ,"Z3_NUM     ","C"      ,           6,           0,"N.Pre-Pedido ","N.Pre-Pedido ","N.Pre-Pedido ","N.Pre-Pedido             ","N.Pre-Pedido             ","N.Pre-Pedido            ","@X                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"24"      ,"Z3_CLI     ","C"      ,           6,           0,"Cliente      ","Cliente      ","Customer     ","Codigo do Cliente        ","Codigo del Cliente       ","Customer Code           ","@!                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","SA1    ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","001      ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"25"      ,"Z3_LOJA    ","C"      ,           2,           0,"Loja         ","Tienda       ","Unit         ","Loja do Cliente          ","Tienda del Cliente       ","Customer's Unit         ","@!                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","002      ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"26"      ,"Z3_NUMSFA  ","C"      ,           8,           0,"N.Portal     ","N.Portal     ","N.Portal     ","N.Portal                 ","N.Portal                 ","N.Portal                ","@!                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"27"      ,"Z3_ITEMSFA ","C"      ,          10,           0,"Item Portal  ","Item Portal  ","Item Portal  ","Item Portal              ","Item Portal              ","Item Portal             ","@!                  ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"28"      ,"Z3_USERLGI ","C"      ,          17,           0,"Log de Inclu ","Log de Inclu ","Log de Inclu ","Log de Inclusao          ","Log de Inclusao          ","Log de Inclusao         ","                    ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZ3"       ,"29"      ,"Z3_USERLGA ","C"      ,          17,           0,"Log de Alter ","Log de Alter ","Log de Alter ","Log de Alteracao         ","Log de Alteracao         ","Log de Alteracao        ","                    ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"€        ","          ","          ","P         ","N          ","V        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+
+
+//        { "X3_ARQUIVO","X3_ORDEM","X3_CAMPO"   ,"X3_TIPO","X3_TAMANHO","X3_DECIMAL","X3_TITULO"    ,"X3_TITSPA"    ,"X3_TITENG"    ,"X3_DESCRIC"               ,"X3_DESCSPA"               ,"X3_DESCENG"              ,"X3_PICTURE"         ,"X3_VALID"                              ,"X3_USADO"          ,"X3_RELACAO" ,"X3_F3"  ,"X3_NIVEL","X3_RESERV" ,"X3_CHECK"  ,"X3_TRIGGER","X3_PROPRI" ,"X3_BROWSE"  ,"X3_VISUAL","X3_CONTEXT" ,"X3_OBRIGAT","X3_VLDUSER" ,"X3_CBOX"                                                                                    ,"X3_CBOXSPA"                                                                                 ,"X3_CBOXENG"                                                                                 ,"X3_PICTVAR","X3_WHEN","X3_INIBRW","X3_GRPSXG","X3_FOLDER","X3_PYME","X3_CONDSQL"}
+Aadd(aSX3,{	"SZA"       ,"01"      ,"ZA_FILIAL  ","C"      ,          02,          00,"Filial       ","Filial       ","Filial       ","Filial                   ","Filial                   ","Filial                   ","@!                 ","                                      ","€€€€€€€€€€€€€€€   ","           ","       ",1         ,"5วว       ","          ","          ","P         ","N          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"02"      ,"ZA_PRENUM  ","C"      ,          06,          00,"Num.Pre.Ped. ","Num.Pre.Ped. ","Num.Pre.Ped. ","Num.Pre.Ped.             ","Num.Pre.Ped.             ","Num.Pre.Ped.             ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"03"      ,"ZA_PREITEM ","C"      ,          02,          00,"Itm Pre.Ped. ","Itm Pre.Ped. ","Itm Pre.Ped. ","Itm Pre.Ped.             ","Itm Pre.Ped.             ","Itm Pre.Ped.             ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"04"      ,"ZA_PEDNUM  ","C"      ,          06,          00,"Num.Pedido   ","Num.Pedido   ","Num.Pedido   ","Num.Pedido               ","Num.Pedido               ","Num.Pedido               ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"05"      ,"ZA_PEDITEM ","C"      ,          02,          00,"Itm Pedido   ","Itm Pedido   ","Itm Pedido   ","Itm Pedido               ","Itm Pedido               ","Itm Pedido               ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"06"      ,"ZA_PRODUTO ","C"      ,          15,          00,"Cod.Produto  ","Cod.Produto  ","Cod.Produto  ","Cod.Produto              ","Cod.Produto              ","Cod.Produto              ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"07"      ,"ZA_DESCPRD ","C"      ,          40,          00,"Dsc.Produto  ","Dsc.Produto  ","Dsc.Produto  ","Dsc.Produto              ","Dsc.Produto              ","Dsc.Produto              ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"08"      ,"ZA_EMISSAO ","D"      ,          08,          00,"Dt Emissao   ","Dt Emissao   ","Dt Emissao   ","Dt Emissao               ","Dt Emissao               ","Dt Emissao               ","@D                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"09"      ,"ZA_INDUSTR ","C"      ,          01,          00,"Industrial.  ","Industrial.  ","Industrial.  ","Industrial.              ","Industrial.              ","Industrial.              ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"10"      ,"ZA_QTDVEND ","N"      ,          14,          02,"Qtd.Vendido  ","Qtd.Vendido  ","Qtd.Vendido  ","Qtd.Vendido              ","Qtd.Vendido              ","Qtd.Vendido              ","@E 99999999999.99  ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"11"      ,"ZA_QTDLIBE ","N"      ,          14,          02,"Qtd.Liberado ","Qtd.Liberado ","Qtd.Liberado ","Qtd.Liberado             ","Qtd.Liberado             ","Qtd.Liberado             ","@E 99999999999.99  ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"12"      ,"ZA_ORIGFIL ","C"      ,          02,          00,"Orig.Filial  ","Orig.Filial  ","Orig.Filial  ","Orig.Filial              ","Orig.Filial              ","Orig.Filial              ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"14"      ,"ZA_ESTDFIL ","C"      ,          02,          00,"UF Filial    ","UF Filial    ","UF Filial    ","UF Filial                ","UF Filial                ","UF Filial                ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"13"      ,"ZA_ORIGLOC ","C"      ,          02,          00,"Orig.Local   ","Orig.Local   ","Orig.Local   ","Orig.Local               ","Orig.Local               ","Orig.Local               ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"14"      ,"ZA_ESTDLOC ","C"      ,          02,          00,"UF Local     ","UF Local     ","UF Local     ","UF Local                 ","UF Local                 ","UF Local                 ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"15"      ,"ZA_DESTCLI ","C"      ,          06,          00,"Cod.Cliente  ","Cod.Cliente  ","Cod.Cliente  ","Cod.Cliente              ","Cod.Cliente              ","Cod.Cliente              ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"16"      ,"ZA_DESTLOJ ","C"      ,          02,          00,"Loj.Cliente  ","Loj.Cliente  ","Loj.Cliente  ","Loj.Cliente              ","Loj.Cliente              ","Loj.Cliente              ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"17"      ,"ZA_DESTNOM ","C"      ,          40,          00,"Nom.Cliente  ","Nom.Cliente  ","Nom.Cliente  ","Nom.Cliente              ","Nom.Cliente              ","Nom.Cliente              ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"18"      ,"ZA_ESTDCLI ","C"      ,          02,          00,"UF Cliente   ","UF Cliente   ","UF Cliente   ","UF Cliente               ","UF Cliente               ","UF Cliente               ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"19"      ,"ZA_TES     ","C"      ,          03,          00,"TES          ","TES          ","TES          ","TES                      ","TES                      ","TES                      ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+Aadd(aSX3,{	"SZA"       ,"20"      ,"ZA_TRANSP  ","C"      ,          06,          00,"Transport.   ","Transport.   ","Transport.   ","Transportadora           ","Transportadora           ","Transportadora           ","@!                 ","                                      ","€€€€€€€€€€€€€€    ","           ","       ",1         ,"€        ","          ","          ","P         ","S          ","A        ","R          ","          ","           ","                                                                                           ","                                                                                           ","                                                                                           ","          ","       ","         ","         ","         ","       ","          "})
+
+dbSelectArea("SX3")
+dbSetOrder(2)
+
+For i:= 1 To Len(aSX3)
+	If !Empty(aSX3[i][1])
+		If !dbSeek(aSX3[i,3])
+			RecLock("SX3",.T.)
+			For j:=1 To Len(aSX3[i])
+				If FieldPos(aEstrut[j])>0
+					FieldPut(FieldPos(aEstrut[j]),aSX3[i,j])
+				EndIf
+			Next j
+			dbCommit()
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+//Atualizar X3_VLDUSER de alguns campos da tabela SC6
+aSX3 := {"C6_PRODUTO","C6_QTDVEN","C6_PRUNIT","C6_PRCVEN","C6_VALOR","C6_ENTREG"}
+For i:=1 To Len(aSX3)
+	If DbSeek(aSX3[i])
+		If !("CCRFAT16" $ SX3->X3_VLDUSER)
+			RecLock("SX3",.F.)
+			If Empty(SX3->X3_VLDUSER)
+				SX3->X3_VLDUSER := "U_CCRFAT16()"
+			Else
+				SX3->X3_VLDUSER := AllTrim(SX3->X3_VLDUSER)+".And.U_CCRFAT16()"
+			EndIf
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fAtuSIX  บAutor  บFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fAtuSIX()
+
+Local aSIX   := {}
+Local aEstrut:= {}
+Local i      := 0
+Local j      := 0
+
+aEstrut := {"INDICE","ORDEM","CHAVE","DESCRICAO","DESCSPA","DESCENG","PROPRI","F3","NICKNAME"}
+
+//------------------- SZ2 -------------------
+Aadd(aSIX,{	"SZ2","1","Z2_FILIAL+Z2_NUM",;
+"Numero",;
+"Numero",;
+"Numero",;
+"S","",""})
+
+Aadd(aSIX,{	"SZ2","2","Z2_FILIAL+DTOS(Z2_EMISSAO)+Z2_NUM",;
+"DT Emissao + Numero",;
+"DT Emissao + Numero",;
+"DT Emissao + Numero",;
+"S","",""})
+
+Aadd(aSIX,{	"SZ2","3","Z2_FILIAL+Z2_CLIENTE+Z2_LOJACLI+Z2_NUM",;
+"Cliente + Loja + Numero",;
+"Cliente + Loja + Numero",;
+"Cliente + Loja + Numero",;
+"S","",""})
+
+Aadd(aSIX,{	"SZ2","4","Z2_FILIAL+Z2_XCLIENT",;
+"Razao Social",;
+"Razao Social",;
+"Razao Social",;
+"S","",""})
+
+Aadd(aSIX,{	"SZ2","5","Z2_FILIAL+Z2_NUMSFA",;
+"N.Portal",;
+"N.Portal",;
+"N.Portal",;
+"S","",""})
+
+//------------------- SZ3 -------------------
+Aadd(aSIX,{	"SZ3","1","Z3_FILIAL+Z3_NUM+Z3_ITEM+Z3_PRODUTO",;
+"Num. Pedido + Item + Produto",;
+"Num. Pedido + Item + Produto",;
+"Num. Pedido + Item + Produto",;
+"S","",""})
+
+Aadd(aSIX,{	"SZ3","2","Z3_FILIAL+Z3_PRODUTO+Z3_NUM+Z3_ITEM",;
+"Produto + Num. Pedido + Item",;
+"Produto + Num. Pedido + Item",;
+"Produto + Num. Pedido + Item",;
+"S","",""})
+
+
+Aadd(aSIX,{	"SZ3","3","Z3_FILIAL+DTOS(Z3_ENTREG)+Z3_NUM+Z3_ITEM",;
+"Entrega + Num. Pedido + Item",;
+"Entrega + Num. Pedido + Item",;
+"Entrega + Num. Pedido + Item",;
+"S","",""})
+
+Aadd(aSIX,{	"SZ3","4","Z3_FILIAL+Z3_NUMSFA+Z3_ITEMSFA",;
+"N.Portal + Item Portal",;
+"N.Portal + Item Portal",;
+"N.Portal + Item Portal",;
+"S","",""})
+
+//------------------- SZA -------------------
+Aadd(aSIX,{	"SZA","1","ZA_FILIAL+ZA_PRENUM+ZA_PREITEM",;
+"Num.Pre.Ped + Itm Pre.Ped",;
+"Num.Pre.Ped + Itm Pre.Ped",;
+"Num.Pre.Ped + Itm Pre.Ped",;
+"S","",""})
+
+Aadd(aSIX,{	"SZA","2","ZA_FILIAL+ZA_ORIGFIL+ZA_PEDNUM+ZA_PEDITEM",;
+"Orig.Filial + Num.Pedido + Itm Pedido",;
+"Orig.Filial + Num.Pedido + Itm Pedido",;
+"Orig.Filial + Num.Pedido + Itm Pedido",;
+"S","",""})
+
+Aadd(aSIX,{	"SZA","3","ZA_FILIAL+ZA_DESTCLI+ZA_DESTLOJ+ZA_PEDNUM+ZA_PEDITEM",;
+"Cod.Cliente + Loj.Cliente + Num.Pedido + Itm Pedido",;
+"Cod.Cliente + Loj.Cliente + Num.Pedido + Itm Pedido",;
+"Cod.Cliente + Loj.Cliente + Num.Pedido + Itm Pedido",;
+"S","",""})
+
+dbSelectArea("SIX")
+dbSetOrder(1)
+
+For i:= 1 To Len(aSIX)
+	If !Empty(aSIX[i,1])
+		If !dbSeek(aSIX[i,1]+aSIX[i,2])
+			RecLock("SIX",.T.)
+			For j:=1 To Len(aSIX[i])
+				If FieldPos(aEstrut[j])>0
+					FieldPut(FieldPos(aEstrut[j]),aSIX[i,j])
+				EndIf
+			Next j
+			dbCommit()
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fAtuSX6 บ Autor บ Felipe Aur้lio de Melo บ Data บ 28/08/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fAtuSX6()
+
+Local aSX6   	:= {}
+Local aEstrut	:= {}
+Local i      	:= 0
+Local j      	:= 0
+
+aEstrut:= { "X6_FIL","X6_VAR","X6_TIPO","X6_DESCRIC","X6_DSCSPA","X6_DSCENG","X6_DESC1","X6_DSCSPA1","X6_DSCENG1",;
+"X6_DESC2","X6_DSCSPA2","X6_DSCENG2","X6_CONTEUD","X6_CONTSPA","X6_CONTENG","X6_PROPRI"}
+
+// Limite de 50 caracteres por descri็ใo
+AADD(aSX6,{	Space(2),"MV_PREPVRV","C",;
+"0=Nenhum, 1=Todos,                     ","0=Nenhum, 1=Todos,                     ","0=Nenhum, 1=Todos,                     ",;
+"2=Originados do Portal,                ","2=Originados do Portal,                ","2=Originados do Portal,                ",;
+"3=Originados do Microsiga              ","3=Originados do Microsiga              ","3=Originados do Microsiga              ",;
+"1","1","1",;
+"S"})
+
+dbSelectArea("SX6")
+dbSetOrder(1)
+For i:= 1 To Len(aSX6)
+	If !Empty(aSX6[i][2])
+		If !dbSeek(aSX6[i,1]+aSX6[i,2])
+			RecLock("SX6",.T.)
+			For j:=1 To Len(aSX6[i])
+				If !Empty(FieldName(FieldPos(aEstrut[j])))
+					FieldPut(FieldPos(aEstrut[j]),aSX6[i,j])
+				EndIf
+			Next j
+			dbCommit()
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บfAtuSX7บAutorบFelipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fAtuSX7()
+
+Local aSX7   := {}
+Local aEstrut:= {}
+Local i      := 0
+Local j      := 0
+
+aEstrut := {"X7_CAMPO","X7_SEQUENC","X7_REGRA","X7_CDOMIN","X7_TIPO","X7_SEEK","X7_ALIAS","X7_ORDEM","X7_CHAVE","X7_CONDIC","X7_PROPRI"}
+
+// Gatilhos do SZ2
+Aadd(aSX7,{"Z2_CLIENTE","001","SA1->A1_NOME"                                                                                     ,"Z2_XCLIENT","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI","M->Z2_XTPPED<>'2'"           ,"U"})
+Aadd(aSX7,{"Z2_CLIENTE","002","SA1->A1_EST"                                                                                      ,"Z2_XESTCLI","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI","M->Z2_XTPPED<>'2'"           ,"U"})
+Aadd(aSX7,{"Z2_CLIENTE","003","SA1->A1_TIPO"                                                                                     ,"Z2_TIPOCLI","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI","M->Z2_XTPPED<>'2'"           ,"U"})
+
+Aadd(aSX7,{"Z2_CLIENTE","004","SA1->A1_VEND"                                                                                     ,"Z2_VEND1"  ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_CLIENTE","005","SA3->A3_COMIS"                                                                                    ,"Z2_COMIS1" ,"P","S","SA3",1,"XFILIAL('SA3')+M->Z2_VEND1"                ,""                            ,"U"})
+//dd(aSX7,{"Z2_CLIENTE","005","SA1->A1_COMIS"                                                                                    ,"Z2_COMIS1" ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_CLIENTE","006","SA1->A1_XVEND2"                                                                                   ,"Z2_VEND2"  ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_CLIENTE","007","SA3->A3_COMIS"                                                                                    ,"Z2_COMIS2" ,"P","S","SA3",1,"XFILIAL('SA3')+M->Z2_VEND2"                ,""                            ,"U"})
+//dd(aSX7,{"Z2_CLIENTE","007","SA1->A1_XCOMIS2"                                                                                  ,"Z2_COMIS2" ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_CLIENTE","008","SA1->A1_XVEND3"                                                                                   ,"Z2_VEND3"  ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_CLIENTE","009","SA3->A3_COMIS"                                                                                    ,"Z2_COMIS3" ,"P","S","SA3",1,"XFILIAL('SA3')+M->Z2_VEND3"                ,""                            ,"U"})
+//dd(aSX7,{"Z2_CLIENTE","009","SA1->A1_XCOMIS3"                                                                                  ,"Z2_COMIS3" ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_CLIENTE","010","If(M->Z2_XTPPED<>'2',M->Z2_CLIENTE,' ')"                                                          ,"Z2_CLIENT" ,"P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z2_CLIENTE","011","If(M->Z2_XTPPED<>'2',M->Z2_LOJACLI,' ')"                                                          ,"Z2_LOJAENT","P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","001","SA1->A1_NOME"                                                                                     ,"Z2_XCLIENT","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI","M->Z2_XTPPED<>'2'"           ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","002","SA1->A1_EST"                                                                                      ,"Z2_XESTCLI","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI","M->Z2_XTPPED<>'2'"           ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","003","SA1->A1_TIPO"                                                                                     ,"Z2_TIPOCLI","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI","M->Z2_XTPPED<>'2'"           ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","004","SA1->A1_VEND"                                                                                     ,"Z2_VEND1"  ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","005","SA1->A1_COMIS"                                                                                    ,"Z2_COMIS1" ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","006","SA1->A1_XVEND2"                                                                                   ,"Z2_VEND2"  ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","007","SA1->A1_XCOMIS2"                                                                                  ,"Z2_COMIS2" ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","008","SA1->A1_XVEND3"                                                                                   ,"Z2_VEND3"  ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","009","SA1->A1_XCOMIS3"                                                                                  ,"Z2_COMIS3" ,"P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENTE+M->Z2_LOJACLI",""                            ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","010","If(M->Z2_XTPPED<>'2',M->Z2_CLIENTE,' ')"                                                          ,"Z2_CLIENT" ,"P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z2_LOJACLI","011","If(M->Z2_XTPPED<>'2',M->Z2_LOJACLI,' ')"                                                          ,"Z2_LOJAENT","P","N",""   ,0,""                                          ,""                            ,"U"})
+//Aadd(aSX7,{"Z2_LOJAENT","001","SA1->A1_NOME"                                                                                     ,"Z2_XCLIENT","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENT+M->Z2_LOJAENT" ,""                            ,"U"})
+//Aadd(aSX7,{"Z2_LOJAENT","002","SA1->A1_EST"                                                                                      ,"Z2_XESTCLI","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENT+M->Z2_LOJAENT" ,""                            ,"U"})
+//Aadd(aSX7,{"Z2_LOJAENT","003","SA1->A1_TIPO"                                                                                     ,"Z2_TIPOCLI","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENT+M->Z2_LOJAENT" ,""                            ,"U"})
+//Aadd(aSX7,{"Z2_CLIENT" ,"001","SA1->A1_NOME"                                                                                     ,"Z2_XCLIENT","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENT+M->Z2_LOJAENT" ,""                            ,"U"})
+//Aadd(aSX7,{"Z2_CLIENT" ,"002","SA1->A1_EST"                                                                                      ,"Z2_XESTCLI","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENT+M->Z2_LOJAENT" ,""                            ,"U"})
+//Aadd(aSX7,{"Z2_CLIENT" ,"003","SA1->A1_TIPO"                                                                                     ,"Z2_TIPOCLI","P","S","SA1",1,"XFILIAL('SA1')+M->Z2_CLIENT+M->Z2_LOJAENT" ,""                            ,"U"})
+Aadd(aSX7,{"Z2_VEND1"  ,"001","SA3->A3_COMIS"                                                                                    ,"Z2_COMIS1" ,"P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z2_VEND2"  ,"001","SA3->A3_COMIS"                                                                                    ,"Z2_COMIS2" ,"P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z2_VEND3"  ,"001","SA3->A3_COMIS"                                                                                    ,"Z2_COMIS3" ,"P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z2_XTPPED" ,"001","If(M->Z2_XTPPED<>'2',M->Z2_CLIENTE,' ')"                                                          ,"Z2_CLIENT" ,"P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z2_XTPPED" ,"002","If(M->Z2_XTPPED<>'2',M->Z2_LOJACLI,' ')"                                                          ,"Z2_LOJAENT","P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z2_MOEDA"  ,"001","CTO->CTO_DESC"                                                                                    ,"Z2_XDMOEDA","P","S","CTO",1,"XFILIAL('CTO')+StrZero(M->Z2_MOEDA,2)"     ,""                            ,"U"})
+Aadd(aSX7,{"Z2_TABELA" ,"001","DA0->DA0_DESCRI"                                                                                  ,"Z2_DESCTAB","P","S","DA0",1,"XFILIAL('DA0')+M->Z2_TABELA"               ,""                            ,"U"})
+Aadd(aSX7,{"Z2_CONDPAG","001","SE4->E4_DESCRI"                                                                                   ,"Z2_DESCOND","P","S","SE4",1,"XFILIAL('SE4')+M->Z2_CONDPAG"              ,""                            ,"U"})
+
+// Gatilhos do SZ3
+Aadd(aSX7,{"Z3_PRODUTO","001","SB1->B1_DESC"                                                                                     ,"Z3_DESCRI" ,"P","S","SB1",1,"XFILIAL('SB1')+M->Z3_PRODUTO"              ,""                            ,"U"})
+Aadd(aSX7,{"Z3_PRODUTO","002","SB1->B1_UM"                                                                                       ,"Z3_UM"     ,"P","S","SB1",1,"XFILIAL('SB1')+M->Z3_PRODUTO"              ,""                            ,"U"})
+Aadd(aSX7,{"Z3_PRODUTO","003","xMoeda(DA1->DA1_PRCVEN,DA1->DA1_MOEDA,M->Z2_MOEDA,M->Z2_EMISSAO)"                                 ,"Z3_PRUNIT" ,"P","S","DA1",2,"XFILIAL('DA1')+M->Z3_PRODUTO+M->Z2_TABELA" ,""                            ,"U"})
+Aadd(aSX7,{"Z3_PRODUTO","004","M->Z2_XDESPER"                                                                                    ,"Z3_XDESPER","P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z3_PRODUTO","005","(M->Z3_PRCVEN-(M->Z3_PRCVEN*(M->Z2_COMIS2/100)))*(M->Z3_XDESPER/100)"                             ,"Z3_XDESFIN","P","N",""   ,0,""                                          ,""                            ,"U"})
+
+Aadd(aSX7,{"Z3_QTDVEN" ,"001","M->Z3_QTDVEN*M->Z3_PRCVEN"                                                                        ,"Z3_VALOR"  ,"P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z3_QTDVEN" ,"002","M->Z3_QTDVEN-M->Z3_QTDLIB"                                                                        ,"Z3_QTDPEN" ,"P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z3_QTDVEN" ,"003","(M->Z3_PRCVEN-(M->Z3_PRCVEN*(M->Z2_COMIS2/100)))*(M->Z3_XDESPER/100)"                             ,"Z3_XDESFIN","P","N",""   ,0,""                                          ,""                            ,"U"})
+
+Aadd(aSX7,{"Z3_PRCVEN" ,"001","M->Z3_QTDVEN*M->Z3_PRCVEN"                                                                        ,"Z3_VALOR"  ,"P","N",""   ,0,""                                          ,""                            ,"U"})
+Aadd(aSX7,{"Z3_PRCVEN" ,"002","(M->Z3_PRCVEN-(M->Z3_PRCVEN*(M->Z2_COMIS2/100)))*(M->Z3_XDESPER/100)"                             ,"Z3_XDESFIN","P","N",""   ,0,""                                          ,""                            ,"U"})
+
+Aadd(aSX7,{"Z3_XDESPER","001","(M->Z3_PRCVEN-(M->Z3_PRCVEN*(M->Z2_COMIS2/100)))*(M->Z3_XDESPER/100)"                             ,"Z3_XDESFIN","P","N",""   ,0,""                                          ,""                            ,"U"})
+
+Aadd(aSX7,{"Z3_XDESFIN","001","(M->Z3_XDESFIN*100)/(M->Z3_PRCVEN-(M->Z3_PRCVEN*(M->Z2_COMIS2/100)))"                             ,"Z3_XDESPER","P","N",""   ,0,""                                          ,""                            ,"U"})
+
+
+
+dbSelectArea("SX7")
+dbSetOrder(1)
+
+For i:= 1 To Len(aSX7)
+	If !Empty(aSX7[i,1])
+		If SX7->(!dbSeek(Padr(aSX7[i,1],Len(SX7->X7_CAMPO))+aSX7[i,2]))
+			RecLock("SX7",.T.)
+			For j:=1 To Len(aSX7[i])
+				If FieldPos(aEstrut[j])>0
+					FieldPut(FieldPos(aEstrut[j]),aSX7[i,j])
+				EndIf
+			Next j
+			dbCommit()
+			MsUnLock("SX7")
+		EndIf
+		SX3->(DbSetOrder(2))
+		If SX3->(DbSeek(aSX7[i,1]))
+			RecLock("SX3",.F.)
+			SX3->X3_TRIGGER := "S"
+			MsUnLock("SX3")
+		EndIf
+	EndIf
+Next i
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fAtuSXB บ Autor บ Felipe Aur้lio de Melo บ Data บ 25/08/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fAtuSXB()
+
+Local aSXB   := {}
+Local aEstrut:= {}
+Local i      := 0
+Local j      := 0
+
+aEstrut:= {"XB_ALIAS","XB_TIPO","XB_SEQ","XB_COLUNA","XB_DESCRI","XB_DESCSPA","XB_DESCENG","XB_CONTEM"}
+
+aAdd(aSXB,{"SZ4FIL","1","01","DB","Controle Expedicao  ","Controle Expedicao  ","Controle Expedicao  ","SZ4"      } )
+aAdd(aSXB,{"SZ4FIL","2","01","01","Uf destino + Priorid","Uf destino + Priorid","Uf destino + Priorid",""         } )
+aAdd(aSXB,{"SZ4FIL","4","01","01","Prioridade          ","Prioridade          ","Prioridade          ","Z4_PRIORI"} )
+aAdd(aSXB,{"SZ4FIL","4","01","02","Filial Orig         ","Filial Orig         ","Filial Orig         ","Z4_FILORI"} )
+aAdd(aSXB,{"SZ4FIL","4","01","03","Nome Filial         ","Nome Filial         ","Nome Filial         ","Z4_FILNOM"} )
+aAdd(aSXB,{"SZ4FIL","4","01","04","Armazem             ","Armazem             ","Armazem             ","Z4_LOCAL" } )
+aAdd(aSXB,{"SZ4FIL","4","01","05","Nome Armazem        ","Nome Armazem        ","Nome Armazem        ","Z4_LOCNOM"} )
+aAdd(aSXB,{"SZ4FIL","4","01","06","Transport.          ","Transport.          ","Transport.          ","Z4_TRANSP"} )
+aAdd(aSXB,{"SZ4FIL","5","01",""  ,""                    ,""                    ,""                    ,"SZ4->Z4_PRIORI"} )
+aAdd(aSXB,{"SZ4FIL","6","01",""  ,""                    ,""                    ,""                    ,"SZ4->Z4_UFDEST==cSz4Dest"} )
+
+dbSelectArea("SXB")
+dbSetOrder(1)
+For i:= 1 To Len(aSXB)
+	If !Empty(aSXB[i][1])
+		If !dbSeek(Padr(aSXB[i,1], Len(SXB->XB_ALIAS))+aSXB[i,2]+aSXB[i,3]+aSXB[i,4])
+			RecLock("SXB",.T.)
+			For j:=1 To Len(aSXB[i])
+				If !Empty(FieldName(FieldPos(aEstrut[j])))
+					FieldPut(FieldPos(aEstrut[j]),aSXB[i,j])
+				EndIf
+			Next j
+			dbCommit()
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ M410Lib บ Autor บ Felipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function M410Lib()
+
+Local cStrCad   := ""
+Local cTitCad   := ""
+
+Local aSizeAut  := MsAdvSize()
+Local aInfo     := {aSizeAut[1],aSizeAut[2],aSizeAut[3],aSizeAut[4],3,3}
+Local aObjects  := {}
+Local aPosObj   := {}
+
+Local nOpcao    := 0
+Local aButtons  := {}
+Local bOk       := {}
+Local bCancel   := {}
+
+Local lLoopPerg := .T.
+
+Private oDlLib, oGdTrt, oEcLib
+Private oPnlDiv1, oPnlNom1, oGdDiv1
+Private oPnlDiv2, oPnlNom2, oGdDiv2
+Private cRecnos := ""
+Private aSaldos := {}
+Private cSz4Dest:= "" //Nunca remover esta variavel pois ้ usando num filtro SXB
+
+//Caso cancele os parametros
+//nใo entrar na tela de libera็ใo
+If !fVldPerg()
+	Return
+EndIf
+
+//------------------------------------------------------------------------------------------------------
+
+//Monta estrutura das telas
+aObjects := {}
+aAdd(aObjects,{100,080,.T.,.F.})
+aAdd(aObjects,{100,100,.T.,.T.})
+aPosObj   := MsObjSize(aInfo,aObjects)
+
+//Define funcionalidades dos bot๕es do cabe็alho
+nOpcao    := 0
+bOk       := { || IIf(oGdTrt:TudoOk() , (nOpcao:=1 , oDlLib:End()) , nOpcao:=0) }
+bCancel   := { || nOpcao:=0 , oDlLib:End() }
+aButtons  := {}
+aAdd(aButtons,{"SELECT"     ,{|| fMarcaTudo() },"Selecionar"  })
+aAdd(aButtons,{"PMSPESQ"    ,{|| fFiltraPrg(oDlLib,aPosObj) },"Novo Filtro" })
+
+//Monta tela
+cStrCad   := "SZA"
+cTitCad   := "Valida็ใo Pr้-Pedido de Vendas ["+cStrCad+"]"
+
+Define MsDialog oDlLib Title cTitCad From aSizeAut[7],0 To aSizeAut[6],aSizeAut[5] Of oMainWnd Pixel
+/*Cabec*/   fEnchoice(oDlLib,@oEcLib,aPosObj)
+/*Valida*/  Processa({||fVldPrePed(oDlLib,aPosObj)},"Processando","Aguarde , selecionando pr้-pedidos...",.F.)
+
+//Carrega Grade de Dados do cabe็alho
+/*Produto*/ fClcGDPrd()
+/*Resumo*/  fClcGDRsm()
+
+Activate MsDialog oDlLib On Init EnchoiceBar(oDlLib,bOk,bCancel,,aButtons)
+
+//Finaliza rotina caso cancelado
+If nOpcao == 1
+	Processa({|| fIncPedVend(oGdTrt)},"Processando","Aguarde , processando pr้-pedidos selecionados...",.F.)
+EndIf
+
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fClcGDRsm บAutorบ Felipe Aur้lio de Melo บ Data บ 03/09/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fClcGDRsm(nLinAt)
+
+Local nSaldoD    := 00
+Local nPVLibT    := 00
+Local nPosPrdTop := aScan(oGdDiv1:aHeader,{|x|AllTrim(x[2])=="ZA_PRODUTO" })
+Local nPosChkBox := aScan(oGdTrt:aHeader ,{|x|AllTrim(x[2])=="ZA_CHKBOX"  })
+Local nPosPrdItm := aScan(oGdTrt:aHeader ,{|x|AllTrim(x[2])=="ZA_PRODUTO" })
+Local nPosFilial := aScan(oGdTrt:aHeader ,{|x|AllTrim(x[2])=="ZA_FILIAL"  })
+Local nPosArmaze := aScan(oGdTrt:aHeader ,{|x|AllTrim(x[2])=="ZA_LOCAL"   })
+Local nPosQtdSel := aScan(oGdTrt:aHeader ,{|x|AllTrim(x[2])=="ZA_QTDELIB" })
+
+Default nLinAt   := 0
+
+//Zera aCols
+oGdDiv2:aCols  := {}
+
+If nLinAt > 0
+	For x:=1 To Len(oGdTrt:aCols)
+		If AllTrim(oGdTrt:aCols[x][nPosPrdItm]) == AllTrim(oGdDiv1:aCols[nLinAt][nPosPrdTop]) .And. AllTrim(oGdTrt:aCols[x][nPosChkBox]) == "LBTIK"
+			nLinPsq := aScan(oGdDiv2:aCols,{|y|AllTrim(y[1])+AllTrim(y[2])==AllTrim(oGdTrt:aCols[x][nPosFilial])+AllTrim(oGdTrt:aCols[x][nPosArmaze])})
+			If nLinPsq  == 0
+				nSaldoD  := 00
+				nPVLibT  := 00
+				//Calcula Saldo SB2
+				If SB2->(DbSeek(oGdTrt:aCols[x][nPosFilial]+oGdTrt:aCols[x][nPosPrdItm]+oGdTrt:aCols[x][nPosArmaze]))
+					While SB2->(!Eof()) .And. SB2->B2_FILIAL+SB2->B2_COD+SB2->B2_LOCAL == oGdTrt:aCols[x][nPosFilial]+oGdTrt:aCols[x][nPosPrdItm]+oGdTrt:aCols[x][nPosArmaze]
+						nSaldoD += SB2->B2_QATU - (SB2->B2_QACLASS + SB2->B2_QEMP)// + SB2->B2_RESERVA)
+						SB2->(DbSkip())
+					End
+				EndIf
+				//Calcula P.V. Liberados
+				nPVLibT := fCalcPVLib(oGdTrt:aCols[x][nPosFilial],oGdTrt:aCols[x][nPosPrdItm],oGdTrt:aCols[x][nPosArmaze])
+				nSaldoD -= nPVLibT
+				
+				//Adiciona no Array
+				aAdd(oGdDiv2:aCols,{oGdTrt:aCols[x][nPosFilial],oGdTrt:aCols[x][nPosArmaze],nSaldoD,oGdTrt:aCols[x][nPosQtdSel],nSaldoD-oGdTrt:aCols[x][nPosQtdSel],.F.})
+				
+			Else
+				oGdDiv2:aCols[nLinPsq][4] += oGdTrt:aCols[x][nPosQtdSel]
+				oGdDiv2:aCols[nLinPsq][5] -= oGdTrt:aCols[x][nPosQtdSel]
+			EndIf
+		EndIf
+	Next x
+EndIf
+
+
+
+If Len(oGdDiv2:aCols) == 0
+	//Cria uma linha no aCols caso esteja vazio
+	aAdd(oGdDiv2:aCols,{"","",0,0,0,.F.})
+Else
+	aSort(oGdDiv2:aCols,,,{|x,y| x[1]+x[2] < y[1]+y[2] })
+EndIf
+
+oGdDiv2:oBrowse:Refresh()
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fClcGDPrd บAutorบ Felipe Aur้lio de Melo บ Data บ 03/09/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fClcGDPrd()
+
+Local nPosChkBox  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_CHKBOX"  })
+Local nPosProduto := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_PRODUTO" })
+Local nPosDescric := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_DESC2"   })
+
+oGdDiv1:aCols := {}
+
+//Carrega Acols
+For x:=1 To Len(oGdTrt:aCols)
+	If aScan(oGdDiv1:aCols,{|y|AllTrim(y[3])==AllTrim(oGdTrt:aCols[x][nPosProduto])}) == 0
+		aAdd(oGdDiv1:aCols,{"LBNO","001",oGdTrt:aCols[x][nPosProduto],oGdTrt:aCols[x][nPosDescric],.F.})
+	EndIf
+Next x
+
+//Ordena Array
+fDiv1Ordm()
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fDiv1Ordm บAutorบ Felipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fDiv1Ordm(nCol)
+
+Local n1          := aScan(oGdDiv1:aHeader,{|k|AllTrim(k[2])=="ZA_PRODUTO"})
+Local n2          := aScan(oGdDiv1:aHeader,{|k|AllTrim(k[2])=="ZA_DESC2"  })
+Default nCol      := 3
+
+//Ordena por Descri็ใo
+If nCol == 3
+	aSort(oGdDiv1:aCols,,,{|x,y| x[n1]+x[n2] < y[n1]+y[n2] })
+ElseIf nCol == 4
+	aSort(oGdDiv1:aCols,,,{|x,y| x[n2]+x[n1] < y[n2]+y[n1] })
+EndIf
+
+//Refaz coluna ordem
+If Len(oGdDiv1:aCols) > 0
+	For x:=1 To Len(oGdDiv1:aCols)
+		oGdDiv1:aCols[x][1] := "LBNO"
+		oGdDiv1:aCols[x][2] := StrZero(x,3)
+	Next x
+	oGdDiv1:oBrowse:nAt:= 1
+	oGdDiv1:oBrowse:Refresh()
+	oGdDiv1:oBrowse:SetFocus()
+EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fTrtOrdm  บAutorบ Felipe Aur้lio de Melo บ Data บ 27/11/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fTrtOrdm(nCol)
+
+Local n01          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_DESC2"   })
+Local n02          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_PRODUTO" })
+
+Local n03          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_NOME"    })
+Local n04          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_CLI"     })
+Local n05          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_LOJA"    })
+
+Local n06          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_FILIAL"  })
+Local n07          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_LOCAL"   })
+Local n08          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_UFDEST"  })
+
+Local n09          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_NUM"     })
+Local n10          := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_ITEM"    })
+
+Local nLin         := oGdTrt:oBrowse:nAt
+
+Local cPos         := oGdTrt:aCols[nLin][n04] +;
+oGdTrt:aCols[nLin][n05] +;
+oGdTrt:aCols[nLin][n06] +;
+oGdTrt:aCols[nLin][n07] +;
+oGdTrt:aCols[nLin][n08] +;
+oGdTrt:aCols[nLin][n09] +;
+oGdTrt:aCols[nLin][n10]
+
+Default nCol      := n1
+
+//Ordena por Descri็ใo
+Do Case
+	Case nCol == n01
+		aSort(oGdTrt:aCols,,,{|x,y| x[n01]+x[n02] < y[n01]+y[n02] })
+		
+	Case nCol == n03
+		aSort(oGdTrt:aCols,,,{|x,y| x[n03]+x[n04]+x[n05] < y[n03]+y[n04]+y[n05] })
+		
+	Case nCol == n06
+		aSort(oGdTrt:aCols,,,{|x,y| x[n06]+x[n07]+x[n08] < y[n06]+y[n07]+y[n08] })
+		
+EndCase
+
+nLin := aScan(oGdTrt:aCols,{|x|(x[n04]+x[n05]+x[n06]+x[n07]+x[n08]+x[n09]+x[n10])==cPos})
+
+Do Case
+	//Refaz coluna ordem
+	Case Len(oGdTrt:aCols) > 0 .And. nLin <= Len(oGdTrt:aCols)
+		oGdTrt:oBrowse:nAt := nLin
+		oGdTrt:oBrowse:Refresh()
+		oGdTrt:oBrowse:SetFocus()
+		
+		//Refaz coluna ordem
+	Case Len(oGdTrt:aCols) > 0
+		oGdTrt:oBrowse:nAt := 1
+		oGdTrt:oBrowse:Refresh()
+		oGdTrt:oBrowse:SetFocus()
+		
+EndCase
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fDiv1Clik บAutorบ Felipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fDiv1Clik()
+
+Local nPosChkBox  := aScan(oGdDiv1:aHeader,{|x|AllTrim(x[2])=="ZA_CHKBOX"  })
+Local nLinhaEdita := oGdDiv1:oBrowse:nAt
+
+//If oGdDiv1:oBrowse:ColPos == nPosChkBox
+For x:=1 To Len(oGdDiv1:aCols)
+	oGdDiv1:aCols[x][1] := "LBNO"
+	oGdDiv1:aCols[x][2] := StrZero(x,3)
+Next x
+oGdDiv1:aCols[nLinhaEdita][nPosChkBox] := "LBTICK"
+oGdDiv1:oBrowse:nAt:= nLinhaEdita
+oGdDiv1:oBrowse:Refresh()
+oGdDiv1:oBrowse:SetFocus()
+
+fClcGDRsm(nLinhaEdita)
+//EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บ fFiltraPrgบAutorบ Felipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fFiltraPrg(oDlLib,aPosObj)
+
+Local nPosChkBox := 0
+Local lLoopPerg  := .T.
+
+If !fVldPerg()
+	Return
+EndIf
+
+oGdTrt := Nil
+Processa({||fVldPrePed(oDlLib,aPosObj)},"Processando","Aguarde , selecionando pr้-pedidos...",.F.)
+fClcGDPrd()
+fClcGDRsm()
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณfTrataQbraบAutor  ณFelipe Aur้lio de Melo บ Data ณ 01/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por tratar as quebras numa string       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fTrataQbra(cTrataStr)
+
+Local cRet 			:= ""
+Local i    			:= 0
+
+cTrataStr  := StrTran(cTrataStr," ","")
+
+cRet += "'"
+If Len(cTrataStr) > 3
+	For i:=1 to Len(cTrataStr)
+		If SubStr(cTrataStr,i,1) $ "/\;-|,:*"
+			cRet  += "','"
+		Else
+			cRet  += SubStr(cTrataStr,i,1)
+		EndIf
+	Next
+Else
+	cRet  += AllTrim(cTrataStr)
+EndIf
+cRet += "'"
+
+Return(cRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fCriaQry บAutor  ณFelipe Aur้lio de Melo บ Data ณ 01/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por criar e executar query              บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fCriaQry(cRecnos)
+
+Local cQuery        := ""
+Local cFiltra       := ""
+Default cRecnos  	:= ""
+
+Private lForcaPrd	:= .f. 	// Daniel franciulli - tratamento de principios ativos
+Private cCodPrCom	:= "" 	// Daniel franciulli - tratamento de principios ativos
+
+//Apenas recarrega parametros preenchido
+Pergunte(cPerg,.F.)
+
+cQuery := Chr(13)+Chr(10)+" SELECT "
+cQuery += Chr(13)+Chr(10)+" 'LBTIK' Z3_FLAG, "
+cQuery += Chr(13)+Chr(10)+" Z3_NUM, "
+cQuery += Chr(13)+Chr(10)+" Z3_ITEM, "
+cQuery += Chr(13)+Chr(10)+" Z2_CLIENTE Z3_CLI, "
+cQuery += Chr(13)+Chr(10)+" Z2_LOJACLI Z3_LOJA, "
+cQuery += Chr(13)+Chr(10)+" Z2_XESTCLI, "
+cQuery += Chr(13)+Chr(10)+" Z2_XCLIENT, "
+cQuery += Chr(13)+Chr(10)+" Z2_MOEDA, "
+cQuery += Chr(13)+Chr(10)+" Z3_PRODUTO, "
+cQuery += Chr(13)+Chr(10)+" Z3_DESCRI, "
+cQuery += Chr(13)+Chr(10)+" Z3_UM, "
+cQuery += Chr(13)+Chr(10)+" Z3_QTDVEN, "
+cQuery += Chr(13)+Chr(10)+" Z3_PRCVEN, "
+cQuery += Chr(13)+Chr(10)+" Z3_VALOR, "
+cQuery += Chr(13)+Chr(10)+" Z3_ENTREG, "
+cQuery += Chr(13)+Chr(10)+" Z3_QTDLIB, "
+cQuery += Chr(13)+Chr(10)+" Z3_QTDPEN*"+Alltrim(Str(mv_par29/100))+" Z3_QTDPEN, "
+cQuery += Chr(13)+Chr(10)+" Z3_XTROCAP, "
+cQuery += Chr(13)+Chr(10)+" Z2_TABELA, "
+cQuery += Chr(13)+Chr(10)+" SZ3.R_E_C_N_O_ RECNO"
+cQuery += Chr(13)+Chr(10)+" FROM "
+cQuery += Chr(13)+Chr(10)+RetSqlName("SZ2")+" SZ2, "
+cQuery += Chr(13)+Chr(10)+RetSqlName("SZ3")+" SZ3, "
+cQuery += Chr(13)+Chr(10)+RetSqlName("SB1")+" SB1 "
+cQuery += Chr(13)+Chr(10)+" WHERE "
+cQuery += Chr(13)+Chr(10)+" SZ2.D_E_L_E_T_ = '' "
+cQuery += Chr(13)+Chr(10)+" AND SZ3.D_E_L_E_T_ = '' "
+cQuery += Chr(13)+Chr(10)+" AND SB1.D_E_L_E_T_ = '' "
+cQuery += Chr(13)+Chr(10)+" AND SZ3.Z3_NUM = SZ2.Z2_NUM "
+cQuery += Chr(13)+Chr(10)+" AND Z3_PRODUTO = B1_COD "
+cQuery += Chr(13)+Chr(10)+" AND Z3_NUM     BETWEEN '"+AllTrim(mv_par31) 	+"' AND '"+AllTrim(mv_par32) 	+"' "
+cQuery += Chr(13)+Chr(10)+" AND Z2_CLIENTE BETWEEN '"+AllTrim(mv_par01) 	+"' AND '"+AllTrim(mv_par03) 	+"' "
+cQuery += Chr(13)+Chr(10)+" AND Z2_LOJACLI BETWEEN '"+AllTrim(mv_par02) 	+"' AND '"+AllTrim(mv_par04) 	+"' "
+cQuery += Chr(13)+Chr(10)+" AND Z3_PRODUTO BETWEEN '"+AllTrim(mv_par05) 	+"' AND '"+AllTrim(mv_par06) 	+"' "
+cQuery += Chr(13)+Chr(10)+" AND Z3_ENTREG  BETWEEN '"+DtoS(mv_par10)    	+"' AND '"+DtoS(mv_par11)    	+"' "
+cQuery += Chr(13)+Chr(10)+" AND Z3_QTDPEN  BETWEEN  "+Str(mv_par24,18,6)	+"  AND  "+Str(mv_par25,18,6)	+"  "
+cQuery += Chr(13)+Chr(10)+" AND Z3_VALOR   BETWEEN  "+Str(mv_par26,18,6)	+"  AND  "+Str(mv_par27,18,6)	+"  "
+cQuery += Chr(13)+Chr(10)+" AND Z3_XLIBERA IN ('1',' ') "
+cQuery += Chr(13)+Chr(10)+" AND Z3_BLQ NOT IN ('R','S','C') "
+cQuery += Chr(13)+Chr(10)+" AND Z2_BLQ NOT IN ('0') "
+cQuery += Chr(13)+Chr(10)+" AND Z3_QTDPEN > 0 "
+
+//Daniel Franciulli - Filtro de pedidos a revisar
+If cRevisPre!="0"
+	cQuery += Chr(13)+Chr(10)+" AND Z2_BLQ<>'0' "
+Endif
+
+//Daniel Franciulli - Filtro por moeda
+If mv_par28==1 .or. mv_par28==2
+	cQuery += Chr(13)+Chr(10)+" AND Z2_MOEDA='"+Alltrim(Str(mv_par28))+"' "
+Endif
+
+// Daniel Franciulli - Vendas Conta e Ordem
+If mv_par46==2
+	cQuery += Chr(13)+Chr(10)+" AND Z2_XTPPED='2' "
+Else
+	cQuery += Chr(13)+Chr(10)+" AND Z2_XTPPED<>'2' "
+Endif
+
+// Daniel Franciulli - Filtros por vencimento
+If !Empty(mv_par14) .and. !Empty(mv_par15)
+	cQuery += Chr(13)+Chr(10)+" AND Z2_DATA1 BETWEEN '"+Dtos(mv_par14)+"' AND '"+Dtos(mv_par15)+"' "
+Endif
+
+If !Empty(mv_par12) .Or. !Empty(mv_par13)
+	cFiltra:= fTrataQbra(mv_par12+" ;"+mv_par13)
+	cQuery += Chr(13)+Chr(10)+" AND Z2_CONDPAG IN ("+cFiltra+") "
+EndIf
+
+If !Empty(mv_par16) .Or. !Empty(mv_par17)
+	cFiltra:= fTrataQbra(mv_par16+" ;"+mv_par17)
+	cQuery += Chr(13)+Chr(10)+" AND Z2_XESTCLI IN ("+cFiltra+") "
+EndIf
+
+If !Empty(mv_par18) .Or. !Empty(mv_par19)
+	cFiltra:= fTrataQbra(mv_par18+" ;"+mv_par19)
+	cQuery += Chr(13)+Chr(10)+" AND Z2_VEND1 IN ("+cFiltra+") "
+EndIf
+
+If !Empty(mv_par20) .Or. !Empty(mv_par21)
+	cFiltra:= fTrataQbra(mv_par20+" ;"+mv_par21)
+	cQuery += Chr(13)+Chr(10)+" AND Z2_VEND2 IN ("+cFiltra+") "
+EndIf
+
+If !Empty(mv_par22) .Or. !Empty(mv_par23)
+	cFiltra:= fTrataQbra(mv_par22+" ;"+mv_par23)
+	cQuery += Chr(13)+Chr(10)+" AND Z2_VEND3 IN ("+cFiltra+") "
+EndIf
+
+If !Empty(mv_par38) .Or. !Empty(mv_par39)
+	cFiltra:= fTrataQbra(mv_par38+" ;"+mv_par39)
+	cQuery += Chr(13)+Chr(10)+" AND Z2_XESTCLI NOT IN ("+cFiltra+") "
+EndIf
+
+If !Empty(mv_par40) .Or. !Empty(mv_par41) .Or. !Empty(mv_par42)
+	cFiltra:= fTrataQbra(mv_par40+" ;"+mv_par41+" ;"+mv_par42)
+	cQuery += Chr(13)+Chr(10)+" AND Z3_PRODUTO NOT IN ("+cFiltra+") "
+EndIf
+
+If !Empty(cRecnos)
+	cQuery += Chr(13)+Chr(10)+" AND SZ3.R_E_C_N_O_ NOT IN ("+cRecnos+") "
+EndIf
+
+Do Case
+	Case mv_par30 == 1
+		//Codigo Cliente
+		cQuery += " ORDER BY Z3_FILIAL, Z2_CLIENTE, Z2_LOJACLI, Z3_NUM, Z3_ITEM"
+		
+	Case mv_par30 == 2
+		//Descri็ใo Produto
+		cQuery += " ORDER BY Z3_FILIAL, Z3_DESCRI, Z3_ENTREG, Z2_CLIENTE, Z2_LOJACLI, Z3_NUM, Z3_ITEM"
+		
+	Case mv_par30 == 3
+		//Data Entrega
+		cQuery += " ORDER BY Z3_FILIAL, Z3_ENTREG, Z3_NUM, Z3_ITEM, Z2_CLIENTE, Z2_LOJACLI"
+		
+	Case mv_par30 == 4
+		//Valor Decrescente
+		cQuery += " ORDER BY Z3_FILIAL ASC, Z3_VALOR DESC, Z3_QTDVEN DESC, Z2_CLIENTE ASC, Z2_LOJACLI ASC, Z3_NUM ASC, Z3_ITEM ASC"
+		
+	Case mv_par30 == 5
+		//Quantidade Decrescente
+		cQuery += " ORDER BY Z3_FILIAL ASC, Z3_QTDVEN DESC, Z3_VALOR DESC, Z2_CLIENTE ASC, Z2_LOJACLI ASC, Z3_NUM ASC, Z3_ITEM ASC"
+		
+	Otherwise
+		//Codigo Cliente
+		cQuery += " ORDER BY Z3_FILIAL, Z2_CLIENTE, Z2_LOJACLI, Z3_NUM, Z3_ITEM"
+EndCase
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณExecuta a   query para selecao dos registros a serem processados         |
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+MemoWrite("C:\M410LIB.SQL",cQuery)
+If Select("SQL") > 0 ; SQL->(dbCloseArea()) ; EndIf
+TcQuery cQuery New Alias "SQL"
+TcSetField("SQL","Z3_ENTREG", "D", 8, 0)
+dbSelectArea("SQL")
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณfCtrQtdPrdบAutor  ณFelipe Aur้lio de Melo บ Data ณ 05/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por controlar quantidade dos produtos   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fCtrQtdPrd(nQtde,cProd,lAchaProx)
+
+Local nQtd1PorEmb := GetAdvFval("SB1","B1_QE" ,xFilial("SB1")+cProd,1," ")
+Local nQtd2PorEmb := GetAdvFval("SB5","B5_QE1",xFilial("SB5")+cProd,1," ")
+Local nQtdRestClc := 0
+Local nQtdRetorno := 0
+Local nQtdSomaPrx := 0
+Default lAchaProx := .F.
+
+IF nQtd1PorEmb > 0 .and. nQtd2PorEmb > 0
+/*  Removido por Daniel em 28/07/2010, pois entrava em looping
+	If lAchaProx
+		While lAchaProx
+			nQtdRestClc := Mod(((nQtde-nQtdSomaPrx)/nQtd1PorEmb),nQtd2PorEmb)
+			If nQtde == 0 .Or. nQtdRestClc == 0
+				lAchaProx := .F.
+				nQtde -= nQtdSomaPrx
+			Else
+				nQtdSomaPrx ++
+			EndIf
+		End
+	EndIf
+*/	
+	nQtdRestClc := Mod((nQtde/nQtd1PorEmb),nQtd2PorEmb)
+	If nQtdRestClc == 0
+		nQtdRetorno := nQtde
+	Else
+		nQtdRetorno := 0
+	End If
+Else
+	nQtdRetorno := nQtde
+EndIf
+
+Return(nQtdRetorno)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑบออออออออออุออออออออออุอออออออุอออออออออออออออออออออออุออออออุออออออออออบฑฑ
+ฑฑบPrograma  บfGDLiberaบ Autor บ Felipe Aur้lio de Melo บ Data บ 12/04/09 บฑฑ
+ฑฑบออออออออออุออออออออออออออออออฯอออออออออออออออออออออออออออฯอออออออออออออบฑฑ
+ฑฑบDesc.     บ                                                            บฑฑ
+ฑฑบ          บ                                                            บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑบUso       บ CCABM410                                                   บฑฑ
+ฑฑบออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออบฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fEnchoice(oDefTela,oEcLib,aPosObj)
+
+Local cGetOpc        := Nil                                             // GD_INSERT+GD_DELETE+GD_UPDATE
+Local cLinhaOk       := "AllwaysTrue()"                                 // Funcao executada para validar o contexto da linha atual do aCols
+Local cTudoOk        := "AllwaysTrue()"                                 // Funcao executada para validar o contexto geral da MsNewGetDados (todo aCols)
+Local cIniCpos       := Nil                                             // Nome dos campos do tipo caracter que utilizarao incremento automatico.
+Local nFreeze        := Nil                                             // Campos estaticos na GetDados.
+Local nMax           := 999                                             // Numero maximo de linhas permitidas. Valor padrao 99
+Local cCampoOk       := "AllwaysTrue()"                                 // Funcao executada na validacao do campo
+Local cSuperApagar   := Nil                                             // Funcao executada quando pressionada as teclas <Ctrl>+<Delete>
+Local cApagaOk       := Nil                                             // Funcao executada para validar a exclusao de uma linha do aCols
+Local aCbcProd       := {}                                              // Array do aHeader
+Local aItmProd       := {}                                              // Array do aCols
+Local aCbcRsmo       := {}                                              // Array do aHeader
+Local aItmRsmo       := {}                                              // Array do aCols
+
+Local aDiv1Tam := {}
+Local aDiv2Tam := {}
+
+
+//Primeiro quadro do cabe็alho (Menor)
+//===========================================================================
+
+//Iniciando variaveis
+aAdd(aDiv1Tam,{    aPosObj[1,1], aPosObj[1,2],                        aPosObj[1,3]-15,       aPosObj[1,4]/3        })
+aAdd(aCbcProd,{""               ,"ZA_CHKBOX"       ,"@BMP"               ,           1,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                 , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCbcProd,{"Ord"            ,"ZA_ORDEM"        ,"@!"                 ,           3,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                 , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCbcProd,{"Produto"        ,"ZA_PRODUTO"      ,"@!"                 ,          15,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                 , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCbcProd,{"Descri็ใo"      ,"ZA_DESC2"        ,"@!"                 ,          20,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                 , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+
+//Montando objetos
+@ aDiv1Tam[1,1]   ,aDiv1Tam[1,2] ScrollBox oPnlDiv1                   Size aDiv1Tam[1,3]    ,aDiv1Tam[1,4] Pixel Border Of oDefTela
+@ 001             ,004           MsPanel   oPnlNom1 Prompt "Produtos" Size aDiv1Tam[1,4]-09 ,010                        Of oPnlDiv1 Color CLR_BLACK,CLR_HGRAY Centered LOWERED
+oGdDiv1:=MsNewGetDados():New(012,004,aDiv1Tam[1,3]-03,aDiv1Tam[1,4]-5,cGetOpc,cLinhaOk,cTudoOk,cIniCpos,,nFreeze,nMax,cCampoOk,cSuperApagar,cApagaOk,oPnlDiv1,aCbcProd,aItmProd)
+oGdDiv1:oBrowse:bHeaderClick := {|x,y| fDiv1Ordm(y) }
+oGdDiv1:oBrowse:bLDblClick   := {|   | fDiv1Clik()  }
+
+//Segundo quadro do cabe็alho (Maior)
+//===========================================================================
+
+//Iniciando variaveis
+aAdd(aDiv2Tam,{aPosObj[1,1], aPosObj[1,2]+3+(aPosObj[1,4]/3), aPosObj[1,3]-15, ((aPosObj[1,4]/3)*2)-6})
+aAdd(aCbcRsmo,{"Filial"                            ,"ZA_FILIAL"       ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                 , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCbcRsmo,{"Armaz."                            ,"ZA_LOCAL"        ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                 , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCbcRsmo,{"Saldo Disp."                       ,"ZA_QTDSLD"       ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                 , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCbcRsmo,{"Qtde A Liberar"                    ,"ZA_QTDSEL"       ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                 , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCbcRsmo,{"Qtde Restante (Qtd Sld - Qtd Lib)" ,"ZA_QTDDIS"       ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                 , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+
+//Montando objetos
+@ aDiv2Tam[1,1]   ,aDiv2Tam[1,2] ScrollBox oPnlDiv2                  Size aDiv2Tam[1,3]     ,aDiv2Tam[1,4] Pixel Border Of oDefTela
+@ 001             ,004           MsPanel   oPnlNom2 Prompt "Resumo"  Size aDiv2Tam[1,4]-09  ,010                        Of oPnlDiv2 Color CLR_BLACK,CLR_HGRAY Centered LOWERED
+oGdDiv2:=MsNewGetDados():New(012,004,aDiv2Tam[1,3]-03,aDiv2Tam[1,4]-5,cGetOpc,cLinhaOk,cTudoOk,cIniCpos,,nFreeze,nMax,cCampoOk,cSuperApagar,cApagaOk,oPnlDiv2,aCbcRsmo,aItmRsmo)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fVldPrePed บAutorณ Felipe Aur้lio de Meloบ Data ณ 06/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por gerar os pedidos de venda           บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fVldPrePed(oDefTela,aPosObj)
+
+Local cGetOpc        := GD_UPDATE                                  // GD_INSERT+GD_DELETE+GD_UPDATE
+Local cLinhaOk       := "AllwaysTrue()"                            // Funcao executada para validar o contexto da linha atual do aCols
+Local cTudoOk        := "AllwaysTrue()"                            // Funcao executada para validar o contexto geral da MsNewGetDados (todo aCols)
+Local cIniCpos       := Nil                                        // Nome dos campos do tipo caracter que utilizarao incremento automatico.
+Local nFreeze        := Nil                                        // Campos estaticos na GetDados.
+Local nMax           := 999                                        // Numero maximo de linhas permitidas. Valor padrao 99
+Local cCampoOk       := "U_fValidGet()"                            // Funcao executada na validacao do campo
+Local cSuperApagar   := Nil                                        // Funcao executada quando pressionada as teclas <Ctrl>+<Delete>
+Local cApagaOk       := Nil                                        // Funcao executada para validar a exclusao de uma linha do aCols
+Local aCabecs        := {}                                         // Array do aHeader
+Local aCols          := {}                                         // Array do aCols
+Local xHeader        := {}                                         // Array do aHeader
+Local xCols          := {}                                         // Array do aCols
+
+Local aLocais        := {}
+Local cPrePed        := ""
+Local cItmPrd        := ""
+Local cCodPrd        := ""
+Local dEntreg        := StoD("")
+Local cDscPrd        := ""
+Local nQtdPen        := 00
+Local nQtdClc        := 00
+Local nQtdLib        := 00
+Local nVlrUnt        := 00
+Local nQulMda        := 00
+Local nVlrMoeda      := 00
+Local nRegua         := 00
+
+Private aLista		 := {}
+Private aSldPA		 := {}
+Private _aProdCom	 := {}
+Private _aListaPC	 := {}
+Private _lMark	 	 := .F.
+
+cRecnos              := ""
+aSaldos              := {}
+nQtdTotIts           := 00
+nVlrTotIts           := 00
+
+//Cria e executa query para alimentar aCols
+fCriaQry("")
+
+//             X3_TITULO       , X3_CAMPO         , X3_PICTURE          ,  X3_TAMANHO, X3_DECIMAL, X3_VALID, X3_USADO        , X3_TIPO, X3_F3 , X3_CONTEXT , X3_CBOX            , X3_RELACAO ,X3_WHEN ,X3_VISUAL, X3_VLDUSER, X3_PICTVAR, X3_OBRIGAT
+aAdd(xHeader,{" "              ,"Z3_FLAG"         ,"@BMP"               ,           1,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"N.Pre-Pedido"   ,"Z3_NUM"          ,"@!"                 ,           6,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Moeda"          ,"Z2_MOEDA"        ,""                   ,           1,          0, ""      , "€€€€€€€€€€€€€€", "N"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Item"           ,"Z3_ITEM"         ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Produto"        ,"Z3_PRODUTO"      ,"@!"                 ,          15,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Descricao"      ,"Z3_DESCRI"       ,"@S30"               ,          30,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Unidade"        ,"Z3_UM"           ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Prc Unitario"   ,"Z3_PRCVEN"       ,"@E 9999,999.999999" ,          15,          6, ""      , "€€€€€€€€€€€€€€", "N"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Vlr.Total"      ,"Z3_VALOR"        ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Qtd.Pre-Pedido" ,"Z3_QTDVEN"       ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Qtd.Liberada"   ,"Z3_QTDLIB"       ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Sld.Liberar"    ,"Z3_QTDPEN"       ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Troca Emb.?"    ,"Z3_XTROCAP"      ,"@!"                 ,           1,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , "S"        ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Cliente"        ,"Z3_CLI"          ,"@!"                 ,           6,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Loja"           ,"Z3_LOJA"         ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Razao Social"   ,"Z2_XCLIENT"      ,"@S40"               ,          40,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Entrega"        ,"Z3_ENTREG"       ,"@D"                 ,           8,          0, ""      , "€€€€€€€€€€€€€€", "D"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+aAdd(xHeader,{"Recno"          ,"RECNO"           ,""                   ,          14,          0, ""      , "€€€€€€€€€€€€€€", "N"    , ""    , "R"        , ""                 , ""         ,""      ,"V"      , ""        , ""        , ""        })
+
+dbSelectArea("SQL")
+DbGoTop()
+Count To nRegua
+SQL->(DbGoTop())
+
+// Daniel franciulli - Tratamento de principios ativos
+While SQL->(!Eof())
+	If Posicione("SB1",1,xFilial("SB1")+SQL->Z3_PRODUTO,"B1_TIPO")=="AT"
+		
+		// Busca o produto disponivel de acordo com a prioridade escolhida
+		_aProdCom := U_ProdCom(SQL->Z3_PRODUTO,SQL->Z3_QTDPEN, SQL->(Z3_NUM+Z3_ITEM))
+		_cProdCom := _aProdCom[1][1]//{SLD->PRODUTO,SLD->FILIAL,SLD->LOCAL,SLD->SALDO}
+		
+		If _cProdCom=="***************"
+			_cDescCom := "SEM PRIORIDADES CADASTRADAS"
+		Else
+			_cDescCom := Iif(Empty(_cProdCom),"",Posicione("SB1",1,xFilial("SB1")+_cProdCom,"B1_DESC"))
+		Endif
+		
+		_cFilial  := _aProdCom[1][2]
+		_cLocal   := _aProdCom[1][3]
+		_nQuant   := Alltrim(Transform(SQL->Z3_QTDPEN 	,"@E 999,999,999.99"))
+		_nSaldo   := Alltrim(Transform(_aProdCom[1][4] ,"@E 999,999,999.99"))
+		_lMarca	  := Iif(Empty(_cProdCom),.f.,.t.)
+		_cTrocaP  := Iif(SQL->Z3_XTROCAP=="S","Sim","Nใo")
+		_cTabela  := Iif(Empty(SQL->Z2_TABELA),GetMv("MV_XSFATAB"),SQL->Z2_TABELA)
+		_cErro	  := ""
+		_nSldAtu  := _aProdCom[1][4]
+		_nQtdPen  := _nQuant
+		
+		// Evita que produtos sem lista de precos aparecam
+		DbSelectArea("DA1")
+		DA1->(DbSetOrder(1))
+		If !DbSeek(xFilial("DA1")+_cTabela+SQL->Z3_PRODUTO)  //DA1_FILIAL+DA1_CODTAB+DA1_CODPRO+DA1_INDLOT+DA1_ITEM
+			_lMarca := .f.
+			_cErro	:= "Nใo existe na tabela de pre็o"
+		Endif
+
+		// Evita que produtos sem saldo entrem na liberacao
+		If _nSldAtu<SQL->Z3_QTDPEN .and. mv_par47==1
+			_lMarca := .f.
+			_cErro	:= "Nใo existe saldo disponํvel para nenhuma das marcas comerciais"			
+		Endif
+		
+		// Evitar produtos indisponiveis
+		If mv_par48==1 .or. (mv_par48==2 .and. !_cProdCom$"PROD. INDISPON./SEM PRIORIDADES")
+			aAdd(aLista,{_lMarca,SQL->Z3_NUM,SQL->Z3_ITEM,_cTrocaP,SQL->Z2_XESTCLI,SQL->Z3_CLI,SQL->Z3_LOJA,Posicione("SA1",1,xFilial("SA1")+SQL->(Z3_CLI+Z3_LOJA),"A1_NREDUZ"),SQL->Z3_PRODUTO,SQL->Z3_DESCRI,_cProdCom,_cDescCom,_nQuant,_cFilial,_nSaldo,_cLocal,_cErro})
+		Endif          
+		
+		_nPosPA := Ascan(aSldPA,{|x| x[1] == _cProdCom+_cFilial+_cLocal})
+
+		If _nPosPA==0
+			aAdd(aSldPA,{_cProdCom+_cFilial+_cLocal,_cDescCom,_cFilial,_nSldAtu,0})
+		Endif
+		
+	Endif
+	SQL->(DbSkip())
+End
+
+If Len(aLista)>0
+	
+	aSort(aLista,,,{|x,y| x[7] < y[7]})
+	
+	_oOk       	:= LoadBitmap( GetResources(), "LBOK" )
+	_oNo       	:= LoadBitmap( GetResources(), "LBNO" )
+	_oOkB		:= LoadBitmap( GetResources(), "BR_VERDE" )
+	_oNoB		:= LoadBitmap( GetResources(), "BR_BRANCO" )
+	oLista		:= Nil
+	
+	DEFINE MSDIALOG _oDlg TITLE "Substitui็ใo de Pr้-Produtos por Produtos Comerciais" FROM C(178),C(181) TO C(406),C(967) PIXEL
+	
+	@ C(006),C(006) ListBox oLista;
+	Fields HEADER " ","Pr้-Pedido","Item","Troca Emb.:","Estado","Cliente","Loja","Nome","Pr้-Produto","Desc. Pr้-Produto","Prod. Sugerido","Descr. Prod. Sug.","Quant.","Filial","Saldo","Armaz้m","Crํtica";
+	Size C(382),C(090) ;
+	Of _oDlg Pixel ColSizes 25 ;
+	On dblClick(aLista[oLista:nAt,1] := !aLista[oLista:nAt,1],_oDlg:Refresh(),oLista:Refresh())
+	
+	oLista:SetArray(aLista)
+	
+	oLista:bLine := {|| {IIf(aLista[oLista:nAT,1], _oOk, _oNo),;
+	aLista[oLista:nAt,2],;
+	aLista[oLista:nAt,3],;
+	aLista[oLista:nAt,4],;
+	aLista[oLista:nAt,5],;
+	aLista[oLista:nAt,6],;
+	aLista[oLista:nAt,7],;
+	aLista[oLista:nAt,8],;
+	aLista[oLista:nAt,9],;
+	aLista[oLista:nAt,10],;
+	aLista[oLista:nAt,11],;
+	aLista[oLista:nAt,12],;
+	aLista[oLista:nAt,13],;
+	aLista[oLista:nAt,14],;
+	aLista[oLista:nAt,15],;
+	aLista[oLista:nAt,16],;	
+	aLista[oLista:nAt,17]}}
+		
+	@ C(100),C(050) Button "Confirmar" 			ACTION U_AtuProd(oLista)															Size C(040),C(012) PIXEL OF _oDlg
+	@ C(100),C(125) Button "Substituir"			ACTION U_A410EST(aLista[oLista:nAt,9],aLista[oLista:nAt,2]+aLista[oLista:nAt,3])	Size C(040),C(012) PIXEL OF _oDlg
+	@ C(100),C(200) Button "Cancelar"  			ACTION _oDlg:End() 																	Size C(037),C(012) PIXEL OF _oDlg
+	@ C(100),C(275) Button "Marca/Desm. Todos" 	ACTION U_A410MD(oLista)																Size C(037),C(012) PIXEL OF _oDlg
+	
+	ACTIVATE MSDIALOG _oDlg CENTERED
+	
+Endif
+
+//Carrega xCols
+SQL->(DbGoTop())
+ProcRegua(nRegua)
+While SQL->(!Eof())
+	IncProc()
+	
+	
+	// Daniel Franciulli - Altera a carga do acols caso o produto no item seja um principio ativo
+	_nPosPC := Ascan(_aListaPC,{|x| x[1] == Alltrim(SQL->(Z3_NUM+Z3_ITEM))})
+	
+	If _nPosPC!=0
+		If _aListaPC[_nPosPC][3]
+			_cProduto := Iif(Empty(_aListaPC[_nPosPC][2]),SQL->Z3_PRODUTO,_aListaPC[_nPosPC][2])
+			_lCont	  := .t.
+		Else
+			_cProduto := ""
+			_lCont	  := .f.
+		Endif
+	Else
+		_cProduto := SQL->Z3_PRODUTO
+		_lCont	  := .t.
+	Endif
+	
+	_cFabric := Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_XCODFAB")
+	
+	// Daniel Franciulli - filtro de fabricantes
+	If !(_cFabric>=mv_par08 .and. _cFabric<=mv_par09)
+		_lCont := .f.
+	Endif
+	
+	If _lCont
+		
+		If Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_TIPO")$"PA//SE"
+			
+			nVlrMoeda := xMoeda( SQL->Z3_QTDPEN*SQL->Z3_PRCVEN,SQL->Z2_MOEDA,MV_PAR28,dDataBase )
+			
+			//		If nVlrMoeda >= MV_PAR26 .And. nVlrMoeda <= MV_PAR27
+			nQtdTotIts += SQL->Z3_QTDPEN
+			nVlrTotIts += nVlrMoeda
+			aAdd(xCols,Array(Len(xHeader)+1))
+			nLin := Len(xCols)
+			For x:=1 To Len(xHeader)
+				
+				If x==5
+					xCols[nLin][x] := _cProduto
+				ElseIf x==6
+					xCols[nLin][x] := Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_DESC")
+				Else
+					xCols[nLin][x] := &("SQL->"+AllTrim(xHeader[x][2]))
+				Endif
+			Next x
+			xCols[nLin,Len(xHeader)+1] := .F.
+			//		EndIf
+		Endif
+	Endif
+	SQL->(DbSkip())
+End
+
+//             X3_TITULO       , X3_CAMPO         , X3_PICTURE          , X3_TAMANHO,  X3_DECIMAL, X3_VALID, X3_USADO        , X3_TIPO, X3_F3   , X3_CONTEXT , X3_CBOX                                        ,X3_RELACAO ,X3_WHEN                       ,X3_VISUAL, X3_VLDUSER                    , X3_PICTVAR, X3_OBRIGAT
+aCabecs := {}
+aAdd(aCabecs,{""               ,"ZA_STATUS"       ,"@BMP"               ,           1,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{""               ,"ZA_CHKBOX"       ,"@BMP"               ,           1,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Manual"         ,"ZA_MANUAL"       ,"@!"                 ,           1,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , "S=Sim;N=Nao"                                , ""         ,""                            ,"A"      , "U_VldLibPre('ZA_MANUAL')"    , ""        , ""        })
+aAdd(aCabecs,{"Tipo P.V."      ,"ZA_TIPOPV"       ,"@!"                 ,           1,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , "1=Entrega Futura;2=Conta e Ordem;3=Normal"  , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Cliente"        ,"ZA_CLI"          ,"@!"                 ,           6,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Loja"           ,"ZA_LOJA"         ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Cli. Entr."     ,"ZA_CLIENT"       ,"@!"                 ,           6,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Loja Entr."     ,"ZA_LOJAENT"      ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"A"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"*Nome"          ,"ZA_NOME"         ,"@!"                 ,          20,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"N.Pre-Pedido"   ,"ZA_NUM"          ,"@!"                 ,           6,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Item"           ,"ZA_ITEM"         ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Entrega"        ,"ZA_ENTREG"       ,"@D"                 ,           8,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Produto"        ,"ZA_PRODUTO"      ,"@!"                 ,          15,          0, ""      , "€€€€€€€€€€€€€€", "C"    , "SB1EMB", "R"        , ""                                           , ""         ,"U_WhnLibPre('ZA_PRODUTO')"   ,"A"      , "U_VldLibPre('ZA_PRODUTO')"   , ""        , ""        })
+aAdd(aCabecs,{"*Descri็ใo"     ,"ZA_DESC2"        ,"@!"                 ,          20,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Troca Emb.?"    ,"ZA_XTROCAP"      ,"@!"                 ,           1,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , "S=Sim;N=Nao"                                , ""         ,""                            ,"V"      , "U_VldLibPre('ZA_MANUAL')"    , ""        , ""        })
+aAdd(aCabecs,{"Origem Prod."   ,"ZA_XORIGEM"      ,"@!"                 ,          20,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Industr."       ,"ZA_INDUSTR"      ,"@!"                 ,           1,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , "S=Sim;N=Nao"                                , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Prior."         ,"ZA_PRIORZ4"      ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , "SZ4FIL", "R"        , ""                                           , ""         ,"U_WhnLibPre('ZA_PRIORZ4')"   ,"A"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Qtde Pendente"  ,"ZA_QTDEPEN"      ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Qtde A Liberar" ,"ZA_QTDELIB"      ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                                           , ""         ,""                            ,"A"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Saldo Disp."    ,"ZA_SALDOD"       ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Saldo Tot."     ,"ZA_SALDOT"       ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Vlr.Unitario"   ,"ZA_PRCVEN"       ,"@E 9999,999.999999" ,          15,          6, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Vlr.A Liberar"  ,"ZA_VALOR"        ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Vlr.Total Pend.","ZA_VLRPEN"       ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"*Filial"        ,"ZA_FILIAL"       ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Armaz."         ,"ZA_LOCAL"        ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"UF Orig"        ,"ZA_UFORIG"       ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"UF Dest"        ,"ZA_UFDEST"       ,"@!"                 ,           2,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"TES"            ,"ZA_TES"          ,"@!"                 ,           3,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+aAdd(aCabecs,{"Transp."        ,"ZA_TRANSP"       ,"@!"                 ,           6,          0, ""      , "€€€€€€€€€€€€€€", "C"    , ""      , "R"        , ""                                           , ""         ,""                            ,"V"      , ""                            , ""        , ""        })
+
+ProcRegua(Len(xCols))
+For x:=1 To Len(xCols)
+	IncProc()
+	lAchou := .T.
+	//Achar estado destino na tabela
+	cPrePed := Padr(xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="Z3_NUM"    })],TamSx3("Z3_NUM"    )[1])
+	cItmPrd := Padr(xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="Z3_ITEM"   })],TamSx3("Z3_ITEM"   )[1])
+	cCodPrd := Padr(xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="Z3_PRODUTO"})],TamSx3("Z3_PRODUTO")[1])
+	dEntreg := Padr(xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="Z3_ENTREG" })],TamSx3("Z3_ENTREG" )[1])
+	
+	nQulMda := xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="Z2_MOEDA" })]
+	nVlrUnt := xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="Z3_PRCVEN" })]
+	nVlrUnt := xMoeda(nVlrUnt,nQulMda,MV_PAR28,dDataBase)
+	
+	nQtdPen := xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="Z3_QTDPEN" })]
+	nQtdClc := xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="Z3_QTDPEN" })]//*(MV_PAR29/100)
+	nQtdClc := fCtrQtdPrd(nQtdClc,cCodPrd,.T.)
+	
+	//Aviso para informar sobre o erro do pedido que ้ gerado
+	//com quantidade maior do que o informado no pr้-pedido.
+	//Caso este erro ocorra o problema ้ na fun็ใo fCtrQtdPrd usada acima
+	If nQtdClc > nQtdPen
+		Alert("ERRO:150909A"+Chr(10)+Chr(13)+"Favor informar ao suporte de TI urgente sobre este erro."+Chr(10)+Chr(13)+"Quantidade de um item estแ tentando ser gerado com mais do que o permitido.")
+	EndIf
+	
+	cDscPrd := Posicione("SB1",1,xFilial("SB1")+cCodPrd,"B1_DESC"   )
+	cTpoPrd := Posicione("SB1",1,xFilial("SB1")+cCodPrd,"B1_TIPO"   )
+	cIndPrd := Posicione("SB1",1,xFilial("SB1")+cCodPrd,"B1_INDUSTR")
+	cIndPrd := IIf(Empty(cIndPrd),"N",cIndPrd)
+	
+	//Localiza cabe็alho do pre-pedido
+	SZ2->(DbSetOrder(1))
+	If SZ2->(!DbSeek(xFilial("SZ2")+cPrePed))
+		lAchou := .F.
+	EndIf	
+	
+	// Daniel Franciulli - Modificado para tratar os principios ativos
+	//Localiza item do pre-pedido
+	SZ3->(DbSetOrder(1))
+	If SZ3->(!DbSeek(xFilial("SZ3")+cPrePed+cItmPrd))
+		If cCodPrd==SZ3->Z3_PRODUTO .OR. Posicione("SB1",1,xFilial("SB1")+SQL->Z3_PRODUTO,"B1_TIPO")=="AT"
+			lAchou := .T.
+		Else
+			lAchou := .F.
+		Endif
+	EndIf
+	
+	//Localiza dados do cliente entrega
+	//SA1->(DbSetOrder(1))
+	//If SA1->(!DbSeek(xFilial("SA1")+SZ2->(Padr(Z2_CLIENT,TamSx3("A1_COD")[1])+Z2_LOJAENT)))
+	//	lAchou := .F.
+	//EndIf
+	
+	SA1->(DbSetOrder(1))
+	If SA1->(!DbSeek(xFilial("SA1")+SZ2->(Padr(Z2_CLIENTE,TamSx3("A1_COD")[1])+Z2_LOJACLI)))
+		lAchou := .F.
+	EndIf
+	
+	aProdutos := {}
+	aAdd(aProdutos,{cCodPrd,cDscPrd,cIndPrd,cPrePed,cItmPrd,nVlrUnt,dEntreg})
+	
+	//Localiza item do pre-pedido
+	SZ4->(DbSetOrder(1))
+	If SZ4->(DbSeek(xFilial("SZ4")+SA1->A1_EST))
+		//Tratamento caso automแtico
+		If mv_par33==1
+			//Quando automatico, o parametro lAchouSZ4 sempre serแ .T.
+			lAchouSZ4 := .T.
+			//Inicializa variaveis
+			nQtdVld := nQtdClc
+			aLocais := {}
+			nSaldoD  := 00
+			nSaldoT  := 00
+			nPVLibT  := 00
+			While SZ4->(!Eof()) .And. SZ4->Z4_UFDEST == SA1->A1_EST .And. nQtdVld > 0
+				//Calcula Saldo Disponivel e Saldo Total do Produto
+				SB2->(DbSetOrder(1))
+				nSaldoD  := 00
+				nSaldoT  := 00
+				nPVLibT  := 00
+				If SB2->(DbSeek(SZ4->Z4_FILORI+aProdutos[1][1]+SZ4->Z4_LOCAL))
+					While SB2->(!Eof()) .And. SB2->B2_FILIAL+SB2->B2_COD+SB2->B2_LOCAL == SZ4->Z4_FILORI+aProdutos[1][1]+SZ4->Z4_LOCAL
+						nSaldoT += SB2->B2_QATU
+						nSaldoD += SB2->B2_QATU - (SB2->B2_QACLASS + SB2->B2_QEMP)// + SB2->B2_RESERVA)
+						SB2->(DbSkip())
+					End
+				EndIf
+				//Calcula P.V. Liberados
+				nPVLibT := fCalcPVLib(SZ4->Z4_FILORI,aProdutos[1][1],SZ4->Z4_LOCAL)
+				nSaldoD -= nPVLibT
+				
+				If nQtdVld == nQtdClc
+					Do Case
+						Case nQtdClc <= nSaldoD .And. nSaldoD >  0 //!= 0
+							nQtdLib := fCtrQtdPrd(nQtdClc,aProdutos[1][1],.T.)//nQtdClc
+							
+						Case nQtdClc  > nSaldoD .And. nSaldoD >  0 //!= 0
+							nQtdLib := fCtrQtdPrd(nSaldoD,aProdutos[1][1],.T.)//nSaldoD
+							
+						Case nQtdClc  > nSaldoD .And. nSaldoD <= 0 //== 0
+							nQtdLib := 0
+					EndCase
+				Else
+					Do Case
+						Case nQtdVld <= nSaldoD .And. nSaldoD >  0 //!= 0
+							nQtdLib := fCtrQtdPrd(nQtdVld,aProdutos[1][1],.T.)//nQtdVld
+							
+						Case nQtdVld  > nSaldoD .And. nSaldoD >  0 //!= 0
+							nQtdLib := fCtrQtdPrd(nSaldoD,aProdutos[1][1],.T.)//nSaldoD
+							
+						Case nQtdVld  > nSaldoD .And. nSaldoD <= 0 //== 0
+							nQtdLib := 0
+					EndCase
+				EndIf
+				
+				nQtdVld -= nQtdLib
+				
+				//aAdd(aSaldos,{"FILIAL","LOCAL","PRODUTO","QTDDISP","QTDTOT","QTDUTIL"})
+				If Len(aSaldos) == 0
+					aAdd(aSaldos,{SZ4->Z4_FILORI,SZ4->Z4_LOCAL,aProdutos[1][1],nSaldoD,nSaldoT,nQtdLib})
+				Else
+					nScan := aScan(aSaldos, {|j| Alltrim(j[1])+Alltrim(j[2])+Alltrim(j[3]) == SZ4->Z4_FILORI+SZ4->Z4_LOCAL+aProdutos[1][1] })
+					If nScan > 0
+						nQtdVld += nQtdLib
+						nSaldoD -= aSaldos[nScan][6] //Atualizado Saldo Disponivel
+						If nQtdVld == nQtdClc
+							Do Case
+								Case nQtdClc <= nSaldoD .And. nSaldoD >  0 //!= 0
+									nQtdLib := fCtrQtdPrd(nQtdClc,aProdutos[1][1],.T.)//nQtdClc
+									
+								Case nQtdClc  > nSaldoD .And. nSaldoD >  0 //!= 0
+									nQtdLib := fCtrQtdPrd(nSaldoD,aProdutos[1][1],.T.)//nSaldoD
+									
+								Case nQtdClc  > nSaldoD .And. nSaldoD <= 0 //== 0
+									nQtdLib := 0
+							EndCase
+						Else
+							Do Case
+								Case nQtdVld <= nSaldoD .And. nSaldoD >  0 //!= 0
+									nQtdLib := fCtrQtdPrd(nQtdVld,aProdutos[1][1],.T.)//nQtdVld
+									
+								Case nQtdVld  > nSaldoD .And. nSaldoD >  0 //!= 0
+									nQtdLib := fCtrQtdPrd(nSaldoD,aProdutos[1][1],.T.)//nSaldoD
+									
+								Case nQtdVld  > nSaldoD .And. nSaldoD <= 0 //== 0
+									nQtdLib := 0
+							EndCase
+						EndIf
+						aSaldos[nScan][6] += nQtdLib
+						nQtdVld -= nQtdLib
+					Else
+						aAdd(aSaldos,{SZ4->Z4_FILORI,SZ4->Z4_LOCAL,aProdutos[1][1],nSaldoD,nSaldoT,nQtdLib})
+					EndIf
+				EndIF
+				
+				SM0->(DbSetOrder(1))
+				SM0->(DbSeek(SubStr(cNumEmp,1,2)+SZ4->Z4_FILORI))
+				If nQtdLib > 0
+					If nQtdLib > nQtdPen
+						Alert("ERRO:061009A"+Chr(10)+Chr(13)+"Favor informar ao suporte de TI urgente sobre este erro."+Chr(10)+Chr(13)+"Quantidade de um item estแ tentando ser gerado com mais do que o permitido.")
+					EndIf
+					
+					aAdd(aLocais,{	aProdutos[1][1],; //cCodPrd
+					aProdutos[1][2],; 			// cDscPrd
+					aProdutos[1][3],; 			// cIndPrd
+					aProdutos[1][4],; 			// cPrePed
+					aProdutos[1][5],; 			// cItmPrd
+					SZ4->Z4_FILORI ,; 			// Filial Origem
+					SZ4->Z4_LOCAL  ,; 			// Arm. Origem
+					SM0->M0_ESTENT ,; 			// Estado Origem
+					SA1->A1_EST    ,; 			// Estado Entrega
+					fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3]),;
+					SZ4->Z4_TRANSP ,; 			// Transportadora
+					nQtdPen        ,; 			// QtdPen
+					nQtdClc        ,; 			// QtdClc
+					nQtdLib        ,; 			// QtdLib
+					nSaldoD        ,; 			// Saldo Disponivel
+					nSaldoT        ,; 			// Saldo Total
+					SZ4->Z4_PRIORI ,; 			// Prioridade Ctrl Exp.
+					aProdutos[1][6],; 			// VlrUnt
+					aProdutos[1][6]*nQtdLib,; 	// VlrLib
+					aProdutos[1][6]*nQtdPen,; 	// VlrPen
+					aProdutos[1][7]}) 			// dEntreg
+				EndIf
+				SZ4->(DbSkip())
+			End
+			
+			If Len(aLocais) == 0
+				SZ4->(DbSeek(xFilial("SZ4")+SA1->A1_EST))
+				SM0->(DbSeek(SubStr(cNumEmp,1,2)+SZ4->Z4_FILORI))
+				aAdd(aLocais,{	aProdutos[1][1],; //cCodPrd
+				aProdutos[1][2],; //cDscPrd
+				aProdutos[1][3],; //cIndPrd
+				aProdutos[1][4],; //cPrePed
+				aProdutos[1][5],; //cItmPrd
+				SZ4->Z4_FILORI ,; //Filial Origem
+				SZ4->Z4_LOCAL  ,; //Arm. Origem
+				SM0->M0_ESTENT ,; //Estado Origem
+				SA1->A1_EST    ,; //Estado Entrega
+				fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3]),;
+				SZ4->Z4_TRANSP ,; //Transportadora
+				nQtdPen        ,; //QtdPen
+				nQtdClc        ,; //QtdClc
+				0              ,; //QtdLib
+				0              ,; //Saldo Disponivel
+				0              ,; //Saldo Total
+				SZ4->Z4_PRIORI ,; //Prioridade Ctrl Exp.
+				aProdutos[1][6],; //VlrUnt
+				0              ,; //VlrLib
+				aProdutos[1][6]*nQtdPen,; //VlrPen
+				aProdutos[1][7]}) //dEntreg
+			EndIf
+			
+			//Cria um registro no getdados com o restante
+			//que falta devido a falta de saldo
+			If Len(aLocais) > 0 .And. nQtdVld > 0 .And. nQtdVld != nQtdClc
+				If nQtdVld > nQtdPen
+					Alert("ERRO:061009B"+Chr(10)+Chr(13)+"Favor informar ao suporte de TI urgente sobre este erro."+Chr(10)+Chr(13)+"Quantidade de um item estแ tentando ser gerado com mais do que o permitido.")
+				EndIf
+				SZ4->(DbSeek(xFilial("SZ4")+SA1->A1_EST))
+				SM0->(DbSeek(SubStr(cNumEmp,1,2)+SZ4->Z4_FILORI))
+				aAdd(aLocais,{	aProdutos[1][1],; //cCodPrd
+				aProdutos[1][2],; //cDscPrd
+				aProdutos[1][3],; //cIndPrd
+				aProdutos[1][4],; //cPrePed
+				aProdutos[1][5],; //cItmPrd
+				SZ4->Z4_FILORI ,; //Filial Origem
+				SZ4->Z4_LOCAL  ,; //Arm. Origem
+				SM0->M0_ESTENT ,; //Estado Origem
+				SA1->A1_EST    ,; //Estado Entrega
+				fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3]),;
+				SZ4->Z4_TRANSP ,; //Transportadora
+				nQtdPen        ,; //QtdPen
+				nQtdClc        ,; //QtdClc
+				nQtdVld        ,; //QtdLib
+				0              ,; //Saldo Disponivel
+				0              ,; //Saldo Total
+				SZ4->Z4_PRIORI ,; //Prioridade Ctrl Exp.
+				aProdutos[1][6],; //VlrUnt
+				aProdutos[1][6]*nQtdVld,; //VlrLib
+				aProdutos[1][6]*nQtdPen,; //VlrPen
+				aProdutos[1][7]}) //dEntreg
+			EndIf
+		Else
+			lAchouSZ4 := .F.
+			If (!Empty(mv_par34) .And. !Empty(mv_par35)) .Or. (!Empty(mv_par36) .And. !Empty(mv_par37))
+				While SZ4->(!Eof()) .And. SZ4->Z4_UFDEST == SA1->A1_EST
+					//Verifica se tem exigencia de prioridade e tenta localizar
+					If !Empty(mv_par34) .And. !Empty(mv_par35)
+						If !lAchouSZ4 .And. SZ4->Z4_FILORI==mv_par34 .And. SZ4->Z4_LOCAL==mv_par35
+							lAchouSZ4 := .T.
+						EndIf
+					EndIf
+					
+					//Verifica se tem exigencia de prioridade e tenta localizar
+					If !Empty(mv_par36) .And. !Empty(mv_par37)
+						If !lAchouSZ4 .And. SZ4->Z4_FILORI==mv_par36 .And. SZ4->Z4_LOCAL==mv_par37
+							lAchouSZ4 := .T.
+						EndIf
+					EndIf
+					
+					//Caso tenha localizado, sair do loop sem desposicionar o registro
+					If lAchouSZ4
+						Exit
+					Else
+						SZ4->(DbSkip())
+					EndIf
+				End
+			Else
+				lAchouSZ4 := .T.
+			EndIf
+			
+			//Calcula Saldo Disponivel e Saldo Total do Produto
+			nQtdVld  := nQtdClc
+			nQtdLib  := nQtdClc
+			aLocais  := {}
+			nSaldoD  := 00
+			nSaldoT  := 00
+			nPVLibT  := 00
+			SB2->(DbSetOrder(1))
+			If SB2->(DbSeek(SZ4->Z4_FILORI+aProdutos[1][1]+SZ4->Z4_LOCAL))
+				While SB2->(!Eof()) .And. SB2->B2_FILIAL+SB2->B2_COD+SB2->B2_LOCAL == SZ4->Z4_FILORI+aProdutos[1][1]+SZ4->Z4_LOCAL
+					nSaldoT += SB2->B2_QATU
+					nSaldoD += SB2->B2_QATU - (SB2->B2_QACLASS + SB2->B2_QEMP)// + SB2->B2_RESERVA)
+					SB2->(DbSkip())
+				End
+			EndIf
+			//Calcula P.V. Liberados
+			nPVLibT := fCalcPVLib(SZ4->Z4_FILORI,aProdutos[1][1],SZ4->Z4_LOCAL)
+			nSaldoD -= nPVLibT
+			
+			aAdd(aSaldos,{SZ4->Z4_FILORI,SZ4->Z4_LOCAL,aProdutos[1][1],nSaldoD,nSaldoT,nQtdLib})
+			
+			If nQtdLib > nQtdPen
+				Alert("ERRO:061009C"+Chr(10)+Chr(13)+"Favor informar ao suporte de TI urgente sobre este erro."+Chr(10)+Chr(13)+"Quantidade de um item estแ tentando ser gerado com mais do que o permitido.")
+			EndIf
+			SM0->(DbSetOrder(1))
+			SM0->(DbSeek(SubStr(cNumEmp,1,2)+SZ4->Z4_FILORI))
+			aAdd(aLocais,{	aProdutos[1][1],; //cCodPrd
+			aProdutos[1][2],; //cDscPrd
+			aProdutos[1][3],; //cIndPrd
+			aProdutos[1][4],; //cPrePed
+			aProdutos[1][5],; //cItmPrd
+			SZ4->Z4_FILORI ,; //Filial Origem
+			SZ4->Z4_LOCAL  ,; //Arm. Origem
+			SM0->M0_ESTENT ,; //Estado Origem
+			SA1->A1_EST    ,; //Estado Entrega
+			fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3]),;
+			SZ4->Z4_TRANSP ,; //Transportadora
+			nQtdPen        ,; //QtdPen
+			nQtdClc        ,; //QtdClc
+			nQtdLib        ,; //QtdLib
+			nSaldoD        ,; //Saldo Disponivel
+			nSaldoT        ,; //Saldo Total
+			SZ4->Z4_PRIORI ,; //Prioridade Ctrl Exp.
+			aProdutos[1][6],; //VlrUnt
+			aProdutos[1][6]*nQtdLib,; //VlrLib
+			aProdutos[1][6]*nQtdPen,; //VlrPen
+			aProdutos[1][7]}) //dEntreg
+		EndIf
+	Else
+		//Quando automatico, o parametro lAchouSZ4 sempre serแ .T.
+		If mv_par33==1
+			lAchouSZ4 := .T.
+		Else
+			lAchouSZ4 := .F.
+		EndIf
+		aLocais := {}
+		aAdd(aLocais,{	aProdutos[1][1],; //cCodPrd
+		aProdutos[1][2],; //cDscPrd
+		aProdutos[1][3],; //cIndPrd
+		aProdutos[1][4],; //cPrePed
+		aProdutos[1][5],; //cItmPrd
+		""             ,; //Filial Origem
+		""             ,; //Arm. Origem
+		""             ,; //Estado Origem
+		SA1->A1_EST    ,; //Estado Entrega
+		fRegraTES("X","X","X","X","X"),;
+		""             ,; //Transportadora
+		nQtdPen        ,; //QtdPen
+		nQtdClc        ,; //QtdClc
+		0              ,; //QtdLib
+		0              ,; //Empenho
+		0              ,; //Saldo
+		0              ,; //Prioridade Ctrl Exp.
+		aProdutos[1][6],; //VlrUnt
+		0              ,; //VlrLib
+		aProdutos[1][6]*nQtdPen,; //VlrPen
+		aProdutos[1][7]}) //dEntreg
+		lAchou := .F.
+	EndIf
+	
+	If lAchouSZ4 .And. xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="Z3_FLAG"})] == "LBTIK"
+		For w:=1 To Len(aLocais)
+			
+			//Tratamento somente quando prioriza็ใo manual
+			If mv_par33 == 2
+				lOKmvpar39 := .F.
+				Do Case
+					//Somente com Saldos
+					Case mv_par47 == 1
+						If aLocais[w][15] > 0
+							lOKmvpar39 := .T.
+						EndIf
+						
+						//Somente Zerados
+					Case mv_par47 == 2
+						If aLocais[w][15] == 0
+							lOKmvpar39 := .T.
+						EndIf
+						
+						//Lista Todos
+					Case mv_par47 == 3
+						lOKmvpar39 := .T.
+						
+				EndCase
+			Else
+				lOKmvpar39 := .T.
+			EndIf
+			
+			If lOKmvpar39
+				aAdd(aCols,Array(Len(aCabecs)+1))
+				nLin := Len(aCols)
+				For y:=1 To Len(aCabecs)
+					Do Case
+						Case aCabecs[y][2] == "ZA_STATUS"
+							aCols[nLin][Y] := IIf(mv_par33==1,"BR_VERDE","BR_AZUL")
+							
+						Case aCabecs[y][2] == "ZA_CHKBOX"
+							aCols[nLin][Y] := "LBTIK"
+							
+						Case aCabecs[y][2] == "ZA_MANUAL"
+							aCols[nLin][Y] := IIf(mv_par33==1,"N","S")
+							
+						Case aCabecs[y][2] == "ZA_TIPOPV"
+							aCols[nLin][Y] := StrZero(mv_par46,1)
+							
+						Case aCabecs[y][2] == "ZA_CLI"
+							aCols[nLin][Y] := SZ2->Z2_CLIENTE
+							
+						Case aCabecs[y][2] == "ZA_LOJA"
+							aCols[nLin][Y] := SZ2->Z2_LOJACLI
+							
+						Case aCabecs[y][2] == "ZA_CLIENT"
+							aCols[nLin][Y] := SA1->A1_COD
+							
+						Case aCabecs[y][2] == "ZA_LOJAENT"
+							aCols[nLin][Y] := SA1->A1_LOJA
+							
+						Case aCabecs[y][2] == "ZA_NOME"
+							aCols[nLin][Y] := SA1->A1_NREDUZ
+							
+						Case aCabecs[y][2] == "ZA_PRODUTO"
+							aCols[nLin][Y] := aLocais[w][1]//cCodPrd
+							
+						Case aCabecs[y][2] == "ZA_DESC2"
+							aCols[nLin][Y] := aLocais[w][2]//cDscPrd
+							
+						Case aCabecs[y][2] == "ZA_INDUSTR"
+							aCols[nLin][Y] := aLocais[w][3]//cIndPrd
+							
+						Case aCabecs[y][2] == "ZA_NUM"
+							aCols[nLin][Y] := aLocais[w][4]//cDscPrd
+							
+						Case aCabecs[y][2] == "ZA_ITEM"
+							aCols[nLin][Y] := aLocais[w][5]//cIndPrd
+							
+						Case aCabecs[y][2] == "ZA_FILIAL"
+							aCols[nLin][Y] := aLocais[w][6]//SZ4->Z4_FILORI
+							If Empty(aLocais[w][6])
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_LOCAL"
+							aCols[nLin][Y] := aLocais[w][7]//SZ4->Z4_LOCAL
+							If Empty(aLocais[w][7])
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_UFORIG"
+							aCols[nLin][Y] := aLocais[w][8]//SM0->M0_ESTENT
+							If Empty(aLocais[w][8])
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_UFDEST"
+							aCols[nLin][Y] := aLocais[w][9]//SA1->A1_EST
+							If Empty(aLocais[w][9])
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_TES"
+							aCols[nLin][Y] := aLocais[w][10]
+							If Empty(aLocais[w][10]) .Or. AllTrim(aLocais[w][10]) == "XXX"
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_TRANSP"
+							If (ALLTRIM(SZ2->Z2_TPFRETE) == "C" .AND. mv_par46 == 2)   // Se Pedido = Conta e Ordem e Frete = CIF.
+								_aAreaSZ4 := GetArea()
+							    aCols[nLin][Y] := Posicione("SZ4",3,Xfilial("SZ4")+aLocais[w][9]+SM0->M0_CODFIL+aLocais[w][7],"Z4_TRANSP")
+							    RestArea(_aAreaSZ4)
+							Else
+								// Fernando - Agility -> Ajustado para quando for Pedido = Normal e Tipo de Frete = FOB trazer transportadora em Branco.							
+								aCols[nLin][Y] := IIf(mv_par46==3 .and. Alltrim(SZ2->Z2_TPFRETE) == "F"," ",aLocais[w][11]) //SZ4->Z4_TRANSP
+							Endif
+							If Empty(aLocais[w][11]) .Or. AllTrim(aLocais[w][11]) == "0" .Or. "XXX" $ aLocais[w][11]
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_QTDEPEN"
+							aCols[nLin][Y] := aLocais[w][12]
+							If Empty(aLocais[w][12])
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_QTDECLC"
+							aCols[nLin][Y] := aLocais[w][13]
+							If Empty(aLocais[w][13])
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_QTDELIB"
+							aCols[nLin][Y] := aLocais[w][14]
+							If Empty(aLocais[w][14])
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_XTROCAP"
+							aCols[nLin][Y] := Posicione("SZ3",1,xFilial("SZ3")+aLocais[w][4]+aLocais[w][5],"Z3_XTROCAP")
+
+						Case aCabecs[y][2] == "ZA_XORIGEM"
+							aCols[nLin][Y] := Iif(Posicione("SZ3",1,xFilial("SZ3")+aLocais[w][4]+aLocais[w][5],"Z3_PRODUTO")!=aLocais[w][1],"Princ. Ativo","Marca Comercial")
+							
+						Case aCabecs[y][2] == "ZA_SALDOD"
+							aCols[nLin][Y] := aLocais[w][15]
+							If Empty(aLocais[w][15]) .And. mv_par33==1
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_SALDOT"
+							aCols[nLin][Y] := aLocais[w][16]
+							If Empty(aLocais[w][16]) .And. mv_par33==1
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_PRIORZ4"
+							aCols[nLin][Y] := aLocais[w][17]
+							If Empty(aLocais[w][17])
+								aCols[nLin][1] := "BR_CANCEL"
+								aCols[nLin][2] := "LBNO"
+							EndIf
+							
+						Case aCabecs[y][2] == "ZA_PRCVEN"
+							aCols[nLin][Y] := aLocais[w][18]
+							
+						Case aCabecs[y][2] == "ZA_VALOR"
+							aCols[nLin][Y] := aLocais[w][19]
+							
+						Case aCabecs[y][2] == "ZA_VLRPEN"
+							aCols[nLin][Y] := aLocais[w][20]
+							
+						Case aCabecs[y][2] == "ZA_ENTREG"
+							aCols[nLin][Y] := aLocais[w][21]
+							
+					EndCase
+				Next y
+				If !lAchou ; aCols[nLin][1] := "BR_CANCEL" ; aCols[nLin][2] := "LBNO" ; EndIf
+				aCols[nLin,Len(aCabecs)+1] := .F.
+				
+				//Guarda os recnos dos registros que constam alguma pendencia
+				//If lAchouSZ4 .And. lOKmvpar39
+				//	If aCols[nLin][1] == "BR_CANCEL"
+				//		If !Empty(cRecnos) ; cRecnos += "," ; EndIf
+				//		cRecnos += AllTrim(Str(xCols[x][aScan(xHeader,{|x|AllTrim(x[2])=="RECNO"})]))
+				//	EndIf
+				//EndIf
+				
+			EndIf
+		Next w
+	EndIf
+Next x
+
+//Execu็ใo das rotinas
+oGdTrt:=MsNewGetDados():New(aPosObj[2,1],aPosObj[2,2],aPosObj[2,3],aPosObj[2,4],cGetOpc,cLinhaOk,cTudoOk,cIniCpos,,nFreeze,nMax,cCampoOk,cSuperApagar,cApagaOk,oDefTela,aCabecs,aCols)
+oGdTrt:oBrowse:bLDblClick := {|| fDblClick() }
+oGdTrt:oBrowse:bHeaderClick := {|x,y| fTrtOrdm(y) }
+
+If Len(oGdTrt:aCols) > 0
+	oGdTrt:oBrowse:nAt:= 1
+	oGdTrt:oBrowse:Refresh()
+	oGdTrt:oBrowse:SetFocus()
+EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fValidGet บ Autor ณFelipe Aur้lio de Meloบ Data ณ 11/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User Function fValidGet()
+
+//aAdd(aCabecs,{"Vlr.Unitario"   ,"ZA_PRCVEN"       ,"@E 9999,999.999999" ,          15,          6, ""      , "€€€€€€€€€€€€€€", "N"    , ""    , "R"        , ""                 , ""         ,""                            ,"V"      , ""        , ""        , ""        })
+//aAdd(aCabecs,{"Vlr.A Liberar"  ,"ZA_VALOR"        ,"@E 999,999,999.99"  ,          14,          2, ""      , "€€€€€€€€€€€€€€", "N"    , ""    , "R"        , ""                 , ""         ,""                            ,"V"      , ""        , ""        , ""        })
+
+Local lRet        := .T.
+Local cTESVld     := " "
+Local nSaldoD     := 00
+Local nSaldoT     := 00
+Local nPVLibT     := 00
+Local aAreaSM0    := {}
+Local nLinhaEdita := oGdTrt:oBrowse:nAt
+Local nPosManual  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_MANUAL"  })
+Local nPosChkBox  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_CHKBOX"  })
+Local nPosStatus  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_STATUS"  })
+Local nPosCliEntr := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_CLIENT"  })
+Local nPosLojaEnt := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_LOJAENT" })
+Local nPosProduto := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_PRODUTO" })
+Local nPosProdInd := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_INDUSTR" })
+Local nPosQtdePen := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_QTDEPEN" })
+Local nPosQtdeLib := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_QTDELIB" })
+Local nPosSaldoD  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_SALDOD"  })
+Local nPosSaldoT  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_SALDOT"  })
+
+Local nPosVlrUnit := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_PRCVEN"  })
+Local nPosVlrALib := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_VALOR"   })
+Local nPosUfDest  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_UFDEST"  })
+Local nPosPriorZ4 := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_PRIORZ4" })
+
+Local nPosFilial  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_FILIAL"  })
+Local nPosLocal   := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_LOCAL"   })
+Local nPosUfOrig  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_UFORIG"  })
+Local nPosTes     := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_TES"     })
+Local nPosTransp  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_TRANSP"  })
+
+Local nBkpQtdeLib := oGdTrt:aCols[nLinhaEdita][nPosQtdeLib]
+Local nBkpVlrALib := oGdTrt:aCols[nLinhaEdita][nPosVlrALib]
+Local nBkpLojaEnt := oGdTrt:aCols[nLinhaEdita][nPosLojaEnt]
+
+//Trava preenchimento caso status
+If lRet .And. oGdTrt:aCols[nLinhaEdita][nPosChkBox] != "LBTIK"
+	lRet := .F.
+	ShowHelpDlg("fValidGet", {"A linha s๓ pode ser editada se","estiver selecionada!!!"},5,;
+	{"Favor selecionar a linha em questใo ","para permitir edi็ใo."},5)
+EndIf
+
+//Preenche as colunas: Filial, Armazem, Uf Origem, TES, Transportadora, Saldo Disponivel e Saldo Total
+If lRet .And. oGdTrt:oBrowse:ColPos == nPosPriorZ4
+	SZ4->(DbSetOrder(1))
+	If SZ4->(DbSeek(xFilial("SZ4")+oGdTrt:aCols[nLinhaEdita][nPosUfDest]+M->ZA_PRIORZ4))
+		
+		//Inicializa Variaveis
+		cTESVld  := ""
+		nSaldoD  := 00
+		nSaldoT  := 00
+		nPVLibT  := 00
+		
+		//Posiciona no SIGAMAT.EMP para obter dados da empresa
+		aAreaSM0 := SM0->(GetArea())
+		SM0->(DbSetOrder(1))
+		SM0->(DbSeek(SubStr(cNumEmp,1,2)+SZ4->Z4_FILORI))
+		
+		//Calcula saldo disponivel e saldo total
+		If SB2->(DbSeek(SZ4->Z4_FILORI+oGdTrt:aCols[nLinhaEdita][nPosProduto]+SZ4->Z4_LOCAL))
+			While SB2->(!Eof()) .And. SB2->B2_FILIAL+SB2->B2_COD+SB2->B2_LOCAL == SZ4->Z4_FILORI+oGdTrt:aCols[nLinhaEdita][nPosProduto]+SZ4->Z4_LOCAL
+				nSaldoT += SB2->B2_QATU
+				nSaldoD += SB2->B2_QATU - (SB2->B2_QACLASS + SB2->B2_QEMP)// + SB2->B2_RESERVA)
+				SB2->(DbSkip())
+			End
+		EndIf
+		
+		//Calcula P.V. Liberados
+		nPVLibT := fCalcPVLib(SZ4->Z4_FILORI,oGdTrt:aCols[nLinhaEdita][nPosProduto],SZ4->Z4_LOCAL)
+		nSaldoD -= nPVLibT
+		
+		//Fun็ใo que defini a TES para situa็ใo abaixo
+		cTESVld := fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,oGdTrt:aCols[nLinhaEdita][nPosUfDest],oGdTrt:aCols[nLinhaEdita][nPosProdInd])
+		
+		//Valida TES
+		If lRet .And. (Empty(cTESVld) .Or. cTESVld == "XXX")
+			lRet := .F.
+			ShowHelpDlg("fValidGet", {"Esta prioridade estแ com crํtica na ","TES"},5,;
+			{"Favor corrigir o cadastro desta prioridade","ou escolher outra prioridade."},5)
+		EndIf
+		
+		//Valida Transportadora
+		If lRet .And. (AllTrim(SZ4->Z4_TRANSP) == "0" .Or. "XXX" $ SZ4->Z4_TRANSP .or. (EMPTY(SZ4->Z4_TRANSP) .AND. SZ2->Z2_TPFRETE <> "F" .AND. mv_par46 <> 3))
+			lRet := .F.
+			ShowHelpDlg("fValidGet", {"Esta prioridade estแ com crํtica na ","Transportadora."},5,;
+			{"Favor corrigir o cadastro desta prioridade","ou escolher outra prioridade."},5)
+		EndIf
+		
+		If lRet
+			//Altera a linha conforme prioridade
+			oGdTrt:aCols[nLinhaEdita][nPosFilial] := SZ4->Z4_FILORI
+			oGdTrt:aCols[nLinhaEdita][nPosLocal ] := SZ4->Z4_LOCAL
+			oGdTrt:aCols[nLinhaEdita][nPosUfOrig] := SM0->M0_ESTENT
+			oGdTrt:aCols[nLinhaEdita][nPosTransp] := SZ4->Z4_TRANSP
+			oGdTrt:aCols[nLinhaEdita][nPosTes   ] := cTESVld
+			oGdTrt:aCols[nLinhaEdita][nPosSaldoD] := nSaldoD
+			oGdTrt:aCols[nLinhaEdita][nPosSaldoT] := nSaldoT
+			
+			//Atualiza objeto com as altera็๕es
+			oGdTrt:Refresh()
+		EndIf
+		
+		//Restaura posi็๕es do SIGAMAT.EMP
+		RestArea(aAreaSM0)
+	Else
+		lRet := .F.
+		ShowHelpDlg("fValidGet", {"Esta prioridade nใo estแ cadastrada!!!"},5,;
+		{"Favor escolher uma prioridade cadastrada."},5)
+	EndIf
+EndIf
+
+If lRet .And. oGdTrt:oBrowse:ColPos == nPosQtdeLib
+	
+	//Trata quantidade por embalagem
+
+	If lRet .And. M->ZA_QTDELIB > 0
+		M->ZA_QTDELIB := fCtrQtdPrd(M->ZA_QTDELIB,oGdTrt:aCols[nLinhaEdita][nPosProduto])
+		If M->ZA_QTDELIB == 0
+			lRet := .F.
+			ShowHelpDlg("fValidGet", {"A quantidade a liberar estแ quebrada","conforme defini็ใo da embalagem!!!"},5,;
+			{"Favor corrigir a quantidade a liberar,","colocando um valor que nใo seja","quebrado por embalagem."},5)
+		EndIf
+	EndIf
+	
+	//Valida quantidade do pre-pedido
+	If lRet .And. M->ZA_QTDELIB > oGdTrt:aCols[nLinhaEdita][nPosQtdePen]
+		lRet := .F.
+		ShowHelpDlg("fValidGet", {"A quantidade a liberar ้ maior que o  ","definido no pre-pedido!!!"},5,;
+		{"Favor corrigir a quantidade a liberar,","colocando um valor menor ou","igual ao definido no pre-pedido."},5)
+	EndIf
+	
+	//Valida saldo disponivel
+	If lRet .And. M->ZA_QTDELIB > oGdTrt:aCols[nLinhaEdita][nPosSaldoD]
+		If oGdTrt:aCols[nLinhaEdita][nPosManual] == "N"
+			lRet := .F.
+			ShowHelpDlg("fValidGet", {"A quantidade a liberar ้ maior que o  ","saldo disponivel!!!"},5,;
+			{"Favor corrigir a quantidade a liberar,","colocando um valor menor ou","igual ao saldo disponivel."},5)
+		EndIf
+	EndIf
+	
+	//Este opera็ใo tem que se a ultima das valida็๕es
+	//Irแ descontar o valor dos totais do cabe็alho a adicionar novamente com os valores atualizado
+	If lRet
+		//Atualiza total a liberar do GetDados
+		oGdTrt:aCols[nLinhaEdita][nPosQtdeLib] := M->ZA_QTDELIB
+		oGdTrt:aCols[nLinhaEdita][nPosVlrALib] := M->ZA_QTDELIB*oGdTrt:aCols[nLinhaEdita][nPosVlrUnit]
+	EndIf
+EndIf
+
+If lRet .And. oGdTrt:oBrowse:ColPos == nPosLojaEnt
+	cChave := xFilial("SA1")+oGdTrt:aCols[nLinhaEdita][nPosCliEntr]+M->ZA_LOJAENT
+	SA1->(DbSetOrder(1))
+	If lRet .And. !SA1->(DbSeek(cChave))
+		lRet := .F.
+		ShowHelpDlg("fValidGet", {"A loja informada nใo existe para o","cliente em questใo!!!"},5,;
+		{"Favor corrigir a loja do cliente, ","informando uma loja correta."},5)
+	EndIf
+	If lRet .And. SA1->(DbSeek(cChave))
+		If SA1->A1_EST != oGdTrt:aCols[nLinhaEdita][nPosUfDest]
+			lRet := .F.
+			ShowHelpDlg("fValidGet", {"O estada da loja de entrega digitado ้ ","diferente do estado ","anteriormente informado."},5,;
+			{"Favor corrigir a loja do cliente, ","informando uma loja com o","mesmo estado jแ pre-definido."},5)
+		EndIf
+	EndIf
+EndIf
+
+//Atualiza Resumo do Cabe็alho
+If lRet
+	For x:=1 To Len(oGdDiv1:aCols)
+		If oGdDiv1:aCols[x][1] == "LBTICK"
+			fClcGDRsm(x)
+			x:=Len(oGdDiv1:aCols)
+		EndIf
+	Next x
+EndIf
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ WhnLibPre บ Autor ณFelipe Aur้lio de Meloบ Data ณ 11/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por                                     บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function WhnLibPre(cCpoWhen)
+
+Local lRet        := .T.
+Local nCpoWhen    := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])==cCpoWhen     })
+Local nPosManual  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_MANUAL"  })
+Local nPosUfDest  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_UFDEST"  })
+Local nPosTrocaP  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_XTROCAP" })
+Local nPosProd 	  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_PRODUTO" })
+Local nLinhaEdita := oGdTrt:oBrowse:nAt
+
+Public _cPrePro  := ""
+Public _cPreProA := ""
+Public _cFiltro  := ""
+
+If cCpoWhen == "ZA_PRIORZ4"
+	cSz4Dest := oGdTrt:aCols[nLinhaEdita][nPosUfDest]
+	If oGdTrt:aCols[nLinhaEdita][nPosManual] == "N"
+		lRet := .F.
+		ShowHelpDlg("WhnLibPre",{"O campo 'Manual' estแ preenchido com 'Nใo'."},5,;
+		{"Para este campo permitir edi็ใo serแ","necessแrio preencher o campo 'Manual'","com 'Sim'."},5)
+	EndIf
+ElseIf cCpoWhen == "ZA_PRODUTO"
+	If oGdTrt:aCols[nLinhaEdita][nPosManual] == "N"
+		lRet := .F.
+		ShowHelpDlg("WhnLibPre",{"O campo 'Manual' estแ preenchido com 'Nใo'."},5,;
+		{"Para este campo permitir edi็ใo serแ","necessแrio preencher o campo 'Manual'","com 'Sim'."},5)
+	Else
+		If oGdTrt:aCols[nLinhaEdita][nPosTrocaP]=="N"
+			lRet := .F.
+			ShowHelpDlg("WhnLibPre",{"O Cliente nใo aceita troca."},5,;
+			{"Para este campo permitir edi็ใo serแ","necessแrio preencher o campo Troca Emb. ","com 'Sim'."},5)
+		Else
+			_cPrePro  := Posicione("SB1",1,xFilial("SB1")+oGdTrt:aCols[nLinhaEdita][nPosProd],"B1_XPREPRO")
+			_cPreProA := Posicione("SB1",1,xFilial("SB1")+_cPrePro,"B1_ALTER")
+			_cFiltro  := _cPrePro+Iif(!Empty(_cPreProA),"/"+_cPreProA,"")
+		Endif
+	EndIf
+EndIf
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ VldLibPre บ Autor ณFelipe Aur้lio de Meloบ Data ณ 11/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por mudar o status conforme campo manualบฑฑ
+ฑฑบ          ณ Tive que criar esta fun็ใo,porque a fun็ใo fValidGet nใo   บฑฑ
+ฑฑบ          ณ estava sendo chamando quando edi็ใo do campo ZA_MANUAL     บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function VldLibPre(cCpoValida)
+
+Local lRet        := .T.
+Local lPodeEdita  := .T.
+Local nCpoValida  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])==cCpoValida   })
+Local nPosStatus  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_STATUS"  })
+Local nPosChkBox  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_CHKBOX"  })
+Local nPosPrdTop  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_PRODUTO" })
+Local nPosPrdDes  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_DESC2" })
+Local nLinhaEdita := oGdTrt:oBrowse:nAt
+Local cVldCpoEdit := ""
+
+cVldCpoEdit := oGdTrt:aCols[nLinhaEdita][aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_FILIAL" })]
+If Empty(cVldCpoEdit)
+	lPodeEdita := .F.
+EndIf
+
+cVldCpoEdit := oGdTrt:aCols[nLinhaEdita][aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_LOCAL"  })]
+If Empty(cVldCpoEdit)
+	lPodeEdita := .F.
+EndIf
+
+cVldCpoEdit := oGdTrt:aCols[nLinhaEdita][aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_UFORIG" })]
+If Empty(cVldCpoEdit)
+	lPodeEdita := .F.
+EndIf
+
+cVldCpoEdit := oGdTrt:aCols[nLinhaEdita][aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_UFDEST" })]
+If Empty(cVldCpoEdit)
+	lPodeEdita := .F.
+EndIf
+
+cVldCpoEdit := oGdTrt:aCols[nLinhaEdita][aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_TES"    })]
+If Empty(cVldCpoEdit) .Or. "XXX" $ cVldCpoEdit  .Or. AllTrim(cVldCpoEdit) == "0"
+	lPodeEdita := .F.
+EndIf
+
+cVldCpoEdit := oGdTrt:aCols[nLinhaEdita][aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_TRANSP" })]
+If (Empty(cVldCpoEdit) .AND. SZ2->Z2_TPFRETE <> "F" .AND. mv_par46 <> 3) .Or. "XXX" $ cVldCpoEdit  .Or. AllTrim(cVldCpoEdit) == "0"
+	lPodeEdita := .F.
+EndIf
+
+cVldCpoEdit := oGdTrt:aCols[nLinhaEdita][aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_PRIORZ4"})]
+If Empty(cVldCpoEdit)
+	lPodeEdita := .F.
+EndIf
+
+// Daniel Franciulli - Atualiza a descri็ใo do produto
+oGdTrt:aCols[nLinhaEdita][nPosPrdDes] := Posicione("SB1",1,xFilial("SB1")+oGdTrt:aCols[nLinhaEdita][nPosPrdTop],"B1_DESC")
+
+If lPodeEdita
+	//Atualiza Status conforme sele็ใo coluna manual
+	If cCpoValida == "ZA_MANUAL"
+		If M->ZA_MANUAL == "S"
+			oGdTrt:aCols[nLinhaEdita][nPosStatus] := "BR_AZUL"
+			oGdTrt:aCols[nLinhaEdita][nPosChkBox] := "LBTIK"
+		Else
+			oGdTrt:aCols[nLinhaEdita][nPosStatus] := "BR_CANCEL"
+			oGdTrt:aCols[nLinhaEdita][nPosChkBox] := "LBNO"
+		EndIf
+	EndIf
+	
+	//Atualiza Resumo do Cabe็alho
+	If lRet
+		For x:=1 To Len(oGdDiv1:aCols)
+			If oGdDiv1:aCols[x][1] == "LBTICK"
+				fClcGDRsm(x)
+				x:=Len(oGdDiv1:aCols)
+			EndIf
+		Next x
+	EndIf
+Else
+	ShowHelpDlg("VLDLIBPRE",{"Existe uma ou mais inconsist๊ncias nesta linha."},5,;
+	{"Favor verificar os campos Filial, Local, Tes,","Uf Origem, Uf Destino, Transportadora,","Prioridade, etc."},5)
+EndIf
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fDblClick บ Autor ณFelipe Aur้lio de Meloบ Data ณ 11/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fDblClick()
+
+Local nScan       := 0
+Local nPosStatus  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_STATUS"  })
+Local nPosChkBox  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_CHKBOX"  })
+Local nPosManual  := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_MANUAL"  })
+Local nPosPriorZ4 := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_PRIORZ4" })
+Local nPosLojaEnt := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_LOJAENT" })
+Local nPosQtdeLib := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_QTDELIB" })
+Local nLinhaEdita := oGdTrt:oBrowse:nAt
+
+If oGdTrt:oBrowse:ColPos == nPosChkBox
+	If oGdTrt:aCols[nLinhaEdita][nPosStatus] $ "BR_VERDE/BR_AZUL"
+		If oGdTrt:aCols[nLinhaEdita][nPosChkBox] == "LBTIK"
+			oGdTrt:aCols[nLinhaEdita][nPosChkBox] := "LBNO"
+		Else
+			oGdTrt:aCols[nLinhaEdita][nPosChkBox] := "LBTIK"
+		EndIf
+	EndIf
+	//Atualiza Resumo do Cabe็alho
+	For x:=1 To Len(oGdDiv1:aCols)
+		If oGdDiv1:aCols[x][1] == "LBTICK"
+			fClcGDRsm(x)
+			x:=Len(oGdDiv1:aCols)
+		EndIf
+	Next x
+EndIf
+
+If oGdTrt:oBrowse:ColPos == nPosManual
+	oGdTrt:EditCell()
+EndIf
+
+If oGdTrt:oBrowse:ColPos == nPosPriorZ4
+	If oGdTrt:aCols[nLinhaEdita][nPosManual] == "S"
+		oGdTrt:EditCell()
+	EndIf
+EndIf
+
+If oGdTrt:oBrowse:ColPos == nPosQtdeLib
+	If oGdTrt:aCols[nLinhaEdita][nPosStatus] $ "BR_VERDE/BR_AZUL"
+		oGdTrt:EditCell()
+	EndIf
+EndIf
+
+If oGdTrt:oBrowse:ColPos == nPosLojaEnt
+	If oGdTrt:aCols[nLinhaEdita][nPosStatus] $ "BR_VERDE/BR_AZUL"
+		oGdTrt:EditCell()
+	EndIf
+EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fMarcaTudoบAutor ณFelipe Aur้lio de Melo บ Data ณ 01/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ                                                            บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fMarcaTudo()
+
+Local nPosStatus := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_STATUS"  })
+Local nPosChkBox := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_CHKBOX"  })
+Local nResp      := Aviso("Aten็ใo: Isso irแ alterar todos os itens aqui listado!!!",;
+"Clique em 'SIM' para marcar todos os registros!"+Chr(13)+Chr(10)+;
+"Clique em 'NรO' para desmarcar todos os registros!",{"Sim","Nใo","Voltar"},2)
+
+//Se for diferente de voltar, alterar aCols
+If nResp < 3
+	For x:=1 To Len(oGdTrt:aCols)
+		If nResp == 1
+			If oGdTrt:aCols[x][nPosStatus] $ "BR_VERDE/BR_AZUL"
+				oGdTrt:aCols[x][nPosChkBox] := "LBTIK"
+			EndIf
+		Else
+			oGdTrt:aCols[x][nPosChkBox] := "LBNO"
+		EndIf
+	Next x
+	
+	If Len(oGdTrt:aCols) > 0
+		oGdTrt:oBrowse:nAt:= 1
+		oGdTrt:oBrowse:Refresh()
+		oGdTrt:oBrowse:SetFocus()
+		fClcGDPrd()
+		fClcGDRsm()
+	EndIf
+EndIf
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fRegraTES บ Autor ณFelipe Aur้lio de Meloบ Data ณ 11/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fRegraTES(cFilOrig,cLocalArmz,cEstOrig,cEstDest,cPrdIndust)
+
+Local cRetTes := Space(03)
+
+//Z8_FILIAL+Z8_FILORI+Z8_ARMORI+Z8_FIL_UF+Z8_ARM_UF
+If !Empty(cFilOrig) .And. !Empty(cLocalArmz)
+	SZ8->(DbSetOrder(1))
+	If SZ8->(DbSeek(xFilial("SZ8")+cFilOrig+cLocalArmz))
+		Do Case
+			//Armazem Proprio
+			Case SZ8->Z8_FIL_UF == SZ8->Z8_ARM_UF
+				If SZ8->Z8_ARM_UF == cEstDest
+					//Dentro do Estado
+					If mv_par46 == 1
+						//Tes de Entrega Futura Dentro do Estado
+						cRetTes := SZ8->Z8_TESEDE
+					ElseIf mv_par46 == 2
+						//Tes de Conta e Ordem Dentro do Estado
+						cRetTes := SZ8->Z8_TESCODE
+					ElseIf cPrdIndust == "S"
+						//Tes de Prod. Industr. Dentro do Estado
+						cRetTes := SZ8->Z8_TESIDE
+					ElseIf cPrdIndust != "S"
+						//Tes de Prod. Comerc. Dentro do Estado
+						cRetTes := SZ8->Z8_TESCDE
+					EndIf
+				Else
+					//Fora do Estado
+					If mv_par46 == 1
+						//Tes de Entrega Futura Fora do Estado
+						cRetTes := SZ8->Z8_TESEFE
+					ElseIf mv_par46 == 2
+						//Tes de Conta e Ordem Fora do Estado
+						cRetTes := SZ8->Z8_TESCOFE
+					ElseIf cPrdIndust == "S"
+						//Tes de Prod. Industr. Fora do Estado
+						cRetTes := SZ8->Z8_TESIFE
+					ElseIf cPrdIndust != "S"
+						//Tes de Prod. Comerc. Fora do Estado
+						cRetTes := SZ8->Z8_TESCFE
+					EndIf
+				EndIf
+				
+				//Armazem Terceiro
+			Case SZ8->Z8_FIL_UF != SZ8->Z8_ARM_UF
+				If SZ8->Z8_FIL_UF == cEstDest
+					//Dentro do Estado
+					If mv_par46 == 1
+						//Tes de Entrega Futura Dentro do Estado
+						cRetTes := SZ8->Z8_TESEDE
+					ElseIf mv_par46 == 2
+						//Tes de Conta e Ordem Dentro do Estado
+						cRetTes := SZ8->Z8_TESCODE
+					ElseIf cPrdIndust == "S"
+						//Tes de Prod. Industr. Dentro do Estado
+						cRetTes := SZ8->Z8_TESIDE
+					ElseIf cPrdIndust != "S"
+						//Tes de Prod. Comerc. Dentro do Estado
+						cRetTes := SZ8->Z8_TESCDE
+					EndIf
+				Else
+					//Fora do Estado
+					If mv_par46 == 1
+						//Tes de Entrega Futura Fora do Estado
+						cRetTes := SZ8->Z8_TESEFE
+					ElseIf mv_par46 == 2
+						//Tes de Conta e Ordem Fora do Estado
+						cRetTes := SZ8->Z8_TESCOFE
+					ElseIf cPrdIndust == "S"
+						//Tes de Prod. Industr. Fora do Estado
+						cRetTes := SZ8->Z8_TESIFE
+					ElseIf cPrdIndust != "S"
+						//Tes de Prod. Comerc. Fora do Estado
+						cRetTes := SZ8->Z8_TESCFE
+					EndIf
+				EndIf
+				
+				//Armazem Industrializador
+				//Nใo tratado
+			Otherwise
+				cRetTes := Space(03)
+		EndCase
+	EndIf
+EndIf
+
+Return(cRetTes)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณfIncPedVendบ Autor ณFelipe Aur้lio de Meloบ Data ณ 11/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fIncPedVend(oGdTrt)
+
+Local x           := 0
+Local lNovo       := .T.
+Local aCabec      := {}
+Local aItens      := {}
+Local aGrvSZA     := {}
+Local aPedVd      := {}
+Local cItens      := "01"
+Local cPrePed     := ""
+Local cItmPrd     := ""
+Local cCodPrd     := ""
+Local cTxtLog     := ""
+Local cBackupFil  := ""
+Local cTratarFil  := ""
+Local cNumeroDoc  := ""
+Local cReturPesq  := ""
+Local cCtrlPedVd  := ""
+Local cBkpFil     := cFilAnt
+Local lPVLiber    := .F.
+Local n1 := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_CHKBOX" })
+Local n2 := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_FILIAL" })
+Local n3 := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_CLI"    })
+Local n4 := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_LOJA"   })
+Local n5 := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_TIPOPV" })
+Local n6 := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_NUM"    })
+Local n7 := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_PRODUTO"})
+Local n8 := aScan(oGdTrt:aHeader,{|k|AllTrim(k[2])=="ZA_ITEM"   })
+Private lMsErroAuto := .F.
+
+//Ordena array para nใo criar pedidos picados
+aSort(oGdTrt:aCols,,,{|x,y| x[n1]+x[n2]+x[n3]+x[n4]+x[n5]+x[n6]+x[n7]+x[n8] < y[n1]+y[n2]+y[n3]+y[n4]+y[n5]+y[n6]+y[n7]+y[n8] })
+
+//Regua de processamento
+ProcRegua(Len(oGdTrt:aCols))
+aLinha := {}
+For x:=1 To Len(oGdTrt:aCols)
+	//Regua de processamento
+	IncProc()
+	
+	If oGdTrt:aCols[x][aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_STATUS"})] $ "BR_VERDE/BR_AZUL" .And.;
+		oGdTrt:aCols[x][aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])=="ZA_CHKBOX"})] == "LBTIK"
+		cReturPesq := fPesqAcols({"ZA_FILIAL","ZA_CLI","ZA_LOJA","ZA_TIPOPV","ZA_NUM"},x)
+		
+		//Inicializa variaveis de pesquisa
+		cPrePed   := fPesqAcols({"ZA_NUM"    } ,x)
+		cItmPrd   := fPesqAcols({"ZA_ITEM"   } ,x)
+		cCodPrd   := fPesqAcols({"ZA_PRODUTO"} ,x)
+		
+		//Localiza item do pre-pedido
+		SZ3->(DbSetOrder(1))
+		SZ3->(DbSeek(xFilial("SZ3")+cPrePed+cItmPrd+cCodPrd))
+		
+		//Carrega variaveis da filial em questใo
+		If Empty(cTratarFil)
+			cTratarFil := fPesqAcols({"ZA_FILIAL" } ,x)
+			cFilAnt    := fPesqAcols({"ZA_FILIAL" } ,x)
+			SM0->(DbSeek(cEmpAnt+cFilAnt))
+		EndIf
+		
+		If cCtrlPedVd != cReturPesq
+			cCtrlPedVd  := cReturPesq
+			lLoop := .T.
+			
+			//Ajusta para filial que deve ser localizado o numero do pedido
+			cBackupFil := cFilAnt
+			cTratarFil := fPesqAcols({"ZA_FILIAL" } ,x)
+			cFilAnt    := fPesqAcols({"ZA_FILIAL" } ,x)
+			SM0->(DbSeek(cEmpAnt+cFilAnt))
+			
+			While lLoop
+				cNumeroDoc  := GetSx8Num("SC5","C5_NUM")
+				If fVldIndPV(cNumeroDoc)
+					ConfirmSX8()
+				Else
+					lLoop := .F.
+				EndIf
+			End
+			
+			//Volta para filial que deve executar o msexecauto
+			cTratarFil := cBackupFil
+			cFilAnt    := cBackupFil
+			cBackupFil := ""
+			SM0->(DbSeek(cEmpAnt+cFilAnt))
+			
+			cItens		:= "01"
+			lNovo       := .T.                                
+		Else
+			cItens		:= Soma1(cItens)
+			lNovo       := .F.
+		EndIf
+		
+		//Executa ExecAuto para criar pedido de venda
+		If lNovo .And. Len(aItens) > 0
+			lMsErroAuto := .F.
+			lErroQtdLib := .F.
+			lErroQtdInc := .F.
+			
+			//Valida array antes
+			If fVldQtdLib(aGrvSZA)
+				Alert("ERRO:150909B"+Chr(10)+Chr(13)+"Favor informar ao suporte de TI urgente sobre este erro."+Chr(10)+Chr(13)+"Quantidade de um item estแ tentando ser gerado com mais do que o permitido.")
+				lErroQtdLib := .T.
+			EndIf
+			
+			If !lErroQtdLib
+				//Executa rotina de inclusใo de pedido de venda
+				Mata410(aCabec,aItens,3)
+				//MSExecAuto({|x,y,z| Mata410(x,y,z)},aCabec,aItens,3)
+			EndIf
+			
+			//Valida array depois
+			If fVldQtdLib(aGrvSZA) .And. !lErroQtdLib
+				Alert("ERRO:150909C"+Chr(10)+Chr(13)+"Favor informar ao suporte de TI urgente sobre este erro."+Chr(10)+Chr(13)+"Quantidade de um item estแ tentando ser gerado com mais do que o permitido.")
+				lErroQtdInc := .T.
+			EndIf
+			
+			//Apresenta erro caso tenha ocorrido
+			If lMsErroAuto
+				Mostraerro()
+			EndIf
+			
+			//Confirma a inclusใo do pedido de venda
+			lPVLiber := .F.
+			If fVldIndPV(aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_NUM"})][2],@lPVLiber) .And. !lErroQtdLib
+				ConfirmSX8()
+				fGeraSZA(aGrvSZA)
+				fAtlzSZ3(aItens)
+				aAdd(aPedVd,{	aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_FILIAL" })][2],;
+				aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_NUM"    })][2],;
+				aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_CLIENT" })][2],;
+				aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_LOJAENT"})][2],;
+				aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_XCLIENT"})][2],;
+				aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_PRENUM" })][2],;
+				lMsErroAuto,;
+				lPVLiber   ,;
+				Len(aItens),;
+				lErroQtdInc})
+			Else
+				//Nใo usar RollBack, pois estแ
+				//atrapalhando o conceito do processo
+				//RollBackSX8()
+			EndIf
+			
+			//Carrega variaveis da filial em questใo
+			cTratarFil := fPesqAcols({"ZA_FILIAL" } ,x)
+			cFilAnt    := fPesqAcols({"ZA_FILIAL" } ,x)
+			SM0->(DbSeek(cEmpAnt+cFilAnt))
+			
+			//Reinicializa array para
+			//utiliza็ใo dos pr๓ximos pedidos
+			aCabec := {}
+			aItens := {}
+			aGrvSZA:= {}
+		EndIf
+		
+		//Localiza item do pre-pedido
+		SZ3->(DbSetOrder(1))
+		SZ3->(DbSeek(xFilial("SZ3")+cPrePed+cItmPrd))
+		// Daniel Franciulli - Tratamento dos principios ativos
+		If Posicione("SB1",1,xFilial("SB1")+SZ3->Z3_PRODUTO,"B1_TIPO")=="AT"
+			//ZA_QTDVEND             ZA_QTDLIBE
+			_cProduto 	:= cCodPrd 							// fPesqAcols({"ZA_PRODUTO"},x)oGdTrt:aCols[x][13]
+			_cDescri	:= oGdTrt:aCols[x][14]
+			_xQtdTotPen := oGdTrt:aCols[x][19]//-oGdTrt:aCols[x][19]
+			_xQtdTotLib := oGdTrt:aCols[x][20]
+			_xEntreg	:= SZ3->Z3_ENTREG
+			_xPrUni		:= SZ3->Z3_PRUNIT
+			_xPrVen	    := SZ3->Z3_PRCVEN
+		Else
+			_cProduto 	:= SZ3->Z3_PRODUTO
+			_cDescri	:= SZ3->Z3_DESCRI
+			_xQtdTotLib := oGdTrt:aCols[x][20]
+			_xQtdTotPen := oGdTrt:aCols[x][19]//-oGdTrt:aCols[x][19]
+			_xEntreg	:= SZ3->Z3_ENTREG
+		Endif
+		
+		//Monta cabe็alho
+		If Len(aCabec) == 0
+			
+			//Inicializa variaveis de pesquisa
+			cPrePed   := fPesqAcols({"ZA_NUM"    } ,x)
+			cItmPrd   := fPesqAcols({"ZA_ITEM"   } ,x)
+			cCodPrd   := fPesqAcols({"ZA_PRODUTO"} ,x)
+			
+			//Localiza cabe็alho do pre-pedido
+			SZ2->(DbSetOrder(1))
+			SZ2->(DbSeek(xFilial("SZ2")+cPrePed))
+			
+			//Localiza COndi็ใo de Pagamento
+			SE4->(DbSetOrder(1))
+			SE4->(DbSeek(xFilial("SE4")+SZ2->Z2_CONDPAG))
+			
+			//Localiza Cliente
+			SA1->(DbSetOrder(1))
+			SA1->(DbSeek(xFilial("SA1")+fPesqAcols({"ZA_CLIENT","ZA_LOJAENT"},x)))
+			
+			//Cabe็alho
+			//CUIDADO: A ordem do campos no array interfere
+			//         na valida็ใo da fun็ใo mata410
+			
+			
+			aCabec :={	;
+			{"C5_FILIAL"	,cTratarFil																,Nil},;
+			{"C5_NUM"		,cNumeroDoc																,Nil},;
+			{"C5_MOEDA"		,SZ2->Z2_MOEDA															,Nil},;
+			{"C5_XDESPER"	,SZ2->Z2_XDESPER														,Nil},;
+			{"C5_XTPPED"	,Alltrim(Str(mv_par46))													,Nil},;
+			{"C5_XTPFIN"	,SZ2->Z2_XTPFIN     													,Nil},;						
+			{"C5_DESCTP"	,SZ2->Z2_DESCTP     													,Nil},;									
+			{"C5_TIPO"		,SZ2->Z2_TIPO															,Nil},;
+			{"C5_CLIENTE"	,SZ2->Z2_CLIENTE														,Nil},;
+			{"C5_LOJACLI"	,SZ2->Z2_LOJACLI														,Nil},;
+			{"C5_CLIENT"	,SZ2->Z2_CLIENT															,Nil},;
+			{"C5_LOJAENT"	,SZ2->Z2_LOJAENT														,Nil},; //fPesqAcols({"ZA_LOJAENT"},x)
+			{"C5_XCLIENT"	,SZ2->Z2_XCLIENT														,Nil},;
+			{"C5_XESTCLI"	,SZ2->Z2_XESTCLI														,Nil},;
+			{"C5_TIPOCLI"	,SZ2->Z2_TIPOCLI														,Nil},;
+			{"C5_EMISSAO"	,dDataBase																,Nil},;
+			{"C5_CONDPAG"	,SZ2->Z2_CONDPAG														,Nil},;
+			{"C5_PARC1"		,SZ2->Z2_PARC1															,Nil},;
+			{"C5_DATA1"		,SZ2->Z2_DATA1															,Nil},;
+			{"C5_PARC2"		,SZ2->Z2_PARC2															,Nil},;
+			{"C5_DATA2"		,SZ2->Z2_DATA2															,Nil},;
+			{"C5_PARC3"		,SZ2->Z2_PARC3															,Nil},;
+			{"C5_DATA3"		,SZ2->Z2_DATA3															,Nil},;
+			{"C5_PARC4"		,SZ2->Z2_PARC4															,Nil},;
+			{"C5_DATA4"		,SZ2->Z2_DATA4															,Nil},;
+			{"C5_TABELA"	,SZ2->Z2_TABELA															,Nil},;
+			{"C5_VEND1"		,SZ2->Z2_VEND1															,Nil},;
+			{"C5_COMIS1"	,SZ2->Z2_COMIS1															,Nil},;
+			{"C5_VEND2"		,SZ2->Z2_VEND2															,Nil},;
+			{"C5_COMIS2"	,SZ2->Z2_COMIS2															,Nil},;
+			{"C5_VEND3"		,SZ2->Z2_VEND3															,Nil},;
+			{"C5_COMIS3"	,SZ2->Z2_COMIS3															,Nil},;
+			{"C5_PESOL"		,SZ2->Z2_PESOL															,Nil},;
+			{"C5_PBRUTO"	,SZ2->Z2_PBRUTO															,Nil},;
+			{"C5_VOLUME1"	,SZ2->Z2_VOLUME1														,Nil},;
+			{"C5_ESPECI1"	,SZ2->Z2_ESPECI1														,Nil},;
+			{"C5_XOBSERV"	,SZ2->Z2_XOBSERV														,Nil},;
+			{"C5_MENNOTA"	,SZ2->Z2_MENNOTA														,Nil},;
+			{"C5_MENNOT1"	,SZ2->Z2_MENNOT1														,Nil},;
+			{"C5_XHISTCO"	,SZ2->Z2_XHISTCO														,Nil},;
+			{"C5_TPFRETE"	,SZ2->Z2_TPFRETE														,Nil},;
+			{"C5_XESPECI"	,SZ2->Z2_XESPECI														,Nil},;
+			{"C5_PRENUM"	,cPrePed																,Nil},;
+			{"C5_XTABDES"	,Posicione("DA0",1,xFilial("DA0")+SZ2->Z2_TABELA,"DA0_DESCRI")			,Nil}}
+		EndIf
+		
+		//_nReais := xMoeda(SZ3->Z3_PRCVEN,M->Z2_MOEDA,1,dDataBase)
+		
+		//SZ3->Z3_PRCVEN
+		_nReais := fPesqAcols({"ZA_QTDELIB"} ,x)
+		xCFOAC := ""
+		xCFOAC := Posicione("SF4",1,xFilial("SF4")+fPesqAcols({"ZA_TES"    } ,x),"F4_CF")
+		//Alimenta itens
+		aadd(aLinha,{"C6_FILIAL"   	,cTratarFil												                ,Nil}) 
+		aadd(aLinha,{"C6_ITEM"		,cItens														         	,Nil})
+		aadd(aLinha,{"C6_PRODUTO"	,_cProduto																,Nil})
+		aadd(aLinha,{"C6_DESCRI"	,_cDescri																,Nil})
+		aadd(aLinha,{"C6_XTPPROD"	,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_TIPO")					,Nil})
+		aadd(aLinha,{"C6_UM"		,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_UM")					,Nil})
+		aadd(aLinha,{"C6_QTDVEN"	,_xQtdTotLib															,Nil})
+		aadd(aLinha,{"C6_PRCVEN"	,SZ3->Z3_PRCVEN															,Nil})
+		aadd(aLinha,{"C6_PRUNIT"	,SZ3->Z3_PRUNIT															,Nil})
+		aadd(aLinha,{"C6_VALOR"		,Round(_xQtdTotLib*SZ3->Z3_PRCVEN,2)									,Nil})
+		aadd(aLinha,{"C6_TES"		,fPesqAcols({"ZA_TES"    } ,x)											,Nil})
+		aadd(aLinha,{"C6_CF"		,IIF(ALLTRIM(SZ2->Z2_XESTCLI)<>ALLTRIM(SM0->M0_ESTENT),"6"+SUBSTR(xCFOAC,2,3),"5"+SUBSTR(xCFOAC,2,3))	,Nil})
+		aadd(aLinha,{"C6_SEGUN"  	,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_SEGUM")					,Nil})		
+		aadd(aLinha,{"C6_XENTREG"	,_xEntreg																,Nil})
+		aadd(aLinha,{"C6_QTDLIB"	,_xQtdTotLib															,Nil})
+		aadd(aLinha,{"C6_LOCAL"		,fPesqAcols({"ZA_LOCAL"  } ,x)											,Nil})
+		aadd(aLinha,{"C6_TRANSP"	,fPesqAcols({"ZA_TRANSP" } ,x)											,Nil})
+		aadd(aLinha,{"C6_XLIBERA"	,"1"																	,Nil})
+		aadd(aLinha,{"C6_ENTREG"	,_xEntreg																,Nil})		
+		aadd(aLinha,{"C6_CHASSI"    , ''                                                                    ,Nil})
+		aadd(aLinha,{"C6_XTABELA"	,SZ3->Z3_XTABELA														,Nil})
+		aadd(aLinha,{"C6_SLDALIB"	,0																		,Nil})
+		aadd(aLinha,{"C6_XDESFIN"	,SZ3->Z3_XDESFIN														,Nil})                
+		aadd(aLinha,{"C6_XDESPER"	,SZ3->Z3_XDESPER														,Nil})
+		aadd(aLinha,{"C6_QTDENT"	,0																		,Nil})
+		aadd(aLinha,{"C6_XDTINCL"	,dDataBase																,Nil})
+		aadd(aLinha,{"C6_PRENUM"	,cPrePed																,Nil})
+		aadd(aLinha,{"C6_PREITEM"	,cItmPrd																,Nil})
+		aadd(aLinha,{"C6_CODFAB"	,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_XCODFAB") 				,Nil})
+		aadd(aLinha,{"C6_LOJAFA"	,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_XLOJFAB")               ,Nil})
+		aadd(aLinha,{"C6_CLI"		,SZ2->Z2_CLIENTE														,Nil})
+		aadd(aLinha,{"C6_LOJA"		,SZ2->Z2_LOJACLI														,Nil})
+		aadd(aLinha,{"C6_NUM"   	,cNumeroDoc																,Nil})
+
+		aadd(aItens,aLinha)
+		aLinha := {}
+/*
+		aAdd(aItens,{{"C6_FILIAL"   	,cTratarFil												,Nil},;
+		{"C6_ITEM"		,cItens																	,Nil},;
+		{"C6_PRODUTO"	,_cProduto																,Nil},;	//		{"C6_PRODUTO"	,SZ3->Z3_PRODUTO														,Nil},;
+		{"C6_DESCRI"	,_cDescri																,Nil},;	//		{"C6_DESCRI"	,SZ3->Z3_DESCRI															,Nil},;
+		{"C6_XTPPROD"	,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_TIPO")					,Nil},;
+		{"C6_UM"		,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_UM")					,Nil},;
+		{"C6_QTDVEN"	,_xQtdTotLib															,Nil},;
+		{"C6_PRCVEN"	,SZ3->Z3_PRCVEN															,Nil},;	//		{"C6_QTDVEN"	,fPesqAcols({"ZA_QTDELIB"} ,x)											,Nil},;   
+		{"C6_PRUNIT"	,SZ3->Z3_PRUNIT															,Nil},;
+		{"C6_VALOR"		,Round(_xQtdTotLib*SZ3->Z3_PRCVEN,2)									,Nil},;
+		{"C6_TES"		,fPesqAcols({"ZA_TES"    } ,x)											,Nil}})
+		{"C6_SEGUN"  	,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_SEGUM")					,Nil},;		
+		{"C6_XENTREG"	,_xEntreg																,Nil},;
+		{"C6_QTDLIB"	,_xQtdTotLib															,Nil},;//{"C6_QTDLIB"	,fPesqAcols({"ZA_QTDELIB"} ,x)
+		{"C6_LOCAL"		,fPesqAcols({"ZA_LOCAL"  } ,x)											,Nil},;
+		{"C6_TRANSP"	,fPesqAcols({"ZA_TRANSP" } ,x)											,Nil},;
+		{"C6_XLIBERA"	,"1"																	,Nil},;
+		{"C6_ENTREG"	,_xEntreg																,Nil},;		
+		{"C6_CHASSI" , '',Nil},; 
+		{"C6_XTABELA"	,SZ3->Z3_XTABELA														,Nil},;
+		{"C6_SLDALIB"	,0																		,Nil},;
+		{"C6_XDESFIN"	,SZ3->Z3_XDESFIN														,Nil},;                 
+		{"C6_XDESPER"	,SZ3->Z3_XDESPER														,Nil},;
+		{"C6_QTDENT"	,0																		,Nil},;
+		{"C6_XDTINCL"	,dDataBase																,Nil},;
+		{"C6_PRENUM"	,cPrePed																,Nil},;
+		{"C6_PREITEM"	,cItmPrd																,Nil},;
+		{"C6_CODFAB"	,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_XCODFAB") 				,Nil},;
+		{"C6_LOJAFA"	,Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_XLOJFAB")               ,Nil},;
+		{"C6_CLI"		,SZ2->Z2_CLIENTE														,Nil},;
+		{"C6_LOJA"		,SZ2->Z2_LOJACLI														,Nil},;
+		{"C6_NUM"   	,cNumeroDoc																,Nil}})
+  */
+		//Alimenta itens
+		aAdd(aGrvSZA,{	{"ZA_FILIAL"   	,xFilial("SZA")															,Nil},;
+		{"ZA_PEDNUM"   	,cNumeroDoc																,Nil},;
+		{"ZA_PEDITEM"   ,cItens																	,Nil},;
+		{"ZA_PRENUM"   	,cPrePed																,Nil},;
+		{"ZA_PREITEM"   ,cItmPrd																,Nil},;
+		{"ZA_PRODUTO"   ,_cProduto																,Nil},;	//		{"ZA_PRODUTO"   ,SZ3->Z3_PRODUTO														,Nil},;
+		{"ZA_DESCPRD"   ,_cDescri        														,Nil},;	//		{"ZA_DESCPRD"   ,SZ3->Z3_DESCRI															,Nil},;
+		{"ZA_EMISSAO"   ,dDataBase																,Nil},;
+		{"ZA_INDUSTR"   ,fPesqAcols({"ZA_INDUSTR"} ,x)											,Nil},;
+		{"ZA_QTDVEND"   ,_xQtdTotLib															,Nil},;	//		{"ZA_QTDVEND"   ,SZ3->Z3_QTDVEN															,Nil},;
+		{"ZA_QTDPEND"   ,_xQtdTotPen															,Nil},;	//		{"ZA_QTDPEND"   ,SZ3->Z3_QTDPEN															,Nil},;
+		{"ZA_QTDLIBE"   ,fPesqAcols({"ZA_QTDELIB"} ,x)											,Nil},;
+		{"ZA_ORIGFIL"   ,cTratarFil																,Nil},;
+		{"ZA_ESTDFIL"   ,fPesqAcols({"ZA_UFORIG" } ,x)											,Nil},;
+		{"ZA_ORIGLOC"   ,fPesqAcols({"ZA_LOCAL"  } ,x)											,Nil},;
+		{"ZA_ESTDLOC"   ,""																		,Nil},;
+		{"ZA_DESTCLI"   ,SZ3->Z3_CLI															,Nil},;
+		{"ZA_DESTLOJ"   ,fPesqAcols({"ZA_LOJAENT"} ,x)											,Nil},;
+		{"ZA_DESTNOM"   ,SZ2->Z2_XCLIENT														,Nil},;
+		{"ZA_ESTDCLI"   ,fPesqAcols({"ZA_UFDEST" } ,x)											,Nil},;
+		{"ZA_TES"   	,fPesqAcols({"ZA_TES"    } ,x)											,Nil},;
+		{"ZA_TRANSP"   	,fPesqAcols({"ZA_TRANSP" } ,x)											,Nil}})
+		
+	EndIf
+Next x
+
+//Executa ExecAuto para criar pedido de venda
+//Gera o ultimo pedido
+//que nใo ้ gerado no loop
+If Len(aItens) > 0
+	lMsErroAuto := .F.
+	lErroQtdLib := .F.
+	lErroQtdInc := .F.
+	
+	//Valida array antes
+	If fVldQtdLib(aGrvSZA)
+		Alert("ERRO:150909D"+Chr(10)+Chr(13)+"Favor informar ao suporte de TI urgente sobre este erro."+Chr(10)+Chr(13)+"Quantidade de um item estแ tentando ser gerado com mais do que o permitido.")
+		lErroQtdLib := .T.
+	EndIf
+	
+	If !lErroQtdLib
+		//Executa rotina de inclusใo de pedido de venda  
+		//Mata410(aCabec,aItens,3)
+		MSExecAuto({|x,y,z| Mata410(x,y,z)},aCabec,aItens,3)
+	EndIf
+	
+	//Valida array depois
+	If fVldQtdLib(aGrvSZA) .And. !lErroQtdLib
+		Alert("ERRO:150909E"+Chr(10)+Chr(13)+"Favor informar ao suporte de TI urgente sobre este erro."+Chr(10)+Chr(13)+"Quantidade de um item estแ tentando ser gerado com mais do que o permitido.")
+		lErroQtdInc := .T.
+	EndIf
+	
+	//Apresenta erro caso tenha ocorrido
+	If lMsErroAuto
+		Mostraerro()
+	EndIf
+	
+	//Confirma a inclusใo do pedido de venda
+	lPVLiber := .F.
+	If fVldIndPV(aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_NUM"})][2],@lPVLiber) .And. !lErroQtdLib
+		ConfirmSX8()
+		fGeraSZA(aGrvSZA)
+		fAtlzSZ3(aItens)
+		aAdd(aPedVd,{	aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_FILIAL" })][2],;
+		aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_NUM"    })][2],;
+		aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_CLIENT" })][2],;
+		aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_LOJAENT"})][2],;
+		aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_XCLIENT"})][2],;
+		aCabec[aScan(aCabec,{|x|AllTrim(x[1])=="C5_PRENUM" })][2],;
+		lMsErroAuto,;
+		lPVLiber   ,;
+		Len(aItens),;
+		lErroQtdInc})
+		
+	Else
+		//Nใo usar RollBack, pois estแ
+		//atrapalhando o conceito do processo
+		//RollBackSX8()
+	EndIf
+	
+	//Reinicializa array para
+	//utiliza็ใo dos pr๓ximos pedidos
+	aCabec := {}
+	aItens := {}
+	aGrvSZA:= {}
+EndIf
+
+//Regua de processamento
+ProcRegua(Len(aPedVd))
+
+//Apresentar log com os pedidos criado
+For x:=1 To Len(aPedVd)
+	IncProc()
+	cTxtLog += "Pre-Pedido: "+aPedVd[x][6]+CRLF
+	cTxtLog += "Fil/Pedido: "+aPedVd[x][1]+"/"+aPedVd[x][2]+CRLF
+	cTxtLog += "Cod. Cliente: "+aPedVd[x][3]+"/"+aPedVd[x][4]+CRLF
+	cTxtLog += "Nome Cliente: "+Left(aPedVd[x][5],35)+CRLF
+	If aPedVd[x][7]
+		cTxtLog += "Aten็ใo: NรO CONFORMIDADE CONSTATADA AO GERAR PV."+CRLF
+	Else
+		cTxtLog += "Aviso  : PEDIDO GERADO COM SUCESSO."+CRLF
+	EndIf
+	If aPedVd[x][8]
+		cTxtLog += "       : PEDIDO FOI GERADO LIBERADO."+CRLF
+	Else
+		cTxtLog += "       : PEDIDO [ NรO ] FOI GERADO LIBERADO."+CRLF
+	EndIf
+	If aPedVd[x][10]
+		cTxtLog += "       : ############### E R R O ############### "+CRLF
+		cTxtLog += "       : ALGUM ITEM FOI GERADO COM QUANTIDADE MAIOR DO QUE O PERMITIDO."+CRLF
+	EndIf
+	cTxtLog     += "       : "+AllTrim(Str(aPedVd[x][9]))+" ITEM(S) GERADO PARA ESTE PEDIDO."+CRLF
+	cTxtLog += Replicate("-",50)+CRLF+CRLF
+Next x
+
+//Imprime em tela o resultado dos pedidos incluidos
+If Len(aPedVd) > 0
+	fResumo(cTxtLog)
+EndIf
+
+//Volta variแvel da filial corrente
+cFilAnt := cBkpFil
+SM0->(DbSeek(cEmpAnt+cFilAnt))
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fPesqAcolsบ Autor ณFelipe Aur้lio de Meloบ Data ณ 14/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fPesqAcols(aCpos,nLin)
+
+Local y    := 0
+Local nPos := 0
+Local cRet := ""
+
+
+For y:=1 To Len(aCpos)
+	nPos := aScan(oGdTrt:aHeader,{|x|AllTrim(x[2])==AllTrim(aCpos[y])})
+	If oGdTrt:aHeader[nPos][8] == "C"
+		cRet += oGdTrt:aCols[nLin][nPos]
+	Else
+		cRet := oGdTrt:aCols[nLin][nPos]
+		y := Len(aCpos)
+	EndIf
+Next y
+
+Return(cRet)
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fResumo บ Autor ณFelipe Aur้lio de Melo บ Data ณ 14/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fResumo(cTexto)
+
+Local oDlg,oMemo
+Local cTxtLog := "LOG DOS PEDIDOS GERADOS"
+Local cArqLog := Criatrab(,.f.)+".LOG"
+Define Font oFont Name "Mono AS" Size 05,12
+
+cTxtLog += CRLF+Replicate("-",50)+CRLF
+cTxtLog += CRLF+"Data: "+DtoC(Date())
+cTxtLog += CRLF+"Hora: "+Time()
+cTxtLog += CRLF+"Usuแrio: "+cUserName
+
+cTxtLog += CRLF+Replicate("-",50)+CRLF
+cTxtLog += CRLF+cTexto
+
+__cFileLog := MemoWrite(cArqLog,cTxtLog)
+
+Define MsDialog oDlg Title cArqLog From 3,0 to 340,417 Pixel
+@ 5,5 Get oMemo Var cTxtLog Memo Size 200,145 OF oDlg Pixel
+oMemo:bRClicked := {||AllwaysTrue()}
+oMemo:oFont:=oFont
+Define sButton From 153,175 Type 1 Action oDlg:End() Enable Of oDlg Pixel
+Define sButton From 153,145 Type 6 Action ( PrintAErr(__cFileLog,cTxtLog),oDlg:End() ) Enable Of oDlg Pixel
+Activate MsDialog oDlg Center
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณfVldIndPVบ Autor ณ Felipe Aur้lio de Melo บ Data ณ 15/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fVldIndPV(cNumPed,lPVLiber)
+
+Local lRet        := .T.
+Local aArea       := GetArea()
+Default lPVLiber    := .F.
+
+SC5->(DbSetOrder(1))
+If SC5->(!DbSeek(xFilial("SC5")+cNumPed))
+	lRet  := .F.
+Else
+	If !Empty(SC5->C5_LIBEROK) .And. Empty(SC5->C5_NOTA) .And. Empty(SC5->C5_BLQ)
+		lPVLiber := .T.
+	EndIf
+EndIf
+
+RestArea(aArea)
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fGeraSZA บ Autor ณFelipe Aur้lio de Melo บ Data ณ 15/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fGeraSZA(aGrvSZA)
+
+Local x := 0
+Local y := 0
+
+For y:=1 To Len(aGrvSZA)
+	RecLock("SZA",.T.)
+	For x:=1 To Len(aGrvSZA[y])
+		If SZA->(FieldPos(aGrvSZA[y][x][1])) > 0
+			&("SZA->"+aGrvSZA[y][x][1]) := aGrvSZA[y][x][2]
+		EndIf
+	Next x
+	SZA->(MsUnLock())
+Next y
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fAtlzSZ3 บ Autor ณFelipe Aur้lio de Melo บ Data ณ 15/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fAtlzSZ3(aItens)
+
+Local x          := 0
+Local aAreaSZ2   := SZ2->(GetArea())
+Local aAreaSZ3   := SZ3->(GetArea())
+Local cPrePedNum := ""
+Local cPrePedItm := ""
+Local cPrePedPrd := ""
+Local nPrePedQtd := ""
+
+SZ2->(DbSetOrder(1))
+SZ3->(DbSetOrder(1))
+For x:=1 To Len(aItens)
+	cPrePedNum := aItens[x][aScan(aItens[x],{|j|AllTrim(j[1])=="C6_PRENUM"  })][2]
+	cPrePedItm := aItens[x][aScan(aItens[x],{|j|AllTrim(j[1])=="C6_PREITEM" })][2]
+	cPrePedPrd := aItens[x][aScan(aItens[x],{|j|AllTrim(j[1])=="C6_PRODUTO" })][2]
+	nPrePedQtd := aItens[x][aScan(aItens[x],{|j|AllTrim(j[1])=="C6_QTDVEN"  })][2]
+	
+	//Como eh apenas um pre-pedido por pedido entao o itens sao sempre
+	//do mesmo pre-pedido e por isso soh precisa fazer uma vez o espelho
+	If x == 1
+		U_EspelhoPV(xFilial("SZ3"),cPrePedNum,'L',,.T.)
+	EndIf
+	
+	If SZ2->(DbSeek(xFilial("SZ2")+cPrePedNum))
+		RecLock("SZ2",.F.)
+		SZ2->Z2_BLQ := "1"
+		SZ2->(MsUnLock())
+	EndIf
+	If SZ3->(DbSeek(xFilial("SZ3")+cPrePedNum+cPrePedItm)) //+cPrePedPrd)) Tratamento do principio ativo
+		If SZ3->Z3_PRODUTO==cPrePedPrd .or. Posicione("SB1",1,xFilial("SB1")+SZ3->Z3_PRODUTO,"B1_TIPO")=="AT"
+			RecLock("SZ3",.F.)
+			SZ3->Z3_QTDLIB += nPrePedQtd
+			SZ3->Z3_QTDPEN -= nPrePedQtd
+			SZ3->(MsUnLock())
+		Endif
+	EndIf
+Next x
+
+//Trata status - Verificar todos os itens
+SZ3->(DbSetOrder(1))
+If SZ3->(DbSeek(xFilial("SZ3")+cPrePedNum))
+	lHouveLib := .F.
+	lTemPende := .F.
+	lBloqTemp := .F.
+	While SZ3->(!Eof()) .And.  SZ3->(Z3_FILIAL+Z3_NUM) == xFilial("SZ3")+cPrePedNum
+		If AllTrim(SZ3->Z3_BLQ) $ "R/S/C"
+			lHouveLib := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN != SZ3->Z3_QTDPEN
+			lHouveLib := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN == SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA == "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C")
+			lTemPende := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN != SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA == "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C") .And. SZ3->Z3_QTDPEN > 0
+			lTemPende := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN == SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA != "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C")
+			lBloqTemp := .T.
+		EndIf
+		If SZ3->Z3_QTDVEN != SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA != "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C") .And. SZ3->Z3_QTDPEN > 0
+			lBloqTemp := .T.
+		EndIf
+		
+		SZ3->(DbSkip())
+	End
+	
+	SZ2->(DbSetOrder(1))
+	If SZ2->(DbSeek(xFilial("SZ2")+cPrePedNum))
+		RecLock("SZ2",.F.)
+		If lHouveLib
+			SZ2->Z2_BLQ     := IIf(SZ2->Z2_BLQ=="0","0","1")
+			If lTemPende .Or. lBloqTemp
+				SZ2->Z2_LIBEROK := " "
+			Else
+				SZ2->Z2_LIBEROK := "1"
+			EndIf
+		Else
+			SZ2->Z2_LIBEROK := " "
+			SZ2->Z2_BLQ     := IIf(SZ2->Z2_BLQ=="0","0"," ")
+		EndIf
+		SZ2->(MsUnLock())
+	EndIf
+EndIf
+
+RestArea(aAreaSZ2)
+RestArea(aAreaSZ3)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fPesqFabr บ Autor ณFelipe Aur้lio de Meloบ Data ณ 15/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fPesqFabr(cProd,aCpos)
+
+Local cRet := ""
+
+SB1->(DbSetOrder(1))
+If SB1->(DbSeek(xFilial("SB1")+AllTrim(cProd)))
+	If AllTrim(cProd) == AllTrim(SB1->B1_COD)
+		SA2->(DbSetOrder(1))
+		If !(Empty(SB1->B1_XCODFAB) .Or. Empty(SB1->B1_XLOJFAB))
+			If SA2->(DbSeek(xFilial("SA2")+SB1->B1_XCODFAB+SB1->B1_XLOJFAB))
+				For x:=1 To Len(aCpos)
+					cRet += &("SB1->"+aCpos[x])
+				Next x
+			EndIf
+		EndIf
+	EndIf
+EndIf
+
+Return(cRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ PrintAErr บ Autor ณFelipe Aur้lio de Meloบ Data ณ 18/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Imprime o autoerro.log                                     บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function PrintAErr(cFileErro,cConteudo)
+
+Local nX          := 0
+Local nLin        := 0
+Default cConteudo := ""
+Private aReturn   := {"", 1,"", 1, 2, 1, "",1 }
+
+CursorWait()
+SetPrint("","LOGPREPED",Nil,"LOG PRE-PEDIDO","LOG PRE-PEDIDO","","",.F.,"",.F.,"M")
+SetDefault(aReturn,"")
+nLinha:= MLCount(cConteudo,132)
+For nX:= 1 To nLinha
+	nLin++
+	If nLin > 80
+		nLin := 1
+		@ 00,00 PSAY AvalImp(132)
+	Endif
+	@ nLin,000 PSAY Memoline(cConteudo,132,nX)
+Next nX
+Set device to Screen
+MS_FLUSH()
+
+Return(.T.)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ M410Mail  บ Autor ณFelipe Aur้lio de Meloบ Data ณ 18/05/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Monta e envia email [html]                                 บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User Function M410Mail(cNumPrePed)
+
+Local lEnvia   := .F.
+Local cDestino := ""
+Local cVirgula := ""
+Local aAreaSZ2 := SZ2->(GetArea())
+Local aAreaSZ3 := SZ3->(GetArea())
+Local aAreaSE4 := SE4->(GetArea())
+Local nValTotal:= 00
+
+Private oHtml
+Private oProcess
+
+//Verifica se serแ necessแrio envio
+SZ2->(DbSetOrder(1))
+If SZ2->(DbSeek(xFilial("SZ2")+cNumPrePed))
+	SE4->(DbSetOrder(1))
+	If SE4->(DbSeek(xFilial("SE4")+SZ2->Z2_CONDPAG))
+		If !Empty(SE4->E4_XFORMUL)
+			cVirgula := IIf(Empty(SE4->E4_XEMAIL),"",";")
+			cDestino := AllTrim(SE4->E4_XEMAIL)
+			cDestino += IIf(Empty(SE4->E4_XMAIL1),"",cVirgula+AllTrim(SE4->E4_XMAIL1))
+			If !Empty(cDestino)
+				lEnvia   := .T.
+			EndIf
+		EndIf
+	EndIf
+EndIf
+
+// Adicionado por Valdemir jose 06/03/2013
+cDestino := ValidaEmail(cDestino)
+
+//Caso nใo envia, restaura posi็๕es
+If !lEnvia
+	RestArea(aAreaSZ2)
+	RestArea(aAreaSZ3)
+	RestArea(aAreaSE4)
+	Return
+EndIf
+
+//Inicia processo para envio do workflow
+oProcess:=TWFProcess():New("00001",OemToAnsi("Pr้-Pedido de Venda"))
+oProcess:NewTask("000001","\workflow\wfpreped.htm")
+oHtml:=oProcess:oHtml
+
+oProcess:cTo      := cDestino
+//oProcess:UserSiga := "000000"
+oProcess:cSubject := "[ CCAB-AGRO - Inclusใo - Pr้-Pedido: "+AllTrim(cNumPrePed)+" ]"
+oProcess:cFromAddr:= "ccab.relatorios@ccab-agro.com.br"//UsrRetMail(__cUserID)
+oProcess:cFromName:= "ccab.relatorios"                 //UsrRetName(__cUserID)
+
+oProcess:oHtml:ValByName( "cNumPRE"			, SZ2->Z2_NUM)
+oProcess:oHtml:ValByName( "cNumSFA"			, SZ2->Z2_NUMSFA)
+oProcess:oHtml:ValByName( "cCliNome"		, SZ2->Z2_CLIENTE+"/"+SZ2->Z2_LOJACLI+" - "+SZ2->Z2_XCLIENT)
+
+//Posiciona no Cliente
+SA1->(DbSetOrder(1))
+SA1->(DbSeek(xFilial("SA1")+SZ2->Z2_CLIENTE+SZ2->Z2_LOJACLI))
+oProcess:oHtml:ValByName( "cCliCNPJ"		, Transform(SA1->A1_CGC,"@R 99.999.999/9999-99"))
+oProcess:oHtml:ValByName( "cCliIE"			, Transform(SA1->A1_INSCR,"@!"))
+oProcess:oHtml:ValByName( "cCliEndereco"	, AllTrim(SA1->A1_END)+"  "+AllTrim(SA1->A1_BAIRRO)+"  "+AllTrim(SA1->A1_MUN)+"  "+AllTrim(SA1->A1_EST)+"  "+Transform(SA1->A1_CEP,"@R 99999-999"))
+oProcess:oHtml:ValByName( "cCliTel"			, Transform(SA1->A1_TEL,"@R 9999-9999"))
+oProcess:oHtml:ValByName( "cCliFax"			, Transform(SA1->A1_FAX,"@R 9999-9999"))
+oProcess:oHtml:ValByName( "cCliContato"		, AllTrim(SA1->A1_CONTATO))
+oProcess:oHtml:ValByName( "cCliEmail"		, AllTrim(SA1->A1_EMAIL))
+//Posiciona no Cliente Entrega
+SA1->(DbSetOrder(1))
+SA1->(DbSeek(xFilial("SA1")+SZ2->Z2_CLIENT+SZ2->Z2_LOJAENT))
+oProcess:oHtml:ValByName( "cCliEndEntr"		, AllTrim(SA1->A1_ENDENT)+"  "+AllTrim(SA1->A1_BAIRROE)+"  "+AllTrim(SA1->A1_MUNE)+"  "+AllTrim(SA1->A1_ESTE)+"  "+Transform(SA1->A1_CEPE,"@R 99999-999"))
+
+SZ3->(DbSetOrder(1))
+If SZ3->(DbSeek(xFilial("SZ3")+cNumPrePed))
+	While SZ3->(!Eof()) .And. SZ3->Z3_FILIAL+SZ3->Z3_NUM == xFilial("SZ3")+cNumPrePed
+		aAdd((oHtml:ValByName("a.Item"))		,SZ3->Z3_ITEM)
+		aAdd((oHtml:ValByName("a.Codigo"))		,SZ3->Z3_PRODUTO)
+		aAdd((oHtml:ValByName("a.Descricao"))	,SZ3->Z3_DESCRI)
+		aAdd((oHtml:ValByName("a.Unidade"))		,SZ3->Z3_UM)
+		aAdd((oHtml:ValByName("a.Entrega"))		,DtoC(SZ3->Z3_ENTREG))
+		aAdd((oHtml:ValByName("a.Quantidade"))	,Transform(SZ3->Z3_QTDVEN,"@E 99999999999.99"))
+		aAdd((oHtml:ValByName("a.ValUnitario"))	,Transform(SZ3->Z3_PRCVEN,"@E 9999,999.999999"))
+		aAdd((oHtml:ValByName("a.ValTotal"))	,Transform(SZ3->Z3_VALOR ,"@E 999,999,999.99"))
+		nValTotal += SZ3->Z3_VALOR
+		SZ3->(DbSkip())
+	End
+EndIf
+
+oProcess:oHtml:ValByName( "cValorTotal"		, Transform(nValTotal,"@E 999,999,999,999.99"))
+oProcess:oHtml:ValByName( "cCondPagamento"	, SZ2->Z2_CONDPAG+" - "+SE4->E4_DESCRI)
+oProcess:oHtml:ValByName( "cMoeda"			, StrZero(SZ2->Z2_MOEDA,2)+" - "+SZ2->Z2_XDMOEDA)
+oProcess:oHtml:ValByName( "cFrete"			, IIf(SZ2->Z2_TPFRETE=="F","FOB","CIF"))
+oProcess:oHtml:ValByName( "cEmails"			, cDestino)
+
+oProcess:Start()
+oProcess:Finish()     
+
+//WFSendMail({"01","01"}) //Devido o parametro MV_WFENVJA estar com .T. nao eh necessario chamar a WFSendMail.
+
+//Restaura posi็๕es
+RestArea(aAreaSZ2)
+RestArea(aAreaSZ3)
+RestArea(aAreaSE4)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ SndMail   บ Autor ณFelipe Aur้lio de Meloบ Data ณ 30/06/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ For็a envio dos emails                                     บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User Function SndMail(lProc)
+
+Local nProces := 00
+Local aParSM0 := {}
+Local aRetSM0 := SM0->(GetArea())
+Default lProc := .F.
+
+If lProc
+	SM0->(DbSeek(cEmpAnt))
+	While SM0->(!Eof()) .And. SM0->M0_CODIGO == cEmpAnt
+		nProces ++
+		SM0->(DbSkip())
+	End
+	ProcRegua(nProces)
+EndIf
+
+SM0->(DbSeek(cEmpAnt))
+While SM0->(!Eof()) .And. SM0->M0_CODIGO == cEmpAnt
+	If lProc
+		IncProc()
+	EndIf
+	aParSM0 := {SM0->M0_CODIGO,SM0->M0_CODFIL}
+	WFSendMail(aParSM0)
+	SM0->(DbSkip())
+End
+
+RestArea(aRetSM0)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fCalcPVLibบ Autor ณFelipe Aur้lio de Meloบ Data ณ 30/06/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Calcula quantidade de pedidos liberados que nใo consumiram บฑฑ
+ฑฑบ          ณ estoque                                                    บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fCalcPVLib(cPvFil,cPvProd,cPvLocal)
+
+Local nRet       := 0
+Local cQry       := ""
+Local aBkpArea   := GetArea()
+Default cPvFil   := ""
+Default cPvProd  := ""
+Default cPvLocal := ""
+
+cQry := " SELECT C6_FILIAL, C6_PRODUTO, C6_LOCAL, SUM(C6_QTDEMP) C6_QTDEMP FROM "+RetSqlName("SC6")+" SC6 "
+cQry += " LEFT JOIN "+RetSqlName("SC5")+" SC5 ON SC5.D_E_L_E_T_ = '' AND SC5.C5_FILIAL = SC6.C6_FILIAL AND SC5.C5_NUM = SC6.C6_NUM "
+cQry += " WHERE SC6.D_E_L_E_T_ = '' "
+cQry += " AND C6_BLQ IN ('N',' ') "
+cQry += " AND C6_QTDVEN-C6_QTDENT > 0 "
+cQry += " AND C6_FILIAL  = '"+AllTrim(cPvFil)+"' "
+cQry += " AND C6_PRODUTO = '"+AllTrim(cPvProd)+"' "
+cQry += " AND C6_LOCAL   = '"+AllTrim(cPvLocal)+"' "
+//==========================
+//  Somente P.V. Liberados
+cQry += " AND C5_LIBEROK !='' "
+cQry += " AND C5_NOTA     ='' "
+cQry += " AND C5_BLQ      ='' "
+//==========================
+// Somente P.V. Normal
+cQry += " AND C5_XTPPED = '3' "
+//==========================
+cQry += " GROUP BY C6_FILIAL, C6_PRODUTO, C6_LOCAL "
+cQry += " ORDER BY C6_FILIAL, C6_PRODUTO, C6_LOCAL "
+
+If Select("QRY") > 0 ; QRY->(dbCloseArea()) ; EndIf
+TcQuery cQry New Alias "QRY"
+
+QRY->(DbGoTop())
+If !QRY->(Eof())
+	nRet := QRY->C6_QTDEMP
+EndIf
+QRY->(dbCloseArea())
+
+RestArea(aBkpArea)
+
+Return(nRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณfTemRevisaoบ Autor ณFelipe Aur้lio de Meloบ Data ณ 28/08/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ                                                            บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fTemRevisao(cParam,cBlq,cNumSfa)
+
+Local lRet := .F.
+
+If cParam > "0"
+	If cParam == "1"
+		//Todo os pr้-pedidos
+		If cBlq == "0"
+			//ษ necessario revisar antes
+			lRet := .T.
+		EndIf
+	ElseIf cParam == "2"
+		//Apenas os pr้-pv originados do portal
+		If cBlq == "0" .And. !Empty(cNumSfa)
+			//ษ necessario revisar antes
+			lRet := .T.
+		EndIf
+	ElseIf cParam == "3"
+		//Apenas os pr้-pv originados do microsiga
+		If cBlq == "0" .And.  Empty(cNumSfa)
+			//ษ necessario revisar antes
+			lRet := .T.
+		EndIf
+	EndIf
+EndIf
+
+Return(lRet)
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ  fVldUser บ Autor ณFelipe Aur้lio de Meloบ Data ณ 28/08/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ                                                            บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function fVldUser(cLogInc,cLogAlt)
+
+Local lRet     := .F.
+Local cUserLog := AllTrim(Substr(cUsuario,7,15))
+Local cUserInc := AllTrim(Substr(Embaralha(cLogInc,1),1,15))
+Local cUserAlt := AllTrim(Substr(Embaralha(cLogAlt,1),1,15))
+
+//Se pr้ pedido veio do portal e nใo sofreu altera็ใo
+If Empty(cUserInc) .And. Empty(cUserAlt)
+	//Qualquer usuแrio pode revisar
+	lRet := .T.
+EndIf
+
+//Se pr้ pedido veio do portal e sofreu altera็ใo
+If Empty(cUserInc) .And. !Empty(cUserAlt)
+	//Valida se usuแrio que alterou ้ diferente do que estแ revisando
+	If cUserAlt != cUserLog
+		lRet := .T.
+	EndIf
+EndIf
+
+//Se pr้ pedido nใo veio do portal e nใo sofreu altera็ใo
+If !Empty(cUserInc) .And. Empty(cUserAlt)
+	//Valida se usuแrio que incluiu ้ diferente do que estแ revisando
+	If cUserInc != cUserLog
+		lRet := .T.
+	EndIf
+EndIf
+
+//Se pr้ pedido nใo veio do portal e sofreu altera็ใo
+If !Empty(cUserInc) .And. !Empty(cUserAlt)
+	//Valida se usuแrio que alterou ้ diferente do que estแ revisando
+	If cUserAlt != cUserLog
+		lRet := .T.
+	EndIf
+EndIf
+
+//Embaralha
+//cCtrlUser  := Substr(cUsuario,7,15)
+//cCtrlData  := Save4in2(MsDate()-Ctod("01/01/96"))
+//cCtrlLog   := Embaralha(cCtrlUser+cCtrlData,0)
+
+//Desembaralha
+//cCtrlLog   := Embaralha(SZ3->Z3_USERLGI,1)
+//cCtrlUser  := Substr(cCtrlLog,1,15)
+//cCtrlData  := CTOD("01/01/96") + Load2in4(Substr(cString,16))
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณfVldQtdLibบ Autor ณFelipe Aur้lio de Melo บ Data ณ 15/09/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar a TES                       บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fVldQtdLib(aGrvSZA)
+
+Local x    := 0
+Local y    := 0
+Local nOK  := 0
+Local lRet := .F.
+Local nSZAVldPen := 0
+Local nSZAVldLib := 0
+
+For y:=1 To Len(aGrvSZA)
+	nOK := 0
+	nSZAVldPen := 0
+	nSZAVldLib := 0
+	For x:=1 To Len(aGrvSZA[y])
+		If aGrvSZA[y][x][1] == "ZA_QTDPEND"
+			nSZAVldPen := aGrvSZA[y][x][2]
+			nOK ++
+		EndIf
+		If aGrvSZA[y][x][1] == "ZA_QTDLIBE"
+			nSZAVldLib := aGrvSZA[y][x][2]
+			nOK ++
+		EndIf
+		If nOK == 2
+			If nSZAVldLib > nSZAVldPen
+				lRet := .T.
+			EndIf
+		EndIf
+	Next x
+Next y
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณ fVldPerg บ Autor ณFelipe Aur้lio de Melo บ Data ณ 16/09/09 บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Fun็ใo responsแvel por validar os parametros da Pergunta   บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ CCABM410                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function fVldPerg()
+
+Local      lRet := .T.
+Local lLoopPerg := .T.
+
+//Caso cancele os parametros
+//nใo entrar na tela de libera็ใo
+While lLoopPerg
+	If !Pergunte(cPerg,.T.)
+		lRet      := .F.
+		lLoopPerg := .F.
+		Exit
+	Else
+		//Valida o valor digitado no parametro mv_par34
+		If mv_par29 > 100
+			lLoopPerg := .T.
+			ShowHelpDlg("VLDPERG",	{"O parโmetro 29 '(%)Qtde A Liberar' ","estแ preenchido com mais do que 100%"},5,;
+			{"Favor corrigir preenchimento com "  ,"at้ 100%"},5)
+		Else
+			lLoopPerg := .F.
+		EndIf
+		
+		//Valida a op็ใo selecionada no parametro mv_par33
+		If !lLoopPerg
+			If mv_par33 == 1 .And. (mv_par46 == 1)// .or. mv_par46 == 2)
+				lLoopPerg := .T.
+				ShowHelpDlg("VLDPERG",	{"O parโmetro 33 'Priorizar Manual'"         ,"estแ preenchido como 'Nใo'."},5,;
+				{"Quando o parโmetro 46 'Gera PV Tipo Esp.' ","estiver preenchido como 'Entrega Futura'","obrigatoriamente o parโmetro 33 ","tem que ser preenchido como 'Sim'."},5)
+			Else
+				lLoopPerg := .F.
+			EndIf
+		EndIf
+		
+		//Valida a op็ใo selecionada no parametro mv_par46
+		If !lLoopPerg
+			/*
+			If mv_par46 == 2
+			lLoopPerg := .T.
+			ShowHelpDlg("VLDPERG",	{"O parโmetro 46 'Gera PV Tipo Esp.' " ,"estแ preenchido como 'Conta e Ordem'."},5,;
+			{"Conta e Ordem no pr้-pedido nใo estแ","implantado, favor escolher outro tipo."},5)
+			Else
+			lLoopPerg := .F.
+			EndIf
+			*/
+		EndIf
+		
+		If !lLoopPerg
+			If mv_par46 == 1 .and. mv_par33==2 .and. Empty(mv_par34)
+				lLoopPerg := .T.
+				ShowHelpDlg("VLDPERG",	{"O parโmetro 46 'Gera PV Tipo Esp.' " ,"estแ preenchido como 'Entrega Futura' e"},5,;
+				{"a prioriza็ใo ้ manual.","Por favor, informe a filial a ser considerada."},5)
+			Else
+				lLoopPerg := .F.
+			EndIf
+		EndIf
+	EndIf
+End
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณProdCom   บAutor  ณDaniel Franciulli   บ Data ณ  08/06/10   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณRetorna o produto comercial de acordo com a prioridade      บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User Function ProdCom(cPreProd,nQuant,cChave)
+
+Local _aRet	 	:= {}
+Local _aArea 	:= GetArea()
+Local _cRet  	:= ""
+Local _cFil		:= ""
+Local _cArm		:= ""
+Local _cForc 	:= mv_par07
+Local _cPreProF	:= Posicione("SB1",1,xFilial("SB1")+mv_par07,"B1_XPREPRO")
+Local _lTrocaE  := Posicione("SZ3",1,xFilial("SZ3")+cChave,"Z3_XTROCAP")=="S"
+Local _cClient  := Posicione("SZ2",1,xFilial("SZ2")+cChave,"Z2_CLIENTE")+Posicione("SZ2",1,xFilial("SZ2")+cChave,"Z2_LOJACLI")
+Local _cAlter   := Posicione("SB1",1,xFilial("SB1")+cPreProd,"B1_ALTER")
+
+DbSelectArea("ZZ4")
+DbSetOrder(1) // ZZ4_FILIAL+ZZ4_PREPRO+ZZ4_PRIORI
+If DbSeek(xFilial("ZZ4")+cPreProd)
+	
+	_cProdCom := ZZ4->ZZ4_PRODUT
+	
+	cQuery := "SELECT "
+	cQuery += "ZZ4_PRODUT PRODUTO, "
+	If !Empty(mv_par07)
+		cQuery += " CASE B1_XPREPRO WHEN '"+_cPreProF+"' THEN '0' ELSE '9' END ORDEM, "
+	Else
+		cQuery += " '9' ORDEM, "
+	Endif
+	If mv_par33==2
+		If !Empty(mv_par34) .and. !Empty(mv_par35)
+			cQuery += "CASE B2_FILIAL+B2_LOCAL WHEN '"+mv_par34+mv_par35+"'  THEN '0' ELSE '1' END ORDEM1, "
+		Else
+			cQuery += "'1' ORDEM1, "
+		Endif
+		
+		If !Empty(mv_par36) .and. !Empty(mv_par37)
+			cQuery += "CASE B2_FILIAL+B2_LOCAL WHEN '"+mv_par36+mv_par37+"'  THEN '0' ELSE '1' END ORDEM2, "
+		Else
+			cQuery += "'1' ORDEM2, "
+		Endif
+	Else
+		cQuery += "'1' ORDEM1, '1' ORDEM2, "
+	Endif
+	cQuery  += "B1_DESC DESCRIC, "
+	cQuery  += "ZZ4_PRIORI PRIORI, "
+	cQuery  += "Z4_PRIORI PRIORILOG, "
+	cQuery  += "B2_FILIAL FILIAL, "
+	cQuery  += "B2_LOCAL LOCAL, "
+	cQuery  += "B2_QATU-B2_QACLASS-B2_QEMP SALDO, "
+	cQuery  += "B1_XPREPRO XPREPRO "
+	cQuery  += "FROM "
+	cQuery  += RetSQLName("SA1") + " SA1,"
+	cQuery  += RetSQLName("SB1") + " SB1,"
+	cQuery  += RetSQLName("SB2") + " SB2,"
+	cQuery  += RetSQLName("SZ3") + " SZ3,"
+	cQuery  += RetSQLName("SZ4") + " SZ4,"
+	cQuery  += RetSQLName("ZZ4") + " ZZ4 "
+	cQuery  += "WHERE "
+	cQuery  += "SA1.D_E_L_E_T_='' "
+	cQuery  += "AND SB1.D_E_L_E_T_='' "
+	cQuery  += "AND SB2.D_E_L_E_T_='' "
+	cQuery  += "AND SZ3.D_E_L_E_T_='' "
+	cQuery  += "AND ZZ4.D_E_L_E_T_='' "
+	cQuery  += "AND ZZ4_FILIAL='' "
+	cQuery  += "AND A1_FILIAL='' "
+	cQuery  += "AND B1_FILIAL='' "
+	cQuery  += "AND Z3_FILIAL='' "
+	cQuery  += "AND Z4_FILIAL='' "
+	cQuery  += "AND A1_COD+A1_LOJA=Z3_CLI+Z3_LOJA "
+	cQuery  += "AND B1_COD=B2_COD "
+	cQuery  += "AND B1_XPREPRO=Z3_PRODUTO "
+	cQuery  += "AND B2_COD=ZZ4_PRODUT "
+//	cQuery  += "AND B2_LOCAL=B1_LOCPAD "
+	cQuery  += "AND Z3_NUM+Z3_ITEM='"+cChave+"' "
+	cQuery  += "AND A1_EST=Z4_UFDEST "
+	cQuery  += "AND Z4_FILORI=B2_FILIAL "
+	cQuery  += "AND Z4_LOCAL=B2_LOCAL "
+	cQuery 	+= "AND B1_XCODFAB BETWEEN '"+AllTrim(mv_par08) +"' AND '"+AllTrim(mv_par09) +"' "
+	// Daniel Franciulli - Filtros de saldo
+	If mv_par47==1
+		cQuery += "AND B2_QATU-B2_QACLASS-B2_QEMP>0 "
+	ElseIf mv_par47==2
+		cQuery += "AND B2_QATU-B2_QACLASS-B2_QEMP=0 "
+	Endif                 
+
+	If !Empty(mv_par40) .Or. !Empty(mv_par41) .Or. !Empty(mv_par42)
+		cFiltra:= fTrataQbra(mv_par40+" ;"+mv_par41+" ;"+mv_par42)
+		cQuery += Chr(13)+Chr(10)+" AND B1_COD NOT IN ("+cFiltra+") "
+	EndIf
+		
+	If !Empty(mv_par43) .Or. !Empty(mv_par44) .Or. !Empty(mv_par45)
+		cFiltra:= fTrataQbra(mv_par43+" ;"+mv_par44+" ;"+mv_par45)
+		cQuery += " AND B1_COD NOT IN ("+cFiltra+") "
+	EndIf
+	
+	If _lTrocaE .and. !Empty(_cAlter)
+		cQuery += "UNION ALL "
+		cQuery += "SELECT "
+		cQuery += "ZZ4_PRODUT PRODUTO,  "
+		If !Empty(mv_par07)
+			cQuery += " CASE B1_XPREPRO WHEN '"+_cPreProF+"' THEN '0' ELSE '9' END ORDEM, "
+		Else
+			cQuery += " '9' ORDEM, "
+		Endif
+		If mv_par33==2
+			If !Empty(mv_par34) .and. !Empty(mv_par35)
+				cQuery += "CASE B2_FILIAL+B2_LOCAL WHEN '"+mv_par34+mv_par35+"'  THEN '2' ELSE '3' END ORDEM1, "
+			Else
+				cQuery += "'3' ORDEM1, "
+			Endif
+			
+			If !Empty(mv_par36) .and. !Empty(mv_par37)
+				cQuery += "CASE B2_FILIAL+B2_LOCAL WHEN '"+mv_par36+mv_par37+"'  THEN '2' ELSE '3' END ORDEM2, "
+			Else
+				cQuery += "'3' ORDEM2, "
+			Endif
+		Else
+			cQuery += "'3' ORDEM1, '3' ORDEM2, "
+		Endif
+		cQuery += "B1_DESC DESCRIC, "
+		cQuery += "ZZ4_PRIORI PRIORI, "
+		cQuery += "Z4_PRIORI PRIORILOG, "
+		cQuery += "B2_FILIAL FILIAL,  "
+		cQuery += "B2_LOCAL LOCAL,  "
+		cQuery += "B2_QATU-B2_QACLASS-B2_QEMP SALDO, "
+		cQuery += "B1_XPREPRO XPREPRO "
+		cQuery += "FROM  "
+		cQuery += RetSQLName("SA1") + " SA1,"
+		cQuery += RetSQLName("SB1") + " SB1,"
+		cQuery += RetSQLName("SB2") + " SB2,"
+		cQuery += RetSQLName("SZ4") + " SZ4,"
+		cQuery += RetSQLName("ZZ4") + " ZZ4 "
+		cQuery += "WHERE "
+		cQuery += "SA1.D_E_L_E_T_='' "
+		cQuery += "AND SB1.D_E_L_E_T_='' "
+		cQuery += "AND SB2.D_E_L_E_T_='' "
+		cQuery += "AND SZ4.D_E_L_E_T_='' "
+		cQuery += "AND ZZ4.D_E_L_E_T_='' "
+		cQuery += "AND A1_FILIAL=''  "
+		cQuery += "AND B1_FILIAL=''  "
+		cQuery += "AND Z4_FILIAL=''  "
+		cQuery += "AND ZZ4_FILIAL='' "
+		cQuery += "AND B1_XPREPRO='"+_cAlter+"' "
+		cQuery += "AND B1_COD=B2_COD "
+		cQuery += "AND B2_COD=ZZ4_PRODUT  "
+		cQuery += "AND A1_COD+A1_LOJA='"+_cClient+"'  "
+		cQuery += "AND A1_EST=Z4_UFDEST  "
+		cQuery += "AND Z4_FILORI=B2_FILIAL  "
+		cQuery += "AND Z4_LOCAL=B2_LOCAL  "
+		cQuery += "AND B1_XCODFAB BETWEEN '"+AllTrim(mv_par08) +"' AND '"+AllTrim(mv_par09) +"' "
+		// Daniel Franciulli - Filtros de saldo
+		If mv_par47==1
+			cQuery += "AND B2_QATU-B2_QACLASS-B2_QEMP>0 "
+		ElseIf mv_par47==2
+			cQuery += "AND B2_QATU-B2_QACLASS-B2_QEMP=0 "
+		Endif
+		
+		If !Empty(mv_par40) .Or. !Empty(mv_par41) .Or. !Empty(mv_par42)
+			cFiltra:= fTrataQbra(mv_par40+" ;"+mv_par41+" ;"+mv_par42)
+			cQuery += Chr(13)+Chr(10)+" AND B1_COD NOT IN ("+cFiltra+") "
+		EndIf
+		
+		If !Empty(mv_par43) .Or. !Empty(mv_par44) .Or. !Empty(mv_par45)
+			cFiltra:= fTrataQbra(mv_par43+" ;"+mv_par44+" ;"+mv_par45)
+			cQuery += " AND B1_COD NOT IN ("+cFiltra+") "
+		EndIf
+		cQuery += "GROUP BY ZZ4_PRODUT, B1_DESC, ZZ4_PRIORI, Z4_PRIORI, B2_FILIAL, B2_LOCAL, B2_QATU, B2_QACLASS, B2_QEMP, B1_XPREPRO "
+	Endif
+	cQuery += "ORDER BY ORDEM, ORDEM1, ORDEM2, PRIORI, PRODUTO, PRIORILOG "
+
+	memowrite("prodcom.SQL",cQuery)
+	cQuery := ChangeQuery(cQuery)
+	
+	IF 	SELECT("SLD")>0
+		dbSelectArea("SLD")
+		dbCloseArea()
+	Endif
+	
+	dbUseArea(.t.,"TOPCONN",TCGENQRY(,,cQuery),"SLD",.f.,.t.)
+	
+	IF  Select( "SLD" )==0 .or. (SLD->(EOF()) .AND. SLD->(BOF()))
+		aAdd(_aRet,{"PROD. INDISPON.","XX","XX",0})
+	Else
+		DbSelectArea("SLD")
+		SLD->(DbGoTop())
+		While SLD->(!Eof())
+			If SLD->ORDEM1=="0"
+				aAdd(_aRet,{SLD->PRODUTO,SLD->FILIAL,SLD->LOCAL,SLD->SALDO})
+			Else
+				_cRet += Iif(Empty(_cRet),SLD->PRODUTO,"")
+				_cFil += Iif(Empty(_cFil),SLD->FILIAL,"")
+				_cArm += Iif(Empty(_cArm),SLD->LOCAL,"")
+				
+				If SLD->SALDO>=nQuant .and. Len(_aRet)==0
+					aAdd(_aRet,{SLD->PRODUTO,SLD->FILIAL,SLD->LOCAL,SLD->SALDO})
+				Endif
+			Endif
+			SLD->(DbSkip())
+		End
+	EndIF
+Else
+	aAdd(_aRet,{"SEM PRIORIDADES","**","**",0})
+Endif
+
+If Len(_aRet)==0
+	aAdd(_aRet,{_cRet,_cFil,_cArm,0})
+Endif
+
+Return(_aRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑฺฤฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฟฑฑ
+ฑฑณPrograma   ณ   C()   ณ Autores ณ Norbert/Ernani/Mansano ณ Data ณ10/05/2005ณฑฑ
+ฑฑรฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤมฤฤฤฤฤฤฤฤฤมฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤมฤฤฤฤฤฤมฤฤฤฤฤฤฤฤฤฤดฑฑ
+ฑฑณDescricao  ณ Funcao responsavel por manter o Layout independente da       ณฑฑ
+ฑฑณ           ณ resolucao horizontal do Monitor do Usuario.                  ณฑฑ
+ฑฑภฤฤฤฤฤฤฤฤฤฤฤมฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿*/
+
+Static Function C(nTam)
+Local nHRes	:=	oMainWnd:nClientWidth	// Resolucao horizontal do monitor
+If nHRes == 640	// Resolucao 640x480 (soh o Ocean e o Classic aceitam 640)
+	nTam *= 0.8
+ElseIf (nHRes == 798).Or.(nHRes == 800)	// Resolucao 800x600
+	nTam *= 1
+Else	// Resolucao 1024x768 e acima
+	nTam *= 1.28
+EndIf
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณTratamento para tema "Flat"ณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+If "MP8" $ oApp:cVersion
+	If (Alltrim(GetTheme()) == "FLAT") .Or. SetMdiChild()
+		nTam *= 0.90
+	EndIf
+EndIf
+Return Int(nTam)
+
+
+User Function AtuProd(oLista)
+
+Local _x := 1
+
+_oDlg:End()
+
+
+// Atualiza o array _aListaPC
+While _x<=Len(oLista:AARRAY)
+	aAdd(_aListaPC,{oLista:AARRAY[_x][2]+oLista:AARRAY[_x][3],oLista:AARRAY[_x][11],oLista:AARRAY[_x][1]})
+	_x++
+End
+
+Return()
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑฺฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤยฤฤฤฤฤฤยฤฤฤฤฤฤฤฤฤฤฟฑฑ
+ฑฑณFun…o    ณA410EST   ณ Autor ณ DANIEL FRANCIULLI     ณ Data ณ 05/07/10 ณฑฑ
+ฑฑรฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤมฤฤฤฤฤฤฤมฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤมฤฤฤฤฤฤมฤฤฤฤฤฤฤฤฤฤดฑฑ
+ฑฑณDescri…o ณMonta a tela com os saldos nos armaz้ns                     ณฑฑ
+ฑฑภฤฤฤฤฤฤฤฤฤฤมฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤูฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function A410EST(_cProduto,cChave)
+
+Local nRegQry	:= 0
+Local cQuery  	:= ""
+Local cQryOrd 	:= ""
+Local _aheader 	:= {"Prioridade","Produto","Descricao","Filial","Armazem","Saldo"}
+Local  _cAlter 	:= Posicione("SB1",1,xFilial("SB1")+_cProduto,"B1_ALTER")
+Local _aCols 	:= {}
+Local aSaldo 	:= {}
+Local _lTrocaE 	:= Posicione("SZ3",1,xFilial("SZ3")+cChave,"Z3_XTROCAP")=="S"
+Local _cClient 	:= Posicione("SZ2",1,xFilial("SZ2")+cChave,"Z2_CLIENTE")+Posicione("SZ2",1,xFilial("SZ2")+cChave,"Z2_LOJACLI")   
+Local _cPreProF	:= Posicione("SB1",1,xFilial("SB1")+mv_par07,"B1_XPREPRO")
+
+If Select("TRB")>0
+	dbSelectArea("TRB")
+	dbCloseArea()
+Endif
+
+cQuery := "SELECT "
+cQuery += "ZZ4_PRODUT PRODUTO, "
+If !Empty(mv_par07)
+	cQuery += " CASE B1_XPREPRO WHEN '"+_cPreProF+"' THEN '0' ELSE '9' END ORDEM, "
+Else
+	cQuery += " '9' ORDEM, "
+Endif
+If mv_par33==2
+	If !Empty(mv_par34) .and. !Empty(mv_par35)
+		cQuery += "CASE B2_FILIAL+B2_LOCAL WHEN '"+mv_par34+mv_par35+"'  THEN '0' ELSE '1' END ORDEM1, "
+	Else
+		cQuery += "'1' ORDEM1, "
+	Endif
+	
+	If !Empty(mv_par36) .and. !Empty(mv_par37)
+		cQuery += "CASE B2_FILIAL+B2_LOCAL WHEN '"+mv_par36+mv_par37+"'  THEN '0' ELSE '1' END ORDEM2, "
+	Else
+		cQuery += "'1' ORDEM2, "
+	Endif
+Else
+	cQuery += "'1' ORDEM1, '1' ORDEM2, "
+Endif
+cQuery  += "B1_DESC DESCRIC, "
+cQuery  += "ZZ4_PRIORI PRIORI, "
+cQuery  += "Z4_PRIORI PRIORILOG, "
+cQuery  += "B2_FILIAL FILIAL, "
+cQuery  += "B2_LOCAL LOCAL, "
+cQuery  += "B2_QATU-B2_QACLASS-B2_QEMP SALDO, "
+cQuery  += "B1_XPREPRO XPREPRO "
+cQuery  += "FROM "
+cQuery  += RetSQLName("SA1") + " SA1,"
+cQuery  += RetSQLName("SB1") + " SB1,"
+cQuery  += RetSQLName("SB2") + " SB2,"
+cQuery  += RetSQLName("SZ3") + " SZ3,"
+cQuery  += RetSQLName("SZ4") + " SZ4,"
+cQuery  += RetSQLName("ZZ4") + " ZZ4 "
+cQuery  += "WHERE "
+cQuery  += "SA1.D_E_L_E_T_='' "
+cQuery  += "AND SB1.D_E_L_E_T_='' "
+cQuery  += "AND SB2.D_E_L_E_T_='' "
+cQuery  += "AND SZ3.D_E_L_E_T_='' "
+cQuery  += "AND ZZ4.D_E_L_E_T_='' "
+cQuery  += "AND ZZ4_FILIAL='' "
+cQuery  += "AND A1_FILIAL='' "
+cQuery  += "AND B1_FILIAL='' "
+cQuery  += "AND Z3_FILIAL='' "
+cQuery  += "AND Z4_FILIAL='' "
+cQuery  += "AND A1_COD+A1_LOJA=Z3_CLI+Z3_LOJA "
+cQuery  += "AND B1_COD=B2_COD "
+cQuery  += "AND B1_XPREPRO=Z3_PRODUTO "
+cQuery  += "AND B2_COD=ZZ4_PRODUT "
+//cQuery  += "AND B2_LOCAL=B1_LOCPAD "
+cQuery  += "AND Z3_NUM+Z3_ITEM='"+cChave+"' "
+cQuery  += "AND A1_EST=Z4_UFDEST "
+cQuery  += "AND Z4_FILORI=B2_FILIAL "
+cQuery  += "AND Z4_LOCAL=B2_LOCAL "
+cQuery 	+= "AND B1_XCODFAB BETWEEN '"+AllTrim(mv_par08) +"' AND '"+AllTrim(mv_par09) +"' "
+// Daniel Franciulli - Filtros de saldo
+If mv_par47==1
+	cQuery += "AND B2_QATU-B2_QACLASS-B2_QEMP>0 "
+ElseIf mv_par47==2
+	cQuery += "AND B2_QATU-B2_QACLASS-B2_QEMP=0 "
+Endif
+If !Empty(mv_par40) .Or. !Empty(mv_par41) .Or. !Empty(mv_par42)
+	cFiltra:= fTrataQbra(mv_par40+" ;"+mv_par41+" ;"+mv_par42)
+	cQuery += Chr(13)+Chr(10)+" AND B1_COD NOT IN ("+cFiltra+") "
+EndIf
+		
+If !Empty(mv_par43) .Or. !Empty(mv_par44) .Or. !Empty(mv_par45)
+	cFiltra:= fTrataQbra(mv_par43+" ;"+mv_par44+" ;"+mv_par45)
+	cQuery += " AND B1_COD NOT IN ("+cFiltra+") "
+EndIf
+
+cQuery  += "GROUP BY ZZ4_PRODUT, B1_DESC, ZZ4_PRIORI, Z4_PRIORI, B2_FILIAL, B2_LOCAL, B2_QATU, B2_QACLASS, B2_QEMP, B1_XPREPRO "
+If _lTrocaE .and. !Empty(_cAlter)
+	cQuery += "UNION ALL "
+	cQuery += "SELECT "
+	cQuery += "ZZ4_PRODUT PRODUTO,  "
+	If !Empty(mv_par07)
+		cQuery += " CASE B1_XPREPRO WHEN '"+_cPreProF+"' THEN '0' ELSE '9' END ORDEM, "
+	Else
+		cQuery += " '9' ORDEM, "
+	Endif
+	
+	If mv_par33==2
+		If !Empty(mv_par34) .and. !Empty(mv_par35)
+			cQuery += "CASE B2_FILIAL+B2_LOCAL WHEN '"+mv_par34+mv_par35+"'  THEN '2' ELSE '3' END ORDEM1, "
+		Else
+			cQuery += "'3' ORDEM1, "
+		Endif
+		
+		If !Empty(mv_par36) .and. !Empty(mv_par37)
+			cQuery += "CASE B2_FILIAL+B2_LOCAL WHEN '"+mv_par36+mv_par37+"'  THEN '2' ELSE '3' END ORDEM2, "
+		Else
+			cQuery += "'3' ORDEM2, "
+		Endif
+	Else
+		cQuery += "'3' ORDEM1, '3' ORDEM2, "
+	Endif
+	cQuery += "B1_DESC DESCRIC, "
+	cQuery += "ZZ4_PRIORI PRIORI, "
+	cQuery += "Z4_PRIORI PRIORILOG, "
+	cQuery += "B2_FILIAL FILIAL,  "
+	cQuery += "B2_LOCAL LOCAL,  "
+	cQuery += "B2_QATU-B2_QACLASS-B2_QEMP SALDO, "
+	cQuery += "B1_XPREPRO XPREPRO "
+	cQuery += "FROM  "
+	cQuery += RetSQLName("SA1") + " SA1,"
+	cQuery += RetSQLName("SB1") + " SB1,"
+	cQuery += RetSQLName("SB2") + " SB2,"
+	cQuery += RetSQLName("SZ4") + " SZ4,"
+	cQuery += RetSQLName("ZZ4") + " ZZ4 "
+	cQuery += "WHERE "
+	cQuery += "SA1.D_E_L_E_T_='' "
+	cQuery += "AND SB1.D_E_L_E_T_='' "
+	cQuery += "AND SB2.D_E_L_E_T_='' "
+	cQuery += "AND SZ4.D_E_L_E_T_='' "
+	cQuery += "AND ZZ4.D_E_L_E_T_='' "
+	cQuery += "AND A1_FILIAL=''  "
+	cQuery += "AND B1_FILIAL=''  "
+	cQuery += "AND Z4_FILIAL=''  "
+	cQuery += "AND ZZ4_FILIAL='' "
+	cQuery += "AND B1_XPREPRO='"+_cAlter+"' "
+	cQuery += "AND B1_COD=B2_COD "
+	cQuery += "AND B2_COD=ZZ4_PRODUT  "
+	cQuery += "AND A1_COD+A1_LOJA='"+_cClient+"'  "
+	cQuery += "AND A1_EST=Z4_UFDEST  "
+	cQuery += "AND Z4_FILORI=B2_FILIAL  "
+	cQuery += "AND Z4_LOCAL=B2_LOCAL  "
+	cQuery += "AND B1_XCODFAB BETWEEN '"+AllTrim(mv_par08) +"' AND '"+AllTrim(mv_par09) +"' "
+	
+	// Daniel Franciulli - Filtros de saldo
+	If mv_par47==1
+		cQuery += "AND B2_QATU-B2_QACLASS-B2_QEMP>0 "
+	ElseIf mv_par47==2
+		cQuery += "AND B2_QATU-B2_QACLASS-B2_QEMP=0 "
+	Endif
+	
+	If !Empty(mv_par40) .Or. !Empty(mv_par41) .Or. !Empty(mv_par42)
+		cFiltra:= fTrataQbra(mv_par40+" ;"+mv_par41+" ;"+mv_par42)
+		cQuery += Chr(13)+Chr(10)+" AND B1_COD NOT IN ("+cFiltra+") "
+	EndIf
+		
+	If !Empty(mv_par43) .Or. !Empty(mv_par44) .Or. !Empty(mv_par45)
+		cFiltra:= fTrataQbra(mv_par43+" ;"+mv_par44+" ;"+mv_par45)
+		cQuery += " AND B1_COD NOT IN ("+cFiltra+") "
+	EndIf
+
+	cQuery += "GROUP BY ZZ4_PRODUT, B1_DESC, ZZ4_PRIORI, Z4_PRIORI, B2_FILIAL, B2_LOCAL, B2_QATU, B2_QACLASS, B2_QEMP, B1_XPREPRO "
+Endif
+cQryOrd += "ORDER BY ORDEM, ORDEM1, ORDEM2, PRIORI, PRODUTO, PRIORILOG "
+
+MemoWrite("a410est.SQL",cQuery)
+
+DbUseArea(.T.,"TOPCONN",TCGENQRY(,,cQuery+cQryOrd),"TRB",.F.,.T.)
+
+TcQuery "SELECT COUNT(*) AS TOTALREG FROM (" + cQuery + ") AS T" NEW ALIAS "QRYCONT"
+QRYCONT->(dbgotop())
+nRegQry := QRYCONT->TOTALREG
+QRYCONT->(dbCloseArea())
+
+If nRegQry > 0
+	dbSelectArea("TRB")
+	dbGoTop()
+	While TRB->(!EOF())
+		aAdd(_aCols,Array(Len(_aheader)))
+		_aCols[Len(_aCols)][1] := TRB->PRIORI
+		_aCols[Len(_aCols)][2] := TRB->PRODUTO
+		_aCols[Len(_aCols)][3] := TRB->DESCRIC
+		_aCols[Len(_aCols)][4] := TRB->FILIAL
+		_aCols[Len(_aCols)][5] := TRB->LOCAL
+		_aCols[Len(_aCols)][6] := alltrim(transform(TRB->SALDO,"@E 999,999,999,999.99"))
+		TRB->(DbSkip())
+	EndDo
+	
+	If Len(_aCols)>0
+		@ 000,000 TO 190,780 DIALOG  oDlg4 TITLE "Saldos dos produtos comerciais"
+		@ 005,005 LISTBOX oQual VAR FIELDS HEADER "Prioridade","Produto","Descricao","Filial","Armazem","Saldo";
+		SIZE 380,070 OF oDlg4 PIXEL
+		oQual:SetArray(_aCols)
+		oQual:bLine := {||{	 _aCols[oQual:nAT,1], _aCols[oQual:nAT,2], _aCols[oQual:nAT,3], _aCols[oQual:nAT,4], _aCols[oQual:nAT,5], _aCols[oQual:nAT,6]}}
+		@ 080,150 BMPBUTTON TYPE 01 ACTION AtuaPro(oQual:nAT)
+		@ 080,230 BMPBUTTON TYPE 02 ACTION Close(oDlg4)
+		ACTIVATE DIALOG oDlg4 CENTERED
+	Else
+		MsgStop("Nใo hแ saldos para os produtos. Verifique se hใ amarra็ใo de pr้-produtos x produtos comerciais")
+	Endif
+Else
+	MsgStop("Nใo hแ saldos para os produtos. Verifique se hใ amarra็ใo de pr้-produtos x produtos comerciais")
+Endif
+
+Return()
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณAtuaPro   บAutor  ณMicrosiga           บ Data ณ  06/08/10   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณAtualiza o produto no array                                 บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+Static Function AtuaPro(_n)
+
+Local _a :=""
+
+Close(oDlg4)
+
+aLista[oLista:nAt][11] := oQual:AARRAY[_n][2]
+aLista[oLista:nAt][12] := oQual:AARRAY[_n][3]
+aLista[oLista:nAt][14] := oQual:AARRAY[_n][4]
+aLista[oLista:nAt][15] := oQual:AARRAY[_n][6]
+aLista[oLista:nAt][16] := oQual:AARRAY[_n][5]
+
+oLista:Refresh()
+
+Return()
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณA410MD    บAutor  ณMicrosiga           บ Data ณ  06/08/10   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณMarca ou desmarca todos os itens                            บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+
+User Function A410MD()                       
+
+Local _lMarca	:= Iif(aLista[1][1],.f.,.t.)
+
+For _x:=1 to Len(aLista)
+	aLista[_x][1] := _lMarca
+Next
+
+oLista:Refresh()
+
+Return()
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณVldSaldo  บAutor  ณDaniel Franciulli   บ Data ณ  08/06/10   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณVerifica se ha saldo para atender a este produto            บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User Function VldSaldo()
+
+Local _cChave := aLista[oLista:nAt][11]+aLista[oLista:nAt][14]+aLista[oLista:nAt][16]
+Local _nPosPA := Ascan(aSldPA,{|x| x[1] == _cChave})
+
+If _nPosPA!=0
+	// aAdd(aSldPA,{_cProdCom+_cFilial+_cLocal,_cDescCom,_cFilial,_nSaldo,0})
+	If aLista[oLista:nAt][01] 
+		aSldPa[_nPosPA][4] -= Val(aLista[oLista:nAt][13])
+
+		If aSldPa[_nPosPA][4]<=0
+			MsgStop("O saldo do produto para este armaz้m e filial estแ esgotado ("+Alltrim(Transform(aSldPa[_nPosPA][4],"@E 999,999,999.99"))+"). A partir de agora, todas as libera็๕es deste produto serใo bloqueadas por estoque na libera็ใo do pedido a ser gerado por este item.")
+		Endif
+	Else
+		aSldPa[_nPosPA][4] += Val(aLista[oLista:nAt][13])
+	Endif
+Endif
+
+Return()
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณCCABM410  บAutor  ณValdemir Jose       บ Data ณ  26/03/13   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ  Rotina para ajustar a numeracao sequencial do pre-pedido  บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                        บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function ValidSXENum()
+	Local cRET  := ''
+	Local aArea := GetArea()
+	                 
+	dbSelectarea('SZ2')       
+	dbGobottom() 
+
+	cRet := STRZERO(VAL(SZ2->Z2_NUM)+1,6)
+	
+	RestArea( aArea )
+	
+Return cRET
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณM410AGRV  บAutor  ณValdemir Jose       บ Data ณ  06/03/13   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Faz leitura de todos os e-mail, retornando um array de     บฑฑ
+ฑฑบ          ณ e-mails                                                    บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบRetorno   ณ Array                                                      บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function ConvertEmail(pcEmail, pcxEmail)
+	Local aRET := {} 
+	Local cRET := ''
+	Local nX   := 1              
+	Local lNAdic := .F.
+	
+	// Todos os e-mails em um array
+	FOR nX := 1 TO Len(pcEmail)
+     if Substr(pcEmail,nX,1) !=';'
+      cRET += Substr(pcEmail,nX,1)
+     Else
+      aAdd(aRET,{cRET})
+      cRET := ''
+     endif
+    NEXT
+	IF !EMPTY(cRET)
+      aAdd(aRET,{cRET})
+      cRET := ''
+	ENDIF
+	// Verifica se existem e-mails duplicado
+	For nX := 1 to Len(aRET)
+	  if (aRET[nX][1] = ALLTRIM(pcxEmail)+'@ccab-agro.com.br')
+	    lNAdic := .T. 
+	  endif
+	Next             
+	
+	if !lNAdic
+      aAdd(aRET,{ALLTRIM(pcxEmail)+'@ccab-agro.com.br'})
+	endif  
+	
+Return aRET
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณM410AGRV  บAutor  ณValdemir Jose       บ Data ณ  06/03/13   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Valida os e-mails da Condi็ใo de Pagamento com o cadastro  บฑฑ
+ฑฑบ          ณ usuarios na tabela X5,irแ validar se nใo estแ duplicado    บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบRetorno   ณ Lista Emails                                               บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+Static Function ValidaEmail(pcEmail)
+	Local cRet    := ''
+	Local _xEmail := ALLTRIM(lower(Posicione("SX5",1,xFilial("SX5")+'ZC'+SA1->A1_XGESTOR,"X5_DESCRI")))  // Posicionar X5
+	Local aEmail  := ConvertEmail(lower(pcEmail), _xEmail)
+	Local nX      := 1
+	                         
+	// Monta a lista de e-mails, ap๓s valida็ใo / Conversใo
+	For nX := 1 To Len(aEmail)
+	    if nX > 1
+	     cRet += ';'
+	    endif
+	    cRet += aEmail[nX][1]
+	Next
+	
+Return cRet          
