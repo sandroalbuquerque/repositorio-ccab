@@ -34,12 +34,12 @@ Local nCnt      := 0
 	   // Gera uma Lista com vencimentos 
 	   if lTrue
 	      aVencto   := GeraVencto(SC7->C7_XVENCTO) 
-	      if Len(aVencto)=0
+	      if Len(aVencto)=0 .OR. Empty(Substr(aVencto[1],1,2))
 	      	Return
 	      endif
 	   Endif  
 	   
-	   IF  "TMPSE2") > 0
+	   IF  SELECT("TMPSE2") > 0
 	      TMPSE2->( dbCloseArea() )
 	   ENDIF     
 	   
