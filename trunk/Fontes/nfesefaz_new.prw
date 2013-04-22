@@ -1,6 +1,6 @@
 #INCLUDE "PROTHEUS.CH"
 #INCLUDE "COLORS.CH"
-#INCLUDE "TBICONN.CH"
+#INCLUDE "TBICONN.CH"  
 
 /*/
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -151,22 +151,29 @@ Local cMV_LJTPNFE	:= SuperGetMV("MV_LJTPNFE", ," ")
 Local cMVCODREG		:= SuperGetMV("MV_CODREG", ," ")
 Local cValLiqB		:= SuperGetMv("MV_BX10925", ,"2")
 Local cDescServ 	:= SuperGetMV("MV_NFESERV", ,"2")
-Local cCfop			:= SuperGetMV("MV_SIMPREM", ," ")         // Parametro do cadastro das CFOPs para Simples Remessa e cliente optante pelo Simples Nacional
-Local cOriExt       := SuperGetMV('ES_ORIEXT',.F.,'')    // Valdemir Jose 18/01/2013
-Local cMsgOriExt    := ''                                      // Valdemir Jose 18/01/2013
+Local cCfop			:= SuperGetMV("MV_SIMPREM", ," ")           // Parametro do cadastro das CFOPs para Simples Remessa e cliente optante pelo Simples Nacional
+Local cOriExt       := SuperGetMV('ES_ORIEXT',.F.,'')    		// Valdemir Jose 18/01/2013
+Local cMsgOriExt    := ''                                       // Valdemir Jose 18/01/2013
 Local cCliLoja		:= "" 
 Local cCliNota		:= ""
-Local cInfAdPr      := SuperGetMV("MV_INFADPR", .F.,"2")      // Parametro que define de onde sera impressa as informacoes adicionais do produto
+Local cInfAdPr      := SuperGetMV("MV_INFADPR", .F.,"2")        // Parametro que define de onde sera impressa as informacoes adicionais do produto
 Local cInfAdPed  	:= ""
 Local cCodProd      := "" 
 Local cDescProd     := ""
 Local cMsSeek       := ""
 Local cTpPessoa		:= ""
+Local cSeekD1		:= ""  
 Local cIpiCst		:= ""
+Local cNfRefcup		:= ""
+Local cSerRefcup	:= ""
+Local cOrigem		:= ""
+Local cCSTrib		:= ""
 
 Local nX         	:= 0
 Local nY		 	:= 0
-Local nCon       	:= 1 
+Local nCon       	:= 1  
+Local nCstIpi 		:= 1
+Local nLenaIpi		:= 0
 Local nPosI			:= 0
 Local nPosF	     	:= 0
 Local nBaseIrrf  	:= 0
@@ -175,11 +182,8 @@ Local nValIPI    	:= 0
 Local nValAux    	:= 0
 Local nValPisZF  	:= 0
 Local nValCofZF  	:= 0
-Local nValCf2		:= 0
-Local nValPs2		:= 0
 Local nPisRet   	:= 0
 Local nCofRet   	:= 0
-Local nDPisCof		:= 0
 Local nInssRet  	:= 0
 Local nIrRet    	:= 0
 Local nCsllRet  	:= 0
@@ -195,7 +199,7 @@ Local nDesconto 	:= 0   			// Desconto no total da NF sobre cupom
 Local nDescRed  	:= 0   			// Valores dos descontos
 Local nDescIcm  	:= 0   			// Valor do desconto do ICMS-Quando TES configurada com AGREGA Valor = D
 Local nDescZF	  	:= 0   			// Valores dos descontos Zona Franca
-Local nPercLeite	:= 0   			// Percentual da redução do Leite	
+Local nPercLeite	:= 0  			// Percentual da redução do Leite	
 Local nValLeite		:= 0   			// Valor da reduçao do Leite
 Local nPrTotal		:= 0   
 Local nCont	 		:= 0
@@ -204,16 +208,22 @@ Local nValIss		:= 0
 Local nIcmsST		:= 0
 Local cNumitem      := 0
 Local nOrderSF1		:= 0
-Local nRecnoSF1		:= 0
+Local nRecnoSF1		:= 0  
+Local nValIcm		:= 0
+Local nBaseIcm		:= 0
+Local nValParImp	:= 0
+Local nValTotOpe	:= 0
+Local nContImp		:= 0
 Local nPosOrigExt   := 0   // Adicionado por Valdemir Jose 18/01/2013
 
 Local lQuery    	:= .F.
 Local lCalSol		:= .F.
-Local lOk			:= .T.
+Local lOk		:= .T.
+Local lContinua		:= .F.
 Local lCabAnf		:= .T.
-Local lConsig   	:= .F. 			// Flag que diz se a operação é de consignação mercantil
-Local lNfCup		:= .F.			// Define se eh Nf sobre cupom
-Local lComplDev		:= .F.	   		//Utilizado para identificar quando for uma nota de complemento de IPI de uma devulução.
+Local lConsig   	:= .F. 							// Flag que diz se a operação é de consignação mercantil
+Local lNfCup		:= .F.							// Define se eh Nf sobre cupom
+Local lComplDev		:= .F.	   	  					// Utilizado para identificar quando for uma nota de complemento de IPI de uma devulução.
 Local lIpiDev   	:= GetNewPar("MV_IPIDEV",.F.)   /* Apenas para devolução de compra de IPI (nota de saída). T-Séra gerado na tag vIPI e destacado no campo
 													VALOR IPI do cabeçalho do danfe. F-Será gerado na tag vOutro e destacado nas informações complementares do danfe
 													e no campo OUTRAS DESPESAS ACESSORIAS*/ 
@@ -226,21 +236,28 @@ Local lEECFAT		:= SuperGetMv("MV_EECFAT")
 Local lMVCOMPET	 	:= SuperGetMV("MV_COMBPET", ,.F.)
 Local lEasy			:= SuperGetMV("MV_EASY") == "S"
 Local lSimpNac   	:= SuperGetMV("MV_CODREG")== "1" .or. SuperGetMV("MV_CODREG")== "2"
-Local lC6_CODINF    := SC6->(FieldPos("C6_CODINF")) > 0
+Local lC6_CODINF    := SC6->(FieldPos("C6_CODINF")) > 0 
+Local lIpiBenef   	:= GetNewPar("MV_IPIBENE",.F.) /*Nota de saída de retorno com tipo = Beneficiamento. .T.- Será gerado na tag vOutro e destacado nas informações
+													complementares do danfe e no campo OUTRAS DESPESAS ACESESSORIAS. .F. - Séra gerado na tag vIPI e destacado no campo
+													VALOR IPI do cabeçalho do danfe (procedimento padrão) */
 
 Local oWSNfe
-Local lNfCupZero:=.F.
-Local lRural	:=.F.
-Local lSeekOk   :=.F.
+Local lNfCupZero	:=.F.
+Local lRural		:=.F.
+Local lSeekOk   	:=.F.
+Local lNotaBenef	:=.F.
 
 Private aUF     	:= {}
 Private aCSTIPI 	:= {}
-Private lAnfavea	:= If(AliasIndic("CDR") .And. AliasIndic("CDS"),.T.,.F.)   
+Private lAnfavea	:= If(AliasIndic("CDR") .And. AliasIndic("CDS"),.T.,.F.)
 
 Private _cDI 	  := ""	// CCAB - importacao
 Private _cContain := "" // CCAB - importacao
 Private xTpFrete  := "" // CCAB - Tipo de frete
 Private cCNDMT		:= SuperGetMV("MV_CNDMT", ," ")           // Paramentro que define numero CND para cada filial de MT
+
+lCD5 := .T.     // Valdemir jose 17/04/13
+
 
 If FunName() == "SPEDNFSE"
 	DEFAULT cTipo   := PARAMIXB[1]
@@ -371,6 +388,7 @@ If cTipo == "1"
 				cTpPessoa	:= SA1->A1_TPESSOA
 					
 				If nCont == 1
+					
 					Do While !SD2->(Eof ()) .And. ((cAliasSD2)->D2_DOC == SF2->F2_DOC . And. SF3->F3_TIPO == "S")
 							nPrTotal += (cAliasSD2)->D2_PRCVEN
 							SD2->(DbSkip ())
@@ -379,12 +397,13 @@ If cTipo == "1"
 	   				dbSelectArea("SD2")
 					dbSetOrder(3)
 			   		MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA)
-			   		
+					cD2Cfop :=SD2->D2_TES
+
 	   				dbSelectArea("CD2")
 					dbSetOrder(1)
 					If DbSeek(xFilial("CD2")+"S"+SF2->F2_SERIE+SF2->F2_DOC+cClieFor+cLoja+PadR(SD2->D2_ITEM,4)+(cAliasSD2)->D2_COD)
 						Do While !CD2->(Eof ()) .And. CD2->CD2_DOC == (cAliasSD2)->D2_DOC  
-		                    If CD2->CD2_IMP == "ISS" 
+		                    If Alltrim(CD2->CD2_IMP) == "ISS" 
 		                    	nValIss	+= CD2->CD2_VLTRIB 
 							EndIf
 							CD2->(DbSkip ())
@@ -585,8 +604,6 @@ If cTipo == "1"
 					cTipoRps:="1" //RPS
 				EndIf
 				
-				
-				
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³Pega os impostos de retencao somente quando houver a retenção, ³
 				//³ou seja, os titulos de retenção que existirem                  ³
@@ -663,11 +680,9 @@ If cTipo == "1"
 					cDescMunP := aDest[08]
 				EndIf
 				
-				
 				dbSelectArea("SD2")
 				dbSetOrder(3)
 				MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA)
-				
 				
 				dbSelectArea("SB1")
 				dbSetOrder(1)
@@ -675,7 +690,6 @@ If cTipo == "1"
 				If SB1->(FieldPos("B1_TRIBMUN"))>0
 					cTribMun:= SB1->B1_TRIBMUN
 				EndIf
-				
 				
 				cString := ""
 				cString += NFSeIde(aNotaServ,cNatOper,cTipoRPS,cModXML)
@@ -703,9 +717,6 @@ If cTipo == "1"
 				
 				aAreaSF2  	:= SF2->(GetArea())
 				
-				
-				
-				
 				DbSelectArea( "SF2" )
 				DbSetOrder(1)  // F2_DOC + F2_SERIE + F2_CLIENTE + F2_LOJA
 				If DbSeek( xFilial("SF2") + cNumNfCup + cSerNfCup)
@@ -728,6 +739,7 @@ If cTipo == "1"
 			aadd(aNota,cTipo)
 			aadd(aNota,SF2->F2_TIPO)
 			aadd(aNota,SF2->F2_HORA)
+
 			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 			//³Posiciona cliente ou fornecedor                                         ³
 			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
@@ -735,7 +747,8 @@ If cTipo == "1"
 			    dbSelectArea("SA1")
 				dbSetOrder(1)
 				// Tratamento para quando existir um cliente de entrega, utilizá-lo ao invés do cliente de venda
-				/*
+
+				 /*
 				If !Empty(AllTrim(SF2->F2_CLIENT)) .And. !Empty(AllTrim(SF2->F2_LOJENT))
 					MsSeek(xFilial("SA1")+SF2->F2_CLIENT+SF2->F2_LOJENT)
 				Else
@@ -746,6 +759,7 @@ If cTipo == "1"
 					EndIf
 				EndIf  
 				*/
+
 				MsSeek(xFilial("SA1")+SF2->F2_CLIENTE+SF2->F2_LOJA)
 				If cMVNFEMSA1=="C" .And. !Empty(SA1->A1_MENSAGE)
 					cMensCli	:=	SA1->(Formula(A1_MENSAGE))
@@ -766,17 +780,19 @@ If cTipo == "1"
 						cMensFis    :=  Alltrim(U_PegaForM4(SF2->F2_CLIENT,SF2->F2_LOJENT,xFilial("SF2")))
 						cMensFis    := 	cMensFis						
 					EndIf
-				EndIf
+					//lContinua := .T.
+				EndIf                                
+				
 				xVolta := Posicione("SA1",1,xFilial("SA1")+SF2->F2_CLIENTE+SF2->F2_LOJA,"A1_CGC")
 								
 				aadd(aDest,AllTrim(SA1->A1_CGC))
 				aadd(aDest,SA1->A1_NOME)
 				aadd(aDest,MyGetEnd(SA1->A1_END,"SA1")[1])
 			   
-				If "/" $ MyGetEnd(SA1->A1_END,"SA1")[3]
-					aadd(aDest,IIF(MyGetEnd(SA1->A1_END,"SA1")[3]<>"",MyGetEnd(SA1->A1_END,"SA1")[3],"SN"))
-				Else
-					aadd(aDest,IIF(MyGetEnd(SA1->A1_END,"SA1")[2]<>0,MyGetEnd(SA1->A1_END,"SA1")[2],"SN"))
+				If MyGetEnd(SA1->A1_END,"SA1")[2]<>0
+					aadd(aDest,MyGetEnd(SA1->A1_END,"SA1")[3]) 
+				Else 
+					aadd(aDest,"SN") 
 				EndIf
 
 //				aadd(aDest,IIF(SA1->(FieldPos("A1_COMPLEM")) > 0 .And. !Empty(SA1->A1_COMPLEM),SA1->A1_COMPLEM,MyGetEnd(SA1->A1_END,"SA1")[4]))
@@ -795,6 +811,7 @@ If cTipo == "1"
 				aadd(aDest,IIF(Empty(SA1->A1_PAIS),"1058"  ,Posicione("SYA",1,xFilial("SYA")+SA1->A1_PAIS,"YA_SISEXP")))
 				aadd(aDest,IIF(Empty(SA1->A1_PAIS),"BRASIL",Posicione("SYA",1,xFilial("SYA")+SA1->A1_PAIS,"YA_DESCR" )))
 				aadd(aDest,SA1->A1_DDD+SA1->A1_TEL)                                                 				
+				
 				If !Upper(SA1->A1_EST) == "EX"                                                      				
 					If !Empty(SA1->A1_INSCRUR) .And. SA1->A1_PESSOA == "F" .And. IIF(!lEndFis,ConvType(SM0->M0_ESTCOB),ConvType(SM0->M0_ESTENT)) == "PR"  .And. SA1->A1_EST == "PR"
 						aadd(aDest,SA1->A1_INSCRUR)
@@ -804,6 +821,7 @@ If cTipo == "1"
 				Else
 					aadd(aDest,"")							
 				EndIf
+				
 				aadd(aDest,SA1->A1_SUFRAMA)
 				aadd(aDest,SA1->A1_EMAIL)
 				aAdd(aDest, SA1->A1_CONTRIB) // Posição 17     
@@ -867,118 +885,131 @@ If cTipo == "1"
 			
 			RestArea(aAreaSA1)				
 				
-				If SF2->(FieldPos("F2_CLIENT"))<>0 .And. !Empty(SF2->F2_CLIENT+SF2->F2_LOJENT) .And. SF2->F2_CLIENT+SF2->F2_LOJENT<>SF2->F2_CLIENTE+SF2->F2_LOJA
-				    dbSelectArea("SA1")
-					dbSetOrder(1)
-					MsSeek(xFilial("SA1")+SF2->F2_CLIENT+SF2->F2_LOJENT)
-					
-					aadd(aEntrega,SA1->A1_CGC)
-					aadd(aEntrega,MyGetEnd(SA1->A1_END,"SA1")[1])
-					aadd(aEntrega,ConvType(IIF(MyGetEnd(SA1->A1_END,"SA1")[2]<>0,MyGetEnd(SA1->A1_END,"SA1")[2],"SN")))
-					aadd(aEntrega,ALLTRIM(SA1->A1_XCOMPLE))
-					//aadd(aEntrega,MyGetEnd(SA1->A1_END,"SA1")[4])
-					aadd(aEntrega,SA1->A1_BAIRRO)
-					aadd(aEntrega,SA1->A1_COD_MUN)
-					aadd(aEntrega,SA1->A1_MUN)
-					aadd(aEntrega,Upper(SA1->A1_EST))
-				EndIf
-						
-			Else
-			    dbSelectArea("SA2")
+			If SF2->(FieldPos("F2_CLIENT"))<>0 .And. !Empty(SF2->F2_CLIENT+SF2->F2_LOJENT) .And. SF2->F2_CLIENT+SF2->F2_LOJENT<>SF2->F2_CLIENTE+SF2->F2_LOJA
+			    dbSelectArea("SA1")
 				dbSetOrder(1)
-				// Tratamento para quando existir um cliente de entrega, utilizá-lo ao invés do fornecedor (apenas por garantia)
-				If !Empty(AllTrim(SF2->F2_CLIENT)) .And. !Empty(AllTrim(SF2->F2_LOJENT))
-					MsSeek(xFilial("SA2")+SF2->F2_CLIENT+SF2->F2_LOJENT)
-				Else
-					MsSeek(xFilial("SA2")+SF2->F2_CLIENTE+SF2->F2_LOJA)
-				EndIf
-		
-				aadd(aDest,AllTrim(SA2->A2_CGC))
-				aadd(aDest,SA2->A2_NOME)
-				aadd(aDest,MyGetEnd(SA2->A2_END,"SA2")[1])
-                
-				If "/" $ MyGetEnd(SA2->A2_END,"SA2")[3]
-					aadd(aDest,IIF(MyGetEnd(SA2->A2_END,"SA2")[3]<>"",MyGetEnd(SA2->A2_END,"SA2")[3],"SN"))
-				Else
-					aadd(aDest,IIF(MyGetEnd(SA2->A2_END,"SA2")[2]<>0,MyGetEnd(SA2->A2_END,"SA2")[2],"SN"))
-				EndIf
-
-				aadd(aDest,IIF(SA2->(FieldPos("A2_COMPLEM")) > 0 .And. !Empty(SA2->A2_COMPLEM),SA2->A2_COMPLEM,MyGetEnd(SA2->A2_END,"SA2")[4]))				
-				aadd(aDest,SA2->A2_BAIRRO)
-				If !Upper(SA2->A2_EST) == "EX"
-					aadd(aDest,SA2->A2_COD_MUN)
-					aadd(aDest,SA2->A2_MUN)				
-				Else
-					aadd(aDest,"99999")			
-					aadd(aDest,"EXTERIOR")
-				EndIf			
-				aadd(aDest,Upper(SA2->A2_EST))
-				aadd(aDest,SA2->A2_CEP)
-				aadd(aDest,IIF(Empty(SA2->A2_PAIS),"1058"  ,Posicione("SYA",1,xFilial("SYA")+SA2->A2_PAIS,"YA_SISEXP")))
-				aadd(aDest,IIF(Empty(SA2->A2_PAIS),"BRASIL",Posicione("SYA",1,xFilial("SYA")+SA2->A2_PAIS,"YA_DESCR")))
-				aadd(aDest,SA2->A2_DDD+SA2->A2_TEL)
-				If !Upper(SA2->A2_EST) == "EX"				
-					aadd(aDest,VldIE(SA2->A2_INSCR))
-				Else
-					aadd(aDest,"")							
-				EndIf					
-				aadd(aDest,"")//SA2->A2_SUFRAMA
-				aadd(aDest,SA2->A2_EMAIL)					
-				aAdd(aDest, "") // Posição 17 (referente a A1_CONTRIB, sendo passado como vazio já que não existe A2_CONTRIB)
-			EndIf
-			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-			//³Posiciona transportador                                                 ³
-			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-			If !Empty(SF2->F2_TRANSP)
-				dbSelectArea("SA4")
-				dbSetOrder(1)
-				MsSeek(xFilial("SA4")+SF2->F2_TRANSP)
+				MsSeek(xFilial("SA1")+SF2->F2_CLIENT+SF2->F2_LOJENT)
 				
-				aadd(aTransp,AllTrim(SA4->A4_CGC))
-				aadd(aTransp,SA4->A4_NOME)
-				If (SA4->A4_TPTRANS <> "3")
-				aadd(aTransp,VldIE(SA4->A4_INSEST))
-				Else
+				aadd(aEntrega,SA1->A1_CGC)
+				aadd(aEntrega,MyGetEnd(SA1->A1_END,"SA1")[1])
+				aadd(aEntrega,ConvType(IIF(MyGetEnd(SA1->A1_END,"SA1")[2]<>0,MyGetEnd(SA1->A1_END,"SA1")[2],"SN")))
+				aadd(aEntrega,ALLTRIM(SA1->A1_XCOMPLE))
+				//aadd(aEntrega,MyGetEnd(SA1->A1_END,"SA1")[4])
+				aadd(aEntrega,SA1->A1_BAIRRO)
+				aadd(aEntrega,SA1->A1_COD_MUN)
+				aadd(aEntrega,SA1->A1_MUN)
+				aadd(aEntrega,Upper(SA1->A1_EST))
+			EndIf
+						
+		Else
+		    dbSelectArea("SA2")
+			dbSetOrder(1)
+			// Tratamento para quando existir um cliente de entrega, utilizá-lo ao invés do fornecedor (apenas por garantia)
+			If !Empty(AllTrim(SF2->F2_CLIENT)) .And. !Empty(AllTrim(SF2->F2_LOJENT))
+				MsSeek(xFilial("SA2")+SF2->F2_CLIENT+SF2->F2_LOJENT)
+			Else
+				MsSeek(xFilial("SA2")+SF2->F2_CLIENTE+SF2->F2_LOJA)
+			EndIf
+	
+			aadd(aDest,AllTrim(SA2->A2_CGC))
+			aadd(aDest,SA2->A2_NOME)
+			aadd(aDest,MyGetEnd(SA2->A2_END,"SA2")[1])
+                
+			If MyGetEnd(SA2->A2_END,"SA2")[2]<>0
+				aadd(aDest,MyGetEnd(SA2->A2_END,"SA2")[3]) 
+			Else 
+				aadd(aDest,"SN") 
+			EndIf
+
+			aadd(aDest,IIF(SA2->(FieldPos("A2_COMPLEM")) > 0 .And. !Empty(SA2->A2_COMPLEM),SA2->A2_COMPLEM,MyGetEnd(SA2->A2_END,"SA2")[4]))				
+			aadd(aDest,SA2->A2_BAIRRO)
+			If !Upper(SA2->A2_EST) == "EX"
+				aadd(aDest,SA2->A2_COD_MUN)
+				aadd(aDest,SA2->A2_MUN)				
+			Else
+				aadd(aDest,"99999")			
+				aadd(aDest,"EXTERIOR")
+			EndIf			
+			aadd(aDest,Upper(SA2->A2_EST))
+			aadd(aDest,SA2->A2_CEP)
+			aadd(aDest,IIF(Empty(SA2->A2_PAIS),"1058"  ,Posicione("SYA",1,xFilial("SYA")+SA2->A2_PAIS,"YA_SISEXP")))
+			aadd(aDest,IIF(Empty(SA2->A2_PAIS),"BRASIL",Posicione("SYA",1,xFilial("SYA")+SA2->A2_PAIS,"YA_DESCR")))
+			aadd(aDest,SA2->A2_DDD+SA2->A2_TEL)
+			If !Upper(SA2->A2_EST) == "EX"				
+				aadd(aDest,VldIE(SA2->A2_INSCR))
+			Else
+				aadd(aDest,"")							
+			EndIf					
+			aadd(aDest,"")//SA2->A2_SUFRAMA
+			aadd(aDest,SA2->A2_EMAIL)					
+			aAdd(aDest, "") // Posição 17 (referente a A1_CONTRIB, sendo passado como vazio já que não existe A2_CONTRIB)
+
+		EndIf
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Posiciona transportador                                                 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If !Empty(SF2->F2_TRANSP)
+			dbSelectArea("SA4")
+			dbSetOrder(1)
+			MsSeek(xFilial("SA4")+SF2->F2_TRANSP)
+			
+			aadd(aTransp,AllTrim(SA4->A4_CGC))
+			aadd(aTransp,SA4->A4_NOME)
+			If (SA4->A4_TPTRANS <> "3")
+			aadd(aTransp,VldIE(SA4->A4_INSEST))
+			Else
                     aadd(aTransp,"")				
                 EndIf    
-				aadd(aTransp,SA4->A4_END)
-				aadd(aTransp,SA4->A4_MUN)
-				aadd(aTransp,Upper(SA4->A4_EST)	)
-				aadd(aTransp,SA4->A4_EMAIL	)
-						
-				If !Empty(SF2->F2_VEICUL1)
+			aadd(aTransp,SA4->A4_END)
+			aadd(aTransp,SA4->A4_MUN)
+			aadd(aTransp,Upper(SA4->A4_EST)	)
+			aadd(aTransp,SA4->A4_EMAIL	)
+					
+			If !Empty(SF2->F2_VEICUL1)
+				dbSelectArea("DA3")
+				dbSetOrder(1)
+				MsSeek(xFilial("DA3")+SF2->F2_VEICUL1)
+				
+				aadd(aVeiculo,DA3->DA3_PLACA)
+				aadd(aVeiculo,DA3->DA3_ESTPLA)
+				aadd(aVeiculo,Iif(DA3->(FieldPos("DA3_RNTC")) > 0 ,DA3->DA3_RNTC,""))//RNTC
+				
+				If !Empty(SF2->F2_VEICUL2)
+				
 					dbSelectArea("DA3")
 					dbSetOrder(1)
-					MsSeek(xFilial("DA3")+SF2->F2_VEICUL1)
+					MsSeek(xFilial("DA3")+SF2->F2_VEICUL2)
+				
+					aadd(aReboque,DA3->DA3_PLACA)
+					aadd(aReboque,DA3->DA3_ESTPLA)
+					aadd(aReboque,Iif(DA3->(FieldPos("DA3_RNTC")) > 0 ,DA3->DA3_RNTC,"")) //RNTC
 					
-					aadd(aVeiculo,DA3->DA3_PLACA)
-					aadd(aVeiculo,DA3->DA3_ESTPLA)
-					aadd(aVeiculo,Iif(DA3->(FieldPos("DA3_RNTC")) > 0 ,DA3->DA3_RNTC,""))//RNTC
-					
-					If !Empty(SF2->F2_VEICUL2)
-					
+					If !Empty(SF2->F2_VEICUL3)
+						
 						dbSelectArea("DA3")
 						dbSetOrder(1)
-						MsSeek(xFilial("DA3")+SF2->F2_VEICUL2)
-					
-						aadd(aReboque,DA3->DA3_PLACA)
-						aadd(aReboque,DA3->DA3_ESTPLA)
-						aadd(aReboque,Iif(DA3->(FieldPos("DA3_RNTC")) > 0 ,DA3->DA3_RNTC,"")) //RNTC
+						MsSeek(xFilial("DA3")+SF2->F2_VEICUL3)
 						
-						If !Empty(SF2->F2_VEICUL3)
-							
-							dbSelectArea("DA3")
-							dbSetOrder(1)
-							MsSeek(xFilial("DA3")+SF2->F2_VEICUL3)
-							
-							aadd(aReboqu2,DA3->DA3_PLACA)
-							aadd(aReboqu2,DA3->DA3_ESTPLA)
-							aadd(aReboqu2,Iif(DA3->(FieldPos("DA3_RNTC")) > 0 ,DA3->DA3_RNTC,"")) //RNTC
-							
-						EndIf
-					EndIf					
-				EndIf
+						aadd(aReboqu2,DA3->DA3_PLACA)
+						aadd(aReboqu2,DA3->DA3_ESTPLA)
+						aadd(aReboqu2,Iif(DA3->(FieldPos("DA3_RNTC")) > 0 ,DA3->DA3_RNTC,"")) //RNTC
+						
+					EndIf
+				EndIf					
+
+			ElseIf lNfCup   
+
+				SL1->(dbSetOrder(2))
+				SL1->(MsSeek(xFilial("SL1")+SF2->F2_SERIE+SF2->F2_DOC))
+		
+				aadd(aVeiculo,SL1->L1_PLACA)
+				aadd(aVeiculo,SL1->L1_UFPLACA)
+				aadd(aVeiculo,"")  
+								
 			EndIf
+		
+		EndIf
 			
 			// Procura registro nos livros fiscais para tratamentos
 			dbSelectArea("SF3")
@@ -1127,24 +1158,26 @@ If cTipo == "1"
 				aadd(aRetido,{"INSS",SF2->F2_BASEINS,SF2->F2_VALINSS})
 			EndIf
 			
+			//////INCLUSAO DE CAMPOS NA QUERY////////////
+			
+			cField := "%"
+			
 			If SD2->(FieldPos("D2_DESCZFC"))<>0 .AND. SD2->(FieldPos("D2_DESCZFP"))<>0
-				cField := "%,D2_DESCZFC,D2_DESCZFP%" 
-			Else
-				cField := "%%"
+				cField += ",D2_DESCZFC,D2_DESCZFP" 						
 			EndIf     
 			
 			if SD2->(FieldPos("D2_NFCUP"))<>0
-			   cField  :="%,D2_NFCUP%"
-			Else 
-			   cField  :="%%" 
+			   cField  +=",D2_NFCUP"
 			EndIF   
 			
 			if SD2->(FieldPos("D2_DESCICM"))<>0
-			   cField  :="%,D2_DESCICM%"
-			Else 
-			   cField  :="%%" 
+			   cField  +=",D2_DESCICM"						    
 			EndIF 
-						
+			
+			cField += "%"
+			
+			//////////////////////////////////////////////
+									
 			If lNfCupZero
 				RestArea(aAreaSF2)
 			EndIf
@@ -1158,7 +1191,7 @@ If cTipo == "1"
 				cAliasSD2 := GetNextAlias()
 				BeginSql Alias cAliasSD2
 						SELECT D2_FILIAL,D2_SERIE,D2_DOC,D2_CLIENTE,D2_LOJA,D2_COD,D2_TES,D2_NFORI,D2_SERIORI,D2_ITEMORI,D2_TIPO,D2_ITEM,D2_CF,
-						D2_QUANT,D2_TOTAL,D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALBRUT,D2_VALISS,D2_PRUNIT,
+						D2_QUANT,D2_TOTAL,D2_DESCON,D2_VALFRE,D2_SEGURO,D2_PEDIDO,D2_ITEMPV,D2_DESPESA,D2_VALBRUT,D2_VALISS,D2_PRUNIT, D2_PICM,      // D2_PICM ADICIONADO 15/04/2013 DEVIDO AO ERRO QUE OCORREU NA FILIAL 07
 						D2_CLASFIS,D2_PRCVEN,D2_IDENTB6,D2_CODISS,D2_DESCZFR,D2_PREEMB,D2_DESCZFC,D2_DESCZFP,D2_LOTECTL,D2_NUMLOTE,D2_DTVALID,
 						D2_ICMSRET,D2_VALPS3,D2_ORIGLAN,D2_VALCF3,D2_VALIPI %Exp:cField%,
 						D2_LOCAL // CCAB - Incluido por Rodrigo em 16/02/2011
@@ -1167,7 +1200,7 @@ If cTipo == "1"
 						SD2.D2_FILIAL  = %xFilial:SD2% AND
 						SD2.D2_SERIE   = %Exp:SF2->F2_SERIE% AND
 						SD2.D2_DOC     = %Exp:SF2->F2_DOC% AND
-						SD2.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND
+						SD2.D2_CLIENTE = %Exp:SF2->F2_CLIENTE% AND           // Valdemir Jose
 						SD2.D2_LOJA    = %Exp:SF2->F2_LOJA% AND
 						SD2.%NotDel%
 						ORDER BY D2_FILIAL,D2_DOC,D2_SERIE,D2_CLIENTE,D2_LOJA,D2_ITEM,D2_COD
@@ -1179,204 +1212,221 @@ If cTipo == "1"
 			While !Eof() .And. xFilial("SD2") == (cAliasSD2)->D2_FILIAL .And.;
 				SF2->F2_SERIE == (cAliasSD2)->D2_SERIE .And.;
 				SF2->F2_DOC == (cAliasSD2)->D2_DOC
-				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-				//³Verifica a natureza da operacao                                         ³
-				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-				If lNfCup
-					aAreaSD2  	:= SD2->(GetArea())
-					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-					//³Pesquisa itens de nota                                                  ³
-					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
-					If Val((cAliasSD2)->D2_ITEMORI)== 0
-					   cNumitem := (cAliasSD2)->D2_ITEM
-					Else 
-					   cNumitem := (cAliasSD2)->D2_ITEMORI
-					End
-					
-					DbSelectArea("SD2")
-					DbSetOrder(3)
-					If DbSeek(xFilial("SD2")+cNumNfCup+cSerNfCup+cCliNota+cCliLoja+(cAliasSD2)->D2_COD+cNumitem)
-						cD2Cfop := SD2->D2_CF
-						cD2Tes	:= SD2->D2_TES
-					EndIf
-					RestArea(aAreaSD2)
-					// ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
-					//³       Informacoes do cupom fiscal referenciado              |
-			    	//|                                                             ³
-					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
-					
-					aadd(aRefECF,{SD2->D2_DOC,SF2->F2_ESPECIE,SF2->F2_PDV})
-					
-				Else
-					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-					//³Quando nao for cupom fiscal,							³
-					//³	o CFOP deve ser atualizado com o CFOP de cada ITEM, |
-					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	 
-					cD2Cfop := (cAliasSD2)->D2_CF
-					cD2Tes	:= (cAliasSD2)->D2_TES
-				EndIf
+				//lContinua := .T.
 				
-				dbSelectArea("SF4")
-				dbSetOrder(1)
-				MsSeek(xFilial("SF4")+cD2Tes)				
-				If !lNatOper
-					If Empty(cNatOper)
-						cNatOper := Alltrim(SF4->F4_TEXTO)
-					Else
-						cNatOper += Iif(!Alltrim(SF4->F4_TEXTO)$cNatOper,"/ " + SF4->F4_TEXTO,"")
-					Endif 
-				Else	
-					dbSelectArea("SX5")
-					dbSetOrder(1)
-					dbSeek(xFilial("SX5")+"13"+SF4->F4_CF)
-					If Empty(cNatOper)
-						cNatOper := AllTrim(SubStr(SX5->X5_DESCRI,1,55))
-					Else
-						cNatOper += Iif(!AllTrim(SubStr(SX5->X5_DESCRI,1,55)) $ cNatOper, "/ " + AllTrim(SubStr(SX5->X5_DESCRI,1,55)), "")
-	    			EndIf
-	    		EndIf     
-	    		
-	    		// CCAB - Agrupamento de naturezas de operacao
-				cNatOper := fGroupTES(@aNatOper,(cAliasSD2)->D2_TES,IIf(!(cAliasSD2)->D2_TIPO$"IP",(cAliasSD2)->D2_TOTAL,0))
-	    		    		
-	    		If SF4->(FieldPos("F4_BASEICM"))>0
-	    			nRedBC := IiF(SF4->F4_BASEICM>0,IiF(SF4->F4_BASEICM == 100,SF4->F4_BASEICM,IiF(SF4->F4_BASEICM > 100,0,100-SF4->F4_BASEICM)),SF4->F4_BASEICM)
-	    			cCST   := SF4->F4_SITTRIB 
-	    		Endif
-				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-				//³Verifica as notas vinculadas                                            ³
-				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-				If !Empty((cAliasSD2)->D2_NFORI) 
-					If (cAliasSD2)->D2_TIPO $ "DBN"
-						dbSelectArea("SD1")
-						dbSetOrder(1)
-						If MsSeek(xFilial("SD1")+(cAliasSD2)->D2_NFORI+(cAliasSD2)->D2_SERIORI+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA+(cAliasSD2)->D2_COD+(cAliasSD2)->D2_ITEMORI)
-							dbSelectArea("SF1")
-							dbSetOrder(1)
-							MsSeek(xFilial("SF1")+SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA+SD1->D1_TIPO)
-							If SD1->D1_TIPO $ "DB"
-								dbSelectArea("SA1")
-								dbSetOrder(1)
-								MsSeek(xFilial("SA1")+SD1->D1_FORNECE+SD1->D1_LOJA)
-							Else
-								dbSelectArea("SA2")
-								dbSetOrder(1)
-								MsSeek(xFilial("SA2")+SD1->D1_FORNECE+SD1->D1_LOJA)
-							EndIf
-							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-							//³Obtem os dados de nota fiscal de produtor rural referenciada                                  ³
-							//³Temos duas situacoes:                                                                         ³
-							//³A NF de saída é uma devolucao, onde a NF original pode ser ou nao uma devolução.              ³
-							//³1) Quando a NF original for uma devolucao, devemos utilizar o remetente do documento fiscal,  ³
-							//³    podendo ser o sigamat.emp no caso de formulario proprio ou o proprio SA1 no caso de nf de ³
-							//³    entrada com formulario proprio igual a NAO.                                               ³
-							//³2) Quando a NF original NAO for uma devolucao, neste caso tambem pode variar conforme o       ³
-							//³    formulario proprio igual a SIM ou NAO. No caso do NAO, os dados a serem obtidos retornara ³
-							//³    da tabela SA2.                                                                            ³
-							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-							If AllTrim(SF1->F1_ESPECIE)=="NFP"
-								//para nota de entrada tipo devolucao o emitente eh o cliente ou o sigamat no caso de formulario proprio=sim
-								If SD1->D1_TIPO$"DB"
-									aadd(aNfVincRur,{SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,SF1->F1_ESPECIE,;
-										IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA1->A1_CGC),; 
-										IIF(SD1->D1_FORMUL=="S",SM0->M0_ESTENT,SA1->A1_EST),; 
-										IIF(SD1->D1_FORMUL=="S",SM0->M0_INSC,SA1->A1_INSCR)})
-								
-								//para nota de entrada normal o emitente eh o fornecedor ou o sigamat no caso de formulario proprio=sim
-								Else
-									aadd(aNfVincRur,{SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,SF1->F1_ESPECIE,;
-										IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA2->A2_CGC),; 
-										IIF(SD1->D1_FORMUL=="S",SM0->M0_ESTENT,SA2->A2_EST),; 
-										IIF(SD1->D1_FORMUL=="S",SM0->M0_INSC,SA2->A2_INSCR)})
-								EndIf
-							Endif
-							// ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
-							//³       Informacoes do cupom fiscal referenciado              |
-					    	//|                                                             ³
-							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
-							If AllTrim(SF1->F1_ESPECIE)=="CF"
-								aadd(aRefECF,{SD1->D1_DOC,SF1->F1_ESPECIE,""})
-							Endif  
-							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-							//³Outros documentos referenciados³
-							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-							If AllTrim(SF1->F1_ESPECIE)<>"NFP"
-								If cChave <> (SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,IIF(SD1->D1_TIPO $ "DB",IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA1->A1_CGC),IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA2->A2_CGC)),SM0->M0_ESTCOB,SF1->F1_ESPECIE,SF1->F1_CHVNFE) .OR. (cAliasSD2)->D2_ITEM <> cItemOr
-									aadd(aNfVinc,{SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,IIF(SD1->D1_TIPO $ "DB",IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA1->A1_CGC),IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA2->A2_CGC)),SM0->M0_ESTCOB,SF1->F1_ESPECIE,SF1->F1_CHVNFE})
-									cChave := (SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,IIF(SD1->D1_TIPO $ "DB",IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA1->A1_CGC),IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA2->A2_CGC)),SM0->M0_ESTCOB,SF1->F1_ESPECIE,SF1->F1_CHVNFE)
-								EndIf	
-								cItemOr:=(cAliasSD2)->D2_ITEM
-							EndIf	
-						ElseIf (cAliasSD2)->D2_TIPO == "N"                                                     						
-							dbSelectArea("SFT")
-					   		dbSetOrder(6)
-					   		If MsSeek(xFilial("SFT")+"S"+(cAliasSD2)->D2_NFORI+(cAliasSD2)->D2_SERIORI)
-					   			If !Empty(SFT->FT_DTCANC)
-						   			dbSelectArea("SF3")
-							   		dbSetOrder(4) 
-							   		MsSeek(xFilial("SF3")+SFT->FT_CLIEFOR+SFT->FT_LOJA+SFT->FT_NFISCAL+SFT->FT_SERIE)
-							   		If Empty(SF3->F3_CODRSEF) .Or. SF3->F3_CODRSEF == "101"
-						   				If cChave <> (SF3->F3_EMISSAO,SF3->F3_SERIE,SF3->F3_NFISCAL,SA1->A1_CGC,SM0->M0_ESTCOB,SF3->F3_ESPECIE,SF3->F3_CHVNFE) .OR. (cAliasSD2)->D2_ITEM <> cItemOr
-											aadd(aNfVinc,{SF3->F3_EMISSAO,SF3->F3_SERIE,SF3->F3_NFISCAL,SA1->A1_CGC,SM0->M0_ESTCOB,SF3->F3_ESPECIE,SF3->F3_CHVNFE})
-											cChave := (SF3->F3_EMISSAO,SF3->F3_SERIE,SF3->F3_NFISCAL,SA1->A1_CGC,SM0->M0_ESTCOB,SF3->F3_ESPECIE,SF3->F3_CHVNFE)
-										EndIf 
-										cItemOr:=(cAliasSD2)->D2_ITEM
-									EndIf
-								ElseIf SFT->FT_ESTADO == "EX" 
-									dbSelectArea("SF3")
-							   		dbSetOrder(4) 
-							   		MsSeek(xFilial("SF3")+SFT->FT_CLIEFOR+SFT->FT_LOJA+SFT->FT_NFISCAL+SFT->FT_SERIE) 
-									If cChave <> (SF3->F3_EMISSAO,SF3->F3_SERIE,SF3->F3_NFISCAL,SA1->A1_CGC,SM0->M0_ESTCOB,SF3->F3_ESPECIE,SF3->F3_CHVNFE) .OR. (cAliasSD2)->D2_ITEM <> cItemOr
-										aadd(aNfVinc,{SF3->F3_EMISSAO,SF3->F3_SERIE,SF3->F3_NFISCAL,SA1->A1_CGC,SM0->M0_ESTCOB,SF3->F3_ESPECIE,SF3->F3_CHVNFE})
-										cChave := (SF3->F3_EMISSAO,SF3->F3_SERIE,SF3->F3_NFISCAL,SA1->A1_CGC,SM0->M0_ESTCOB,SF3->F3_ESPECIE,SF3->F3_CHVNFE)
-									EndIf 
-									cItemOr:=(cAliasSD2)->D2_ITEM
-								EndIf
-							EndIf																
+				//Se for nota sobre cupom, pega somente os itens do cupom que estão na nota sobre cupom.				
+				If SD2->(FieldPos("D2_NFCUP")) <> 0 .And. !Empty( (cAliasSD2)->D2_NFCUP )
+					If lNfCup .And. !( cSerNfCup + cNumNfCup  == SubStr((cAliasSD2)->D2_SERIORI,1,TamSx3("F2_SERIE")[1]) + SubStr((cAliasSD2)->D2_NFCUP,1,TamSx3("F2_DOC")[1]) )									
+						lContinua := .F.																		
+					endIf
+				Endif
+				
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³Verifica a natureza da operacao                                         ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					If lNfCup
+						aAreaSD2  	:= SD2->(GetArea())
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³Pesquisa itens de nota                                                  ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+						If Val((cAliasSD2)->D2_ITEMORI)== 0
+						   cNumitem := (cAliasSD2)->D2_ITEM
+						Else 
+						   cNumitem := (cAliasSD2)->D2_ITEMORI
+						End
+						
+						DbSelectArea("SD2")
+						DbSetOrder(3)
+						If DbSeek(xFilial("SD2")+cNumNfCup+cSerNfCup+cCliNota+cCliLoja+(cAliasSD2)->D2_COD+cNumitem)
+							cD2Cfop := SD2->D2_CF
+							cD2Tes	:= SD2->D2_TES
 						EndIf
+						RestArea(aAreaSD2)
+						// ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
+						//³       Informacoes do cupom fiscal referenciado              |
+				    	//|                                                             ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
+						
+						aadd(aRefECF,{SD2->D2_DOC,SF2->F2_ESPECIE,SF2->F2_PDV})
+						
 					Else
-						aOldReg  := SD2->(GetArea())
-						aOldReg2 := SF2->(GetArea())
-						dbSelectArea("SD2")
-						dbSetOrder(3)
-//						Alterado a chave de busca completa devido ao procedimento de complemento de notas de devolucao de compras. FNC -> 00000008125/2011.						
-//						If MsSeek(xFilial("SD2")+(cAliasSD2)->D2_NFORI+(cAliasSD2)->D2_SERIORI+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA+(cAliasSD2)->D2_COD+(cAliasSD2)->D2_ITEMORI)
-						If MsSeek(xFilial("SD2")+(cAliasSD2)->D2_NFORI+(cAliasSD2)->D2_SERIORI)//+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA+(cAliasSD2)->D2_COD+(cAliasSD2)->D2_ITEMORI)
-							dbSelectArea("SF2")
-							dbSetOrder(1)
-							MsSeek(xFilial("SF2")+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA)
-							If !SD2->D2_TIPO $ "DB"
-								dbSelectArea("SA1")
-								dbSetOrder(1)
-								MsSeek(xFilial("SA1")+SD2->D2_CLIENTE+SD2->D2_LOJA)
-							Else
-								dbSelectArea("SA2")
-								dbSetOrder(1)
-								MsSeek(xFilial("SA2")+SD2->D2_CLIENTE+SD2->D2_LOJA)
-								lComplDev := .T.
-							EndIf
-							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-							//³Obtem os dados de nota fiscal de produtor rural referenciada                                  ³
-							//³A NF de saída NAO EH uma devolucao, portanto eh uma nota de saida complementar. Para este tipo³
-							//³ de nota, o emitente eh sempre o sigamat.emp                                                  ³
-							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-							If AllTrim(SF2->F2_ESPECIE)=="NFP"
-								//para nota de saida normal o emitente eh o sigamat
-								aadd(aNfVincRur,{SD2->D2_EMISSAO,SD2->D2_SERIE,SD2->D2_DOC,SF2->F2_ESPECIE,;
-									SM0->M0_CGC,SM0->M0_ESTENT,SM0->M0_INSC})
-							Endif							
-							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-							//³Outros documentos referenciados³
-							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-							If cChave <> Dtos(SF2->F2_EMISSAO)+SD2->D2_SERIE+SD2->D2_DOC+SM0->M0_CGC+SM0->M0_ESTCOB+SF2->F2_ESPECIE+SF2->F2_CHVNFE							
-								aadd(aNfVinc,{SF2->F2_EMISSAO,SD2->D2_SERIE,SD2->D2_DOC,SM0->M0_CGC,SM0->M0_ESTCOB,SF2->F2_ESPECIE,SF2->F2_CHVNFE})                         
-								cChave := Dtos(SF2->F2_EMISSAO)+SD2->D2_SERIE+SD2->D2_DOC+SM0->M0_CGC+SM0->M0_ESTCOB+SF2->F2_ESPECIE+SF2->F2_CHVNFE							
-							EndIf
-						EndIf
-						RestArea(aOldReg)
-						RestArea(aOldReg2)
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³Quando nao for cupom fiscal,							³
+						//³	o CFOP deve ser atualizado com o CFOP de cada ITEM, |
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	 
+						cD2Cfop := (cAliasSD2)->D2_CF
+						cD2Tes	:= (cAliasSD2)->D2_TES
 					EndIf
-				EndIf
+					
+					dbSelectArea("SF4")
+					dbSetOrder(1)
+					MsSeek(xFilial("SF4")+cD2Tes)				
+					If !lNatOper
+						If Empty(cNatOper)
+							cNatOper := Alltrim(SF4->F4_TEXTO)
+						Else
+							cNatOper += Iif(!Alltrim(SF4->F4_TEXTO)$cNatOper,"/ " + SF4->F4_TEXTO,"")
+						Endif 
+					Else	
+						dbSelectArea("SX5")
+						dbSetOrder(1)
+						dbSeek(xFilial("SX5")+"13"+SF4->F4_CF)
+						If Empty(cNatOper)
+							cNatOper := AllTrim(SubStr(SX5->X5_DESCRI,1,55))
+						Else
+							cNatOper += Iif(!AllTrim(SubStr(SX5->X5_DESCRI,1,55)) $ cNatOper, "/ " + AllTrim(SubStr(SX5->X5_DESCRI,1,55)), "")
+		    			EndIf
+		    		EndIf
+     	    		// CCAB - Agrupamento de naturezas de operacao
+	    			cNatOper := fGroupTES(@aNatOper,(cAliasSD2)->D2_TES,IIf(!(cAliasSD2)->D2_TIPO$"IP",(cAliasSD2)->D2_TOTAL,0))
+		    		
+		    		If SF4->(FieldPos("F4_BASEICM"))>0
+		    			nRedBC := IiF(SF4->F4_BASEICM>0,IiF(SF4->F4_BASEICM == 100,SF4->F4_BASEICM,IiF(SF4->F4_BASEICM > 100,0,100-SF4->F4_BASEICM)),SF4->F4_BASEICM)
+		    			cCST   := SF4->F4_SITTRIB 
+		    		Endif
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³Verifica as notas vinculadas                                            ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					If !Empty((cAliasSD2)->D2_NFORI)
+						If (cAliasSD2)->D2_TIPO $ "DBN"
+							dbSelectArea("SD1")
+							dbSetOrder(1)
+							If MsSeek(xFilial("SD1")+(cAliasSD2)->D2_NFORI+(cAliasSD2)->D2_SERIORI+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA+(cAliasSD2)->D2_COD+(cAliasSD2)->D2_ITEMORI)
+								dbSelectArea("SF1")
+								dbSetOrder(1)
+								MsSeek(xFilial("SF1")+SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA+SD1->D1_TIPO)
+								If SD1->D1_TIPO $ "DB"
+									dbSelectArea("SA1")
+									dbSetOrder(1)
+									MsSeek(xFilial("SA1")+SD1->D1_FORNECE+SD1->D1_LOJA)
+								Else
+									dbSelectArea("SA2")
+									dbSetOrder(1)
+									MsSeek(xFilial("SA2")+SD1->D1_FORNECE+SD1->D1_LOJA)
+								EndIf
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³Obtem os dados de nota fiscal de produtor rural referenciada                                  ³
+								//³Temos duas situacoes:                                                                         ³
+								//³A NF de saída é uma devolucao, onde a NF original pode ser ou nao uma devolução.              ³
+								//³1) Quando a NF original for uma devolucao, devemos utilizar o remetente do documento fiscal,  ³
+								//³    podendo ser o sigamat.emp no caso de formulario proprio ou o proprio SA1 no caso de nf de ³
+								//³    entrada com formulario proprio igual a NAO.                                               ³
+								//³2) Quando a NF original NAO for uma devolucao, neste caso tambem pode variar conforme o       ³
+								//³    formulario proprio igual a SIM ou NAO. No caso do NAO, os dados a serem obtidos retornara ³
+								//³    da tabela SA2.                                                                            ³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								If AllTrim(SF1->F1_ESPECIE)=="NFP"
+									//para nota de entrada tipo devolucao o emitente eh o cliente ou o sigamat no caso de formulario proprio=sim
+									If SD1->D1_TIPO$"DB"
+										aadd(aNfVincRur,{SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,SF1->F1_ESPECIE,;
+											IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA1->A1_CGC),; 
+											IIF(SD1->D1_FORMUL=="S",SM0->M0_ESTENT,SA1->A1_EST),; 
+											IIF(SD1->D1_FORMUL=="S",SM0->M0_INSC,SA1->A1_INSCR)})
+									
+									//para nota de entrada normal o emitente eh o fornecedor ou o sigamat no caso de formulario proprio=sim
+									Else
+										aadd(aNfVincRur,{SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,SF1->F1_ESPECIE,;
+											IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA2->A2_CGC),; 
+											IIF(SD1->D1_FORMUL=="S",SM0->M0_ESTENT,SA2->A2_EST),; 
+											IIF(SD1->D1_FORMUL=="S",SM0->M0_INSC,SA2->A2_INSCR)})
+									EndIf
+								Endif
+								// ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
+								//³       Informacoes do cupom fiscal referenciado              |
+						    	//|                                                             ³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
+								If AllTrim(SF1->F1_ESPECIE)=="CF"
+									aadd(aRefECF,{SD1->D1_DOC,SF1->F1_ESPECIE,""})
+								Endif  
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³Outros documentos referenciados³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								if AllTrim(SF1->F1_ESPECIE)<>"NFP"
+									if cChave <> dToS( SD1->D1_EMISSAO ) + SD1->D1_SERIE + SD1->D1_DOC + iIf( SD1->D1_TIPO $ "DB", iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA1->A1_CGC ), iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA2->A2_CGC ) ) + SM0->M0_ESTCOB + SF1->F1_ESPECIE + SF1->F1_CHVNFE;
+										.or. ( cAliasSD2 )->D2_ITEM <> cItemOr
+										
+										aAdd( aNfVinc, { SD1->D1_EMISSAO, SD1->D1_SERIE, SD1->D1_DOC, iIf( SD1->D1_TIPO $ "DB", iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA1->A1_CGC ), iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA2->A2_CGC ) ), SM0->M0_ESTCOB, SF1->F1_ESPECIE, SF1->F1_CHVNFE } )
+										cChave	:= dToS( SD1->D1_EMISSAO ) + SD1->D1_SERIE + SD1->D1_DOC + iIf( SD1->D1_TIPO $ "DB", iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA1->A1_CGC ), iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA2->A2_CGC ) ) + SM0->M0_ESTCOB + SF1->F1_ESPECIE + SF1->F1_CHVNFE
+										
+									endIf	
+									cItemOr	:= ( cAliasSD2 )->D2_ITEM
+								endIf	
+							ElseIf (cAliasSD2)->D2_TIPO == "N"                                                     						
+								dbSelectArea("SFT")
+						   		dbSetOrder(6)
+						   		If MsSeek(xFilial("SFT")+"S"+(cAliasSD2)->D2_NFORI+(cAliasSD2)->D2_SERIORI)
+						   			If !Empty(SFT->FT_DTCANC)
+							   			dbSelectArea("SF3")
+								   		dbSetOrder(4) 
+								   		MsSeek(xFilial("SF3")+SFT->FT_CLIEFOR+SFT->FT_LOJA+SFT->FT_NFISCAL+SFT->FT_SERIE)
+								   		If Empty(SF3->F3_CODRSEF) .Or. SF3->F3_CODRSEF == "101"
+							   				if cChave <> dToS( SF3->F3_EMISSAO ) + SF3->F3_SERIE + SF3->F3_NFISCAL + SA1->A1_CGC + SM0->M0_ESTCOB + SF3->F3_ESPECIE + SF3->F3_CHVNFE;
+							   					.or. (cAliasSD2)->D2_ITEM <> cItemOr
+							   					
+												aAdd( aNfVinc, { SF3->F3_EMISSAO, SF3->F3_SERIE, SF3->F3_NFISCAL, SA1->A1_CGC, SM0->M0_ESTCOB, SF3->F3_ESPECIE, SF3->F3_CHVNFE } )
+												cChave	:= dToS( SF3->F3_EMISSAO ) + SF3->F3_SERIE + SF3->F3_NFISCAL + SA1->A1_CGC + SM0->M0_ESTCOB + SF3->F3_ESPECIE + SF3->F3_CHVNFE
+												
+											endIf 
+											cItemOr	:= ( cAliasSD2 )->D2_ITEM
+										endIf
+									ElseIf SFT->FT_ESTADO == "EX" 
+										dbSelectArea("SF3")
+								   		dbSetOrder(4) 
+								   		MsSeek(xFilial("SF3")+SFT->FT_CLIEFOR+SFT->FT_LOJA+SFT->FT_NFISCAL+SFT->FT_SERIE) 
+										if cChave <> dToS( SF3->F3_EMISSAO ) + SF3->F3_SERIE + SF3->F3_NFISCAL + SA1->A1_CGC + SM0->M0_ESTCOB + SF3->F3_ESPECIE + SF3->F3_CHVNFE;
+											.or. ( cAliasSD2 )->D2_ITEM <> cItemOr
+											
+											aAdd( aNfVinc, { SF3->F3_EMISSAO, SF3->F3_SERIE, SF3->F3_NFISCAL, SA1->A1_CGC, SM0->M0_ESTCOB, SF3->F3_ESPECIE, SF3->F3_CHVNFE } )
+											cChave	:= dToS( SF3->F3_EMISSAO ) + SF3->F3_SERIE + SF3->F3_NFISCAL + SA1->A1_CGC + SM0->M0_ESTCOB + SF3->F3_ESPECIE + SF3->F3_CHVNFE
+											
+										endIf
+										cItemOr	:= ( cAliasSD2 )->D2_ITEM
+									EndIf
+								EndIf																
+							EndIf
+						Else
+							aOldReg  := SD2->(GetArea())
+							aOldReg2 := SF2->(GetArea())
+							dbSelectArea("SD2")
+							dbSetOrder(3)
+	//						Alterado a chave de busca completa devido ao procedimento de complemento de notas de devolucao de compras. FNC -> 00000008125/2011.						
+	//						If MsSeek(xFilial("SD2")+(cAliasSD2)->D2_NFORI+(cAliasSD2)->D2_SERIORI+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA+(cAliasSD2)->D2_COD+(cAliasSD2)->D2_ITEMORI)
+							If MsSeek(xFilial("SD2")+(cAliasSD2)->D2_NFORI+(cAliasSD2)->D2_SERIORI)//+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA+(cAliasSD2)->D2_COD+(cAliasSD2)->D2_ITEMORI)
+								dbSelectArea("SF2")
+								dbSetOrder(1)
+								MsSeek(xFilial("SF2")+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA)
+								If !SD2->D2_TIPO $ "DB"
+									dbSelectArea("SA1")
+									dbSetOrder(1)
+									MsSeek(xFilial("SA1")+SD2->D2_CLIENTE+SD2->D2_LOJA)
+								Else
+									dbSelectArea("SA2")
+									dbSetOrder(1)
+									MsSeek(xFilial("SA2")+SD2->D2_CLIENTE+SD2->D2_LOJA)
+									lComplDev := .T.
+								EndIf
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³Obtem os dados de nota fiscal de produtor rural referenciada                                  ³
+								//³A NF de saída NAO EH uma devolucao, portanto eh uma nota de saida complementar. Para este tipo³
+								//³ de nota, o emitente eh sempre o sigamat.emp                                                  ³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								If AllTrim(SF2->F2_ESPECIE)=="NFP"
+									//para nota de saida normal o emitente eh o sigamat
+									aadd(aNfVincRur,{SD2->D2_EMISSAO,SD2->D2_SERIE,SD2->D2_DOC,SF2->F2_ESPECIE,;
+										SM0->M0_CGC,SM0->M0_ESTENT,SM0->M0_INSC})
+								Endif							
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³Outros documentos referenciados³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								If cChave <> Dtos(SF2->F2_EMISSAO)+SD2->D2_SERIE+SD2->D2_DOC+SM0->M0_CGC+SM0->M0_ESTCOB+SF2->F2_ESPECIE+SF2->F2_CHVNFE							
+									aadd(aNfVinc,{SF2->F2_EMISSAO,SD2->D2_SERIE,SD2->D2_DOC,SM0->M0_CGC,SM0->M0_ESTCOB,SF2->F2_ESPECIE,SF2->F2_CHVNFE})                         
+									cChave := Dtos(SF2->F2_EMISSAO)+SD2->D2_SERIE+SD2->D2_DOC+SM0->M0_CGC+SM0->M0_ESTCOB+SF2->F2_ESPECIE+SF2->F2_CHVNFE							
+								EndIf
+							EndIf
+							RestArea(aOldReg)
+							RestArea(aOldReg2)
+						EndIf
+					EndIf
 							
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³Obtem os dados do produto                                               ³
@@ -1402,7 +1452,7 @@ If cTipo == "1"
 					If SB5->(FieldPos("B5_DESCNFE")) > 0 .And. !Empty(SB5->B5_DESCNFE)
 						cInfAdic	:= Alltrim(SB5->B5_DESCNFE)
 					Else	
-						cInfAdic	:= ""				
+						cInfAdic	:= ""
 					EndIF
 				Else
 					cInfAdic	:= ""		
@@ -1428,7 +1478,7 @@ If cTipo == "1"
 				      	EndIf
 					EndIf                                                  	
 				EndIf
-				
+					
 				//Veiculos Novos
 				If AliasIndic("CD9")			
 					dbSelectArea("CD9")
@@ -1453,7 +1503,6 @@ If cTipo == "1"
 					dbSetOrder(1) 
 					MsSeek(xFilial("CD8")+"S"+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA+(cAliasSD2)->D2_ITEM)
 				EndIf
-						
 				//Anfavea
 				If lAnfavea
 					dbSelectArea("CDR")
@@ -1482,20 +1531,27 @@ If cTipo == "1"
 				dbSelectArea("SC6")
 				dbSetOrder(1)
 				MsSeek(xFilial("SC6")+(cAliasSD2)->D2_PEDIDO+(cAliasSD2)->D2_ITEMPV+(cAliasSD2)->D2_COD)
-				
+					
 				If !AllTrim(SC5->C5_MENNOTA) $ cMensCli
 					If Len(cMensCli) > 0 .And. SubStr(cMensCli, Len(cMensCli), 1) <> " "
 						cMensCli += " "
 					EndIf
+					
+					//-- Tratamento para a integração entre WMS Logix X ERP Protheus 
+					If SC5->( FieldPos("C5_ORIGEM") ) > 0 .And. 'LOGIX' $ Upper(SC5->C5_ORIGEM) 
+						LgxMsgNfs()
+					EndIf     
+					
 					cMensCli += AllTrim(SC5->C5_MENNOTA)
 				EndIf
+
 				If !Empty(SC5->C5_MENPAD) .And. !AllTrim(FORMULA(SC5->C5_MENPAD)) $ cMensFis
 					If Len(cMensFis) > 0 .And. SubStr(cMensFis, Len(cMensFis), 1) <> " "
 						cMensFis += " "
 					EndIf
 					cMensFis += AllTrim(FORMULA(SC5->C5_MENPAD))
-				EndIf      
-				
+				EndIf
+
 				//CCAB - Alterado por Samir para buscar a informacao do SF2 e nao do SC5
 				dbSelectArea("SF2")
 				dbSetOrder(1)
@@ -1503,7 +1559,7 @@ If cTipo == "1"
 				If !Empty(SF2->F2_MENNOTA) .and. !(AllTrim(SF2->F2_MENNOTA) $ cMensCli)
 					cMensCli += AllTrim(SF2->F2_MENNOTA)
 				EndIf                                 
-				
+					
 				IF Upper(Alltrim(SC5->C5_ESPECI1)) == "GRANEL"
 					If !Empty(SC5->C5_XOBSERV)
 						cMensCli += " " + Alltrim(SC5->C5_XOBSERV)
@@ -1519,7 +1575,7 @@ If cTipo == "1"
 				If !Empty(SC5->C5_MENSEXP) .and. !(AllTrim(SC5->C5_MENSEXP) $ cMensCli)
 					cMensCli += " " + AllTrim(SC5->C5_MENSEXP)
 				EndIf                                 
-
+	
 				// CCAB - Alterado por Armando em 22/07/08 para tratamento de impressao de campo de mensagem de nota fiscal customizado
 				//Alterado por Samir para buscar a informacao do SF2 e nao do SC5
 				If Alltrim(SC5->C5_MENNOT1) <> ""
@@ -1530,6 +1586,7 @@ If cTipo == "1"
 							cMensCli += Alltrim(SC5->C5_MENNOT1)
 					EndIf
 				EndIf			
+
 				// CCAB - Incluido por Armando em 22/07/08 para tratamento de mensagem padrao a ser impressa em todas as notas fiscais de acordo com solicitacao do Valdeci e Marega
 				//
 				// Favaro 04/04/2012
@@ -1553,7 +1610,7 @@ If cTipo == "1"
 					EndIf
 					cMensCli += Alltrim(_cEndEntd)
 				EndIf
-				
+					
 				// CCAB - Alterado por Armando para considerar a informacao de local de origem do material em 22/07/08
 				_cArmOrig := Substring(Tabela("AL",(cAliasSD2)->D2_LOCAL),RAT("/",Tabela("AL",(cAliasSD2)->D2_LOCAL))+1,Len(Tabela("AL",(cAliasSD2)->D2_LOCAL))-RAT("/",Tabela("AL",(cAliasSD2)->D2_LOCAL)))
 				
@@ -1564,7 +1621,7 @@ If cTipo == "1"
 					EndIf
 					cMensCli := cMensCli + IIf(Empty(Formula(Alltrim(_cArmOrig))), "", Formula(Alltrim(_cArmOrig)))
 				EndIf
-				
+					
 				// CCAB - Alterado por Armando para considerar a informacao de local de origem do material em 22/07/08
 				IF Type("xPedido") <> "U" .and. !("Ped. de Venda CCAB: " + Alltrim(xPedido)) $ cMensCli
 					cMenscli += " / Ped. de Venda CCAB: " + Alltrim(xPedido)
@@ -1590,7 +1647,7 @@ If cTipo == "1"
 						cMenscli += " / Num. da CND: " + Alltrim(cCNDMT)
 					EndIf				
 				EndIf  
-				
+					
 				// CCAB - Alterado por Armando para considerar a informacao de local de entrega em 22/07/08
 				If Type("_cEndEnt")<>"U" .and. !Empty(_cEndEnt) .and. !Alltrim(_cEndEnt) $ cMensCli
 					If !Empty(cMensCli)
@@ -1598,7 +1655,22 @@ If cTipo == "1"
 					EndIf
 					cMensCli:=cMensCli+_cEndEnt                 
 				EndIf
-								
+
+				If !Empty( cNumNfCup )
+					//Tratamento para nota sobre Cupom 
+					aAreaSF2  	:= SF2->(GetArea())
+					DbSelectArea("SFT")
+				    DbSetOrder(1)
+				    If SFT->(DbSeek((xFilial("SD2")+"S"+ cSerNfCup + cNumNfCup )))
+						IF  AllTrim(SFT->FT_OBSERV) <> " " .AND.(cAliasSD2)->D2_ORIGLAN=="LO"
+							IF !Alltrim(SFT->FT_OBSERV) $ Alltrim(cMensCli) 
+								cMensCli +=" " + AllTrim(SFT->FT_OBSERV)
+							EndIf       
+		           		EndIf
+		        	EndIF
+					RestArea(aAreaSF2)	        	
+				EndIf	
+					
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³Obtem os dados do veiculo informado no pedido de venda                  ³
 				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ							
@@ -1610,121 +1682,72 @@ If cTipo == "1"
 						aadd(aVeiculo,DA3->DA3_ESTPLA)
 						aadd(aVeiculo,Iif(DA3->(FieldPos("DA3_RNTC")) > 0 ,DA3->DA3_RNTC,""))//RNTC				
 					EndIf
-				EndIf	
-				
+				EndIf
 				If Alltrim(SB1->B1_GRUPO) == "700"
 					If SF4->F4_XESTADO$"D"                    
-					If !AllTrim(Formula("F01")) $ cMensCli
-						cMensCli	+= " / " + Formula("F01")
-					Endif
+						If !AllTrim(Formula("F01")) $ cMensCli
+							cMensCli	+= " / " + Formula("F01")
+						Endif
 					Elseif SF4->F4_XESTADO$"F"						
-					If !AllTrim(Formula("F02")) $ cMensCli
-						cMensCli	+= " / " + Formula("F02")
-					Endif
+						If !AllTrim(Formula("F02")) $ cMensCli
+							cMensCli	+= " / " + Formula("F02")
+						Endif
 					Elseif SF4->F4_XESTADO$"A"						                    
-					If !AllTrim(SF4->(Formula(F4_FORMULA))) $ cMensCli
-						cMensCli	+= " / " + SF4->(Formula(F4_FORMULA))
-					Endif										
+						If !AllTrim(SF4->(Formula(F4_FORMULA))) $ cMensCli
+							cMensCli	+= " / " + SF4->(Formula(F4_FORMULA))
+						Endif										
 					Endif
 				Endif				
-							
+				
 				//Tratamento para o campo F4_FORMULA,onde atraves do parametro MV_NFEMSF4 se determina se o conteudo da formula devera compor a mensagem do cliente(="C") ou do fisco(="F").
 				If !Empty(SF4->F4_FORMULA) .And. Formula(SF4->F4_FORMULA) <> NIL .And. ( ( cMVNFEMSF4=="C" .And. !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli ) .Or. (cMVNFEMSF4=="F" .And. !AllTrim(Formula(SF4->F4_FORMULA))$cMensFis) )
 
 					If cMVNFEMSF4=="C"
 						If Len(cMensCli) > 0 .And. SubStr(cMensCli, Len(cMensCli), 1) <> " "
 							cMensCli += " "
-						EndIf       
-						If Alltrim(SB1->B1_GRUPO) <> "700"  
-							If !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli						
-								cMensCli	+=	SF4->(Formula(F4_FORMULA))
+							If Alltrim(SB1->B1_GRUPO) <> "700"  
+								If !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli						
+									cMensCli	+=	SF4->(Formula(F4_FORMULA))
+								Endif
+							Elseif SF4->F4_XESTADO$"D"                    
+								If !AllTrim(Formula("F01")) $ cMensCli
+									cMensCli	+=	Formula("F01")    
+								Endif
+							Elseif SF4->F4_XESTADO$"F"						
+								If !AllTrim(Formula("F02")) $ cMensCli						
+									cMensCli	+=	Formula("F02")
+								Endif
+							Elseif SF4->F4_XESTADO$"A"						
+								If !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli
+									cMensCli	+=	SF4->(Formula(F4_FORMULA))						
+								Endif
 							Endif
-						Elseif SF4->F4_XESTADO$"D"                    
-						If !AllTrim(Formula("F01")) $ cMensCli
-							cMensCli	+=	Formula("F01")    
-						Endif
-						Elseif SF4->F4_XESTADO$"F"						
-						If !AllTrim(Formula("F02")) $ cMensCli						
-							cMensCli	+=	Formula("F02")
-						Endif
-						Elseif SF4->F4_XESTADO$"A"						
-							If !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli
-							cMensCli	+=	SF4->(Formula(F4_FORMULA))						
-							Endif
-						Endif
-					ElseIf cMVNFEMSF4=="F"
-						If Len(cMensFis) > 0 .And. SubStr(cMensFis, Len(cMensFis), 1) <> " "
-							cMensFis += " "
-						EndIf                             
-						If Alltrim(SB1->B1_GRUPO) <> "700"     
-						If !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli						
-							cMensCli	+=	SF4->(Formula(F4_FORMULA))
-						Endif
-						Elseif SF4->F4_XESTADO$"D"                    
-						If !AllTrim(Formula("F01")) $ cMensCli
-							cMensCli	+=	Formula("F01")    
-						Endif
-						Elseif SF4->F4_XESTADO$"F"						
-						If !AllTrim(Formula("F02")) $ cMensCli
-							cMensCli	+=	Formula("F02")
-						Endif
-						Elseif SF4->F4_XESTADO$"A"						
-						If !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli
-							cMensCli	+=	SF4->(Formula(F4_FORMULA))						
-						Endif
-						Endif
-					EndIf
-				EndIf
-				If !Empty(SF4->F4_XFORMU2) .And. Formula(SF4->F4_XFORMU2) <> NIL .And. ( ( cMVNFEMSF4=="C" .And. !AllTrim(Formula(SF4->F4_XFORMU2)) $ cMensCli ) .Or. (cMVNFEMSF4=="F" .And. !AllTrim(Formula(SF4->F4_XFORMU2))$cMensFis) )
-
-					If cMVNFEMSF4=="C"
-						If Len(cMensCli) > 0 .And. SubStr(cMensCli, Len(cMensCli), 1) <> " "
-							cMensCli += " "
-						EndIf                              
-					    If !AllTrim(Formula(SF4->F4_XFORMU2)) $ cMensCli
-						cMensCli	+=	SF4->(Formula(F4_XFORMU2))
 						Endif
 					ElseIf cMVNFEMSF4=="F"
 						If Len(cMensFis) > 0 .And. SubStr(cMensFis, Len(cMensFis), 1) <> " "
 							cMensFis += " "
 						EndIf
-						If !AllTrim(Formula(F4_XFORMU2)) $ cMensCli
-						cMensFis	+=	SF4->(Formula(F4_XFORMU2))
-						Endif
-					EndIf
-				EndIf
-				// CCAB - Rodrigo 03/2011 - Tratamento para mensagens do TES
-				If !Empty(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_FORMULA")) .And. !AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_FORMULA"))) $ cMensCli
-						If Alltrim(SB1->B1_GRUPO) <> "700"
-							If !Empty(cMensCli)
-								cMensCli += " / "
-							EndIf						
-							If !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli
-							cMensCli	+=	AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_FORMULA")))
+						If Alltrim(SB1->B1_GRUPO) <> "700"     
+							If !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli						
+								cMensCli	+=	SF4->(Formula(F4_FORMULA))
 							Endif
 						Elseif SF4->F4_XESTADO$"D"                    
-							If !Empty(cMensCli)
-								cMensCli += " / "
-							EndIf						   
 							If !AllTrim(Formula("F01")) $ cMensCli
-							cMensCli	+=	Alltrim(Formula("F01"))
+								cMensCli	+=	Formula("F01")    
 							Endif
 						Elseif SF4->F4_XESTADO$"F"						
-							If !Empty(cMensCli)
-								cMensCli += " / "
-							EndIf
-							If !AllTrim(Formula("F02")) $ cMensCli						
-							cMensCli	+=	Alltrim(Formula("F02"))
+							If !AllTrim(Formula("F02")) $ cMensCli
+								cMensCli	+=	Formula("F02")
 							Endif
 						Elseif SF4->F4_XESTADO$"A"						
-							If !Empty(cMensCli)
-								cMensCli += " / "
-							EndIf						
 							If !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli
-							cMensCli	+=	AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_FORMULA")))
+								cMensCli	+=	SF4->(Formula(F4_FORMULA))						
 							Endif
-						Endif					
-				EndIf
+						Endif
+
+					EndIf
+				Endif
+				
 				// CCAB - Fernando 07/2011 - Tratamento para mensagens do TES
 				If !Empty(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_XFORMU2")) .And. !AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_XFORMU2"))) $ cMensCli
 					If !Empty(cMensCli)
@@ -1734,64 +1757,12 @@ If cTipo == "1"
 					cMensCli += AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_XFORMU2")))
 					Endif
 				EndIf
-				
+					
 				// CCAB - Daniel 10/09/2010 - Tratamento para produtos especificos (caso de fertilizantes)
 				_cMensGrpD := Posicione("SBM",1,xFilial("SBM")+SB1->B1_GRUPO,"BM_XMENSD")
 				_cMensGrpF := Posicione("SBM",1,xFilial("SBM")+SB1->B1_GRUPO,"BM_XMENSF")
-				/*
-				If !Empty(_cMensGrpD+_cMensGrpF) // Caso uma das duas esteja preenchida
-					SF4->(Formula(F4_FORMULA))
-					
-					// Verifica se o tipo de entrada eh para dentro ou fora do estado (D=Dentro;F=Fora;A=Ambos)
-					_cTpOper := Posicione("SF4",1,xFilial("SF4")+(cAliasSD2)->D2_TES,"F4_XESTADO")
-					
-					If _cTpOper=="F" // fora do estado
-						_cMensF := AllTrim(FORMULA(_cMensGrpF))
-						If !Empty(_cMensF) .And. !AllTrim(_cMensF) $ cMensFis
-							If !Empty(cMensFis)
-								cMensFis += " / "
-							EndIf
-							cMensFis += AllTrim(_cMensF)
-						EndIf
-					Else
-						_cMensD := AllTrim(FORMULA(_cMensGrpD))
-						If !Empty(_cMensD) .And. !AllTrim(_cMensD) $ cMensFis
-							If !Empty(cMensFis)
-								cMensFis += " / "
-							EndIf
-							cMensFis += AllTrim(_cMensD)
-						EndIf
-					Endif
-				Else
-					// CCAB - Alterado por Armando em 22/07/08 -- Tratativa de mensagem padrao do TES
-					If !Empty(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_FORMULA")) .And. !AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_FORMULA"))) $ cMensFis .and. !AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_FORMULA"))) $ cMensCli
-						If !Empty(cMensFis)
-							cMensFis += " / "
-						EndIf
-						cMensFis += AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_FORMULA")))
-					EndIf
-					
-					If !Empty(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_XFORMU2")) .And. !AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_XFORMU2"))) $ cMensFis .and. !AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_XFORMU2"))) $ cMensCli
-						If !Empty(cMensFis)
-							cMensFis += " / "
-						EndIf
-						cMensFis += AllTrim(FORMULA(POSICIONE("SF4",1,XFILIAL("SF4")+(cAliasSD2)->D2_TES,"F4_XFORMU2")))
-					EndIf
 
-				Endif
-				*/
-				/*
-				If cFilAnt == "01" .And. (cAliasSD2)->D2_TES $ GetMv("MV_XTESSP")
-					cAux := GetMv("MV_XDESSP")
-					If !Empty(cAux) .And. !AllTrim(cAux) $ cMensFis
-						If !Empty(cMensFis)
-							cMensFis += " / "
-						EndIf
-						cMensFis += AllTrim(cAux)
-					EndIf
-				EndIf
-				*/
-
+	
 				//*********************** INICIO DO TRATAMENTO DA MENSAGEM SAIDA DE ARMAZEM...... - FERNANDO K. - AGILITY
 				If cFilAnt == "01" .and. !EMPTY(SC5->C5_MENPAD2)
 					cAux := Alltrim(Formula(SC5->C5_MENPAD2))
@@ -1802,7 +1773,7 @@ If cTipo == "1"
 						cMensFis += AllTrim(cAux)
 					EndIf				
 				Endif    
-				
+					
 				If cFilAnt == "06" .and. !EMPTY(SC5->C5_MENPAD2)
 					cAux := Alltrim(Formula(SC5->C5_MENPAD2))
 					If !Empty(cAux) .And. !AllTrim(cAux) $ cMensFis
@@ -1812,18 +1783,31 @@ If cTipo == "1"
 						cMensFis += AllTrim(cAux)
 					EndIf				
 				Endif
-				//*********************** FIM DO TRATAMENTO DA MENSAGEM SAIDA DE ARMAZEM...... - FERNANDO K. - AGILITY
-				If !Empty(SF2->F2_TPFRETE)	
-		 		If SF2->F2_TPFRETE=="C"
-					cModFrete := "0"
-				ElseIf SF2->F2_TPFRETE=="F"
-				 	cModFrete := "1"
-				ElseIf SF2->F2_TPFRETE=="T"
-				 	cModFrete := "2"
-				ElseIf SF2->F2_TPFRETE=="S"
-				 	cModFrete := "9"
-			 	ElseIf Empty(cModFrete)
-			 		If SC5->C5_TPFRETE=="C"
+				If !Empty(SF2->F2_TPFRETE)
+		 			If SF2->F2_TPFRETE=="C"
+						cModFrete := "0"
+					ElseIf SF2->F2_TPFRETE=="F"
+				 		cModFrete := "1"
+					ElseIf SF2->F2_TPFRETE=="T"
+				 		cModFrete := "2"
+					ElseIf SF2->F2_TPFRETE=="S"
+				 		cModFrete := "9"
+			 		ElseIf Empty(cModFrete)
+			 			If SC5->C5_TPFRETE=="C"
+							cModFrete := "0"
+						ElseIf SC5->C5_TPFRETE=="F"
+					 		cModFrete := "1"
+						ElseIf SC5->C5_TPFRETE=="T"
+					 		cModFrete := "2"
+						ElseIf SC5->C5_TPFRETE=="S"
+					 		cModFrete := "9" 
+				 		Else
+				 			cModFrete := "1" 			 	 	
+						EndIf   			 
+				    EndIf               
+                    Else
+					// CCAB - alterado em 04/04/11 para tratar o tipo de frete pelo pedido de venda
+					If Posicione("SC5",1,xFilial("SC5")+SC5->C5_NUM,"C5_TPFRETE") == "C"
 						cModFrete := "0"
 					ElseIf SC5->C5_TPFRETE=="F"
 					 	cModFrete := "1"
@@ -1834,31 +1818,18 @@ If cTipo == "1"
 				 	Else
 				 		cModFrete := "1" 			 	 	
 					EndIf   			 
-				EndIf   
-				
-				Else 
-					// CCAB - alterado em 04/04/11 para tratar o tipo de frete pelo pedido de venda
-					If Posicione("SC5",1,xFilial("SC5")+SC5->C5_NUM,"C5_TPFRETE") == "C"
-						cModFrete := "0"
-					ElseIf Posicione("SC5",1,xFilial("SC5")+SC5->C5_NUM,"C5_TPFRETE") == "F"
-						cModFrete := "1"
-					ElseIf Posicione("SC5",1,xFilial("SC5")+SC5->C5_NUM,"C5_TPFRETE") == "T"
-						cModFrete := "2"
-					ElseIf Posicione("SC5",1,xFilial("SC5")+SC5->C5_NUM,"C5_TPFRETE") == "S"
-						cModFrete := "9"
-					Endif
-                Endif            
-				
+				EndIf               
+					
 				If Empty(aPedido)
 					aPedido := {"",AllTrim(SC6->C6_PEDCLI),""}
 				EndIf
-				
+					
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³ Incluido o tratamento pelo fato do SIGALOJA nao gravar o campo D2_DESCON³ 
 				//³	quando e' dado desconto no total da venda.  			                ³
 				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 				If lNfCup 		
-					nDesconto := Round((cAliasSD2)->D2_QUANT*(cAliasSD2)->D2_PRUNIT,2)-(cAliasSD2)->D2_TOTAL
+					nDesconto := Round((cAliasSD2)->D2_QUANT*(cAliasSD2)->D2_PRUNIT,2)+((cAliasSD2)->D2_VALACRS)-(cAliasSD2)->D2_TOTAL
 	            Else 
 					nDesconto := (cAliasSD2)->D2_DESCON            	
 					
@@ -1868,83 +1839,98 @@ If cTipo == "1"
 					
 					EndIF
 	            EndIf
-	            
-	    	//======================================================================
-			// Novo Ajuste para pegar o numero do Lote do Fornecedor quando Houver	
-			// Favaro 30/03/2012						
-			cLoteForx := ""
-			cLoteForx := Posicione("SB8",1,xFilial("SB8")+Padr((cAliasSD2)->D2_COD,15)+Padr((cAliasSD2)->D2_LOCAL,2)+PADR((cAliasSD2)->D2_DTVALID,8)+PADR((cAliasSD2)->D2_LOTECTL,10)+PADR((cAliasSD2)->D2_NUMLOTE,6),"B8_LOTEFOR")
-			//======================================================================
-			// Novo Ajuste para pegar o Codigo de Barras do Fornecedor quando Houver	
-			// Favaro 04/04/2012						
-			cCodBarx  := ""
-            cCodBarx  := Posicione("SA5",2,xFilial("SA5")+PADR((cAliasSD2)->D2_COD,15),"A5_CODBAR")
-	            
-	        //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-			//³ Tratamento para verificar se o produto e controlado por terceiros (IDENTB6)³
-			//³  e a partir do tipo do pedido (Cliente ou Fornecedor) verifica  se existe  ³
-			//³  amarracao entre Produto X Cliente(SA7) ou Produto X Fornecedor(SA5)       ³  
-			//³Caso haja a amarraca, o codigo e descricao do produto, assumem o conteudo   ³
-			//³	da SA7 ou SA5															   ³ 
-			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ  
+		            
+		    	//======================================================================
+				// Novo Ajuste para pegar o numero do Lote do Fornecedor quando Houver	
+				// Favaro 30/03/2012						
+				cLoteForx := ""
+				cLoteForx := Posicione("SB8",1,xFilial("SB8")+Padr((cAliasSD2)->D2_COD,15)+Padr((cAliasSD2)->D2_LOCAL,2)+PADR((cAliasSD2)->D2_DTVALID,8)+PADR((cAliasSD2)->D2_LOTECTL,10)+PADR((cAliasSD2)->D2_NUMLOTE,6),"B8_LOTEFOR")
+				//======================================================================
+				// Novo Ajuste para pegar o Codigo de Barras do Fornecedor quando Houver	
+				// Favaro 04/04/2012						
+				cCodBarx  := ""
+	            cCodBarx  := Posicione("SA5",2,xFilial("SA5")+PADR((cAliasSD2)->D2_COD,15),"A5_CODBAR")
 
-			cCodProd  := (cAliasSD2)->D2_COD	            
-			cDescProd := IIF(Empty(SC6->C6_DESCRI),SB1->B1_DESC,SC6->C6_DESCRI) 
+		        //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Tratamento para verificar se o produto e controlado por terceiros (IDENTB6)³
+				//³  e a partir do tipo do pedido (Cliente ou Fornecedor) verifica  se existe  ³
+				//³  amarracao entre Produto X Cliente(SA7) ou Produto X Fornecedor(SA5)       ³  
+				//³Caso haja a amarraca, o codigo e descricao do produto, assumem o conteudo   ³
+				//³	da SA7 ou SA5															   ³ 
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ  
+
+				cCodProd  := (cAliasSD2)->D2_COD	            
+				cDescProd := IIF(Empty(SC6->C6_DESCRI),SB1->B1_DESC,SC6->C6_DESCRI) 
 				 
-			If !Empty((cAliasSD2)->D2_IDENTB6) 
-	         	If SC5->C5_TIPO == "N" 
-			         //--A7_FILIAL + A7_CLIENTE + A7_LOJA + A7_PRODUTO
-			         SA7->(dbSetOrder(1)) 	         
-			         If SA7->(MsSeek( xFilial("SA7") + (cAliasSD2)->(D2_CLIENTE+D2_LOJA+D2_COD) )) .and. !empty(SA7->A7_CODCLI) .and. !empty(SA7->A7_DESCCLI) 
-			         	cCodProd  := SA7->A7_CODCLI 
-			            cDescProd := SA7->A7_DESCCLI	            						
-			         EndIf 
-			      ElseIf SC5->C5_TIPO == "B"
-			      	//--A5_FILIAL + A5_FORNECE + A5_LOJA + A5_PRODUTO
-			         SA5->(dbSetOrder(1)) 	         
-			         If SA5->(MsSeek( xFilial("SA5") + (cAliasSD2)->(D2_CLIENTE+D2_LOJA+D2_COD) )) .and. !empty(SA5->A5_CODPRF) .and. !empty(SA5->A5_DESREF)
-			         	cCodProd  := SA5->A5_CODPRF 
-			            cDescProd := SA5->A5_DESREF 	            
-			         EndIf 	
-			      EndIf  
-	         EndIf 
-	         
+				If !Empty((cAliasSD2)->D2_IDENTB6) 
+		         	If SC5->C5_TIPO == "N" 
+				         //--A7_FILIAL + A7_CLIENTE + A7_LOJA + A7_PRODUTO
+				         SA7->(dbSetOrder(1)) 	         
+				         If SA7->(MsSeek( xFilial("SA7") + (cAliasSD2)->(D2_CLIENTE+D2_LOJA+D2_COD) )) .and. !empty(SA7->A7_CODCLI) .and. !empty(SA7->A7_DESCCLI) 
+				         	cCodProd  := SA7->A7_CODCLI 
+				            cDescProd := SA7->A7_DESCCLI	            						
+				         EndIf 
+					ElseIf SC5->C5_TIPO == "B"
+				      	//--A5_FILIAL + A5_FORNECE + A5_LOJA + A5_PRODUTO
+				         SA5->(dbSetOrder(1)) 	         
+				         If SA5->(MsSeek( xFilial("SA5") + (cAliasSD2)->(D2_CLIENTE+D2_LOJA+D2_COD) )) .and. !empty(SA5->A5_CODPRF) .and. !empty(SA5->A5_DESREF)
+				         	cCodProd  := SA5->A5_CODPRF 
+				            cDescProd := SA5->A5_DESREF 	            
+				         EndIf 	
+			      	EndIf  
+	         	EndIf 
+		         
 	            nDescZF := (cAliasSD2)->D2_DESCZFR
 	            
 	            //Tratamento para que o valor de ICMS ST venha a compor o valor da tag vOutros quando for uma nota de Devolução, impedindo que seja gerada a rejeição 610.
 	            If !lIcmSTDev .And. (cAliasSD2)->D2_TIPO == "D" 
 	            	nIcmsST := (cAliasSD2)->D2_ICMSRET
 	            EndIf   
-	            				
+	            cOrigem:= IIF(!Empty((cAliasSD2)->D2_CLASFIS),SubStr((cAliasSD2)->D2_CLASFIS,1,1),'0')
+	            cCSTrib:= IIF(!Empty((cAliasSD2)->D2_CLASFIS),SubStr((cAliasSD2)->D2_CLASFIS,2,2),'50')
+		            
+	            /* Tratamento da Clausula Décima do Ajuste SINIEF 19/2012 - CHAMADO TGTGNB */
+				If (SF4->(FieldPos("F4_CONSUMO")) > 0 .And. SF4->F4_CONSUMO == "N") .And. (cOrigem $"1-2-3" .And. cCSTrib $ "00-10-20-70-90") .And. ((cAliasSD2)->D2_PICM == 4)
+					lFCI	:= .T.
+					SPEDRastro2((cAliasSD2)->D2_NUMLOTE,(cAliasSD2)->D2_LOTECTL,cCodProd,@nBaseIcm,@nValICM,lFCI)
+					If nBaseIcm > 0
+						nValParImp := (cAliasSD2)->D2_QUANT*nBaseIcm   //Valor da Parcela Importada (valor da importação correspondete ao valor da base de calculo de icms na Op de importação)
+						nValTotOpe := (cAliasSD2)->D2_TOTAL+(cAliasSD2)->D2_VALIPI// Valor Total da Operação de Saída Interestadual (incluindo tributos incidentes nas operações proprias do remetente)
+						nContImp   := (nValParImp/nValTotOpe)*100  // Conteúdo da Importação (% entre o valor da parcela importada e o valor total da operação)
+						
+						cInfAdic  += "Resolucao do Senado Federal nº 13/12, Valor da Parcela Importada R$ "+ ConvType(nValParImp, 11,2)+ ", Conteudo de Importacao " + ConvType(nContImp, 11,2) + "% , Valor da Importacao R$ " + ConvType(nBaseIcm, 11,2)
+					EndIf
+				EndIf	            
+		            				
 				aAdd(aInfoItem,{(cAliasSD2)->D2_PEDIDO,(cAliasSD2)->D2_ITEMPV,(cAliasSD2)->D2_TES,(cAliasSD2)->D2_ITEM})
 				aadd(aProd,	{Len(aProd)+1,;
-					(cAliasSD2)->D2_COD,;
-			  	    If(Empty(IIf(Val(SB1->B1_CODBAR)==0,"",Str(Val(SB1->B1_CODBAR),Len(SB1->B1_CODBAR),0))),cCodBarx,IIf(Val(SB1->B1_CODBAR)==0,"",Str(Val(SB1->B1_CODBAR),Len(SB1->B1_CODBAR),0))),; 
-				  	NoAcento(ANSItoOEM(IIF(Empty(SC6->C6_DESCRI),SB1->B1_DESC,SC6->C6_DESCRI))),; //IIF(Empty(SC6->C6_DESCRI),SB1->B1_DESC,SC6->C6_DESCRI),;
+					cCodProd,;
+					IIf(Val(SB1->B1_CODBAR)==0,"",StrZero(Val(SB1->B1_CODBAR),Len(Alltrim(SB1->B1_CODBAR)),0)),;
+					cDescProd,;
 					Iif(!lCapProd,SB1->B1_POSIPI,Substr(SB1->B1_POSIPI,1,2)+Space(6)),;
 					SB1->B1_EX_NCM,;
 					cD2Cfop,;
 					SB1->B1_UM,;
 					(cAliasSD2)->D2_QUANT,;
-				    IIF(!(cAliasSD2)->D2_TIPO$"IP",(cAliasSD2)->D2_TOTAL,0),;// CCAB - Substituido por daniel em 27/04/2011 IIF(!(cAliasSD2)->D2_TIPO$"IP",Iif(!(cAliasSD2)->D2_TIPO$"D",(cAliasSD2)->D2_TOTAL+(cAliasSD2)->D2_DESCON+(cAliasSD2)->D2_DESCZFR,(cAliasSD2)->D2_TOTAL),0),;
+					IIF(!(cAliasSD2)->D2_TIPO$"IP",(cAliasSD2)->D2_TOTAL,0),;   //IIF(!(cAliasSD2)->D2_TIPO$"IP",(cAliasSD2)->D2_TOTAL+nDesconto+(cAliasSD2)->D2_DESCZFR,IIF(((cAliasSD2)->D2_TIPO=="I" .And. SF4->F4_AJUSTE == "S" .And. SubStr(SM0->M0_CODMUN,1,2) == "31") .Or. ((cAliasSD2)->D2_TIPO=="I" .And. SF4->F4_AJUSTE == "S" .And. "RESSARCIMENTO" $ Upper(cNatOper) .And. "RESSARCIMENTO" $ Upper(cDescProd)),(cAliasSD2)->D2_TOTAL,0)),;
 					IIF(Empty(SB5->B5_UMDIPI),SB1->B1_UM,SB5->B5_UMDIPI),;
 					IIF(Empty(SB5->B5_CONVDIPI),(cAliasSD2)->D2_QUANT,SB5->B5_CONVDIPI*(cAliasSD2)->D2_QUANT),;
 					(cAliasSD2)->D2_VALFRE,;
 					(cAliasSD2)->D2_SEGURO,;
-				    0,;// CCAB - Substituido por daniel em 27/04/2011 ((cAliasSD2)->D2_DESCON)/*(cAliasSD2)->D2_DESCZFR)*/,;
-				    IIF(!(cAliasSD2)->D2_TIPO$"IP",(cAliasSD2)->D2_PRCVEN,0),;// CCAB - Substituido por daniel em 27/04/2011 IIF(!(cAliasSD2)->D2_TIPO$"IP",(cAliasSD2)->D2_PRCVEN+(((cAliasSD2)->D2_DESCON+(cAliasSD2)->D2_DESCZFR)/(cAliasSD2)->D2_QUANT),0),;
+					0,;// CCAB - Substituido por daniel em 27/04/2011 (nDesconto+nDescIcm),;
+					IIF(!(cAliasSD2)->D2_TIPO$"IP",(cAliasSD2)->D2_PRCVEN,0),;// CCAB - Substituido por daniel em 27/04/2011 RetPrvUnit(cAliasSD2,nDesconto),;
 					IIF(SB1->(FieldPos("B1_CODSIMP"))<>0,SB1->B1_CODSIMP,""),; //codigo ANP do combustivel
 					IIF(SB1->(FieldPos("B1_CODIF"))<>0,SB1->B1_CODIF,""),; //CODIF
-				    IIF(ALLTRIM(cLoteForx) <> "","Lote: For. "+cLoteForx,IIF(!Empty((cAliasSD2)->D2_LOTECTL),"Lote: "+(cAliasSD2)->D2_LOTECTL,"Sem Lote")),;
+					IIF(ALLTRIM(cLoteForx) <> "","Lote For. "+cLoteForx,IIF(!Empty((cAliasSD2)->D2_LOTECTL),"Lote: "+(cAliasSD2)->D2_LOTECTL,"Sem Lote")),;
 					(cAliasSD2)->D2_NUMLOTE,;//Numero do Lote
-					(cAliasSD2)->D2_DESPESA,;//Outras despesas
+					IIF(((cAliasSD2)->D2_TIPO == "D" .And. !lIpiDev) .Or. lConsig .Or. (Alltrim((cAliasSD2)->D2_CF) $ cMVCFOPREM ) .or. ((cAliasSD2)->D2_TIPO == "B" .and. lIpiBenef) ,(cAliasSD2)->D2_DESPESA + (cAliasSD2)->D2_VALPS3 + (cAliasSD2)->D2_VALCF3 + (cAliasSD2)->D2_VALIPI + nIcmsST, (cAliasSD2)->D2_DESPESA + (cAliasSD2)->D2_VALPS3 + (cAliasSD2)->D2_VALCF3 + nIcmsST),;      //Outras despesas + PISST + COFINSST  (Inclusão do valor de PIS ST e COFINS ST na tag vOutros - NT 2011/004).E devolução com IPI.
 					nRedBC,;//% Redução da Base de Cálculo
 					cCST,;//Cód. Situação Tributária
-					SF4->F4_AGREG,;// Tipo de agregação de valor ao total do documento
-					cInfAdic,;
-					NoAcento(ANSItoOEM(Posicione("SB5",1,xFilial("SB5")+(cAliasSD2)->D2_COD,"B5_XDESCR1+B5_XDESCR2+B5_XDESCR3+B5_XDESCR4+B5_XDESCR5+B5_XDESCR6+B5_XDESCR7")))}) //Informacoes adicionais do produto(B5_DESCNFE)
-				aadd(aCST,{IIF(!Empty((cAliasSD2)->D2_CLASFIS),SubStr((cAliasSD2)->D2_CLASFIS,2,2),'50'),;
-				IIF(!Empty((cAliasSD2)->D2_CLASFIS),SubStr((cAliasSD2)->D2_CLASFIS,1,1),'0')})
+					IIF(SF4->F4_AGREG='N' .Or. (SF4->F4_ISS='S' .And. SF4->F4_ICM='N'),"0","1"),;// Tipo de agregação de valor ao total do documento
+					 cInfAdic,;//Informacoes adicionais do produto(B5_DESCNFE)
+					nDescZF,;
+					(cAliasSD2)->D2_TES})
+				aadd(aCST,{cCSTrib,cOrigem})
 				aadd(aICMS,{})
 				aadd(aIPI,{})
 				aadd(aICMSST,{})
@@ -1959,7 +1945,7 @@ If cTipo == "1"
 				aadd(aPisAlqZ,{})
 				aadd(aCofAlqZ,{})
 				aadd(aCsosn,{})
-				
+					
 				
 				cNCM := SB1->B1_POSIPI
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -1987,6 +1973,7 @@ If cTipo == "1"
 				Else
 					aadd(aExp,{})
 				EndIf
+
 				If AliasIndic("CD6")  .And. CD6->(FieldPos("CD6_QTAMB")) > 0 .And. CD6->(FieldPos("CD6_UFCONS")) > 0  .And. CD6->(FieldPos("CD6_BCCIDE")) > 0 .And. CD6->(FieldPos("CD6_VALIQ")) > 0 .And. CD6->(FieldPos("CD6_VCIDE")) > 0
 					aadd(aComb,{CD6->CD6_CODANP,CD6->CD6_SEFAZ,CD6->CD6_QTAMB,CD6->CD6_UFCONS,CD6->CD6_BCCIDE,CD6->CD6_VALIQ, CD6->CD6_VCIDE })
 			    Elseif AliasIndic("CD6")  .And. CD6->(FieldPos("CD6_QTAMB")) > 0 .And. CD6->(FieldPos("CD6_UFCONS")) > 0 
@@ -2004,6 +1991,7 @@ If cTipo == "1"
 				Else
 					aadd(aArma,{})
 				EndIf			
+
 				If AliasIndic("CD9")    	
 					aadd(aveicProd,{IIF(CD9->CD9_TPOPER$"03",1,IIF(CD9->CD9_TPOPER$"1",2,IIF(CD9->CD9_TPOPER$"2",3,IIF(CD9->CD9_TPOPER$"9",0,"")))),;
 									CD9->CD9_CHASSI,CD9->CD9_CODCOR,CD9->CD9_DSCCOR,CD9->CD9_POTENC,CD9->CD9_CM3POT,CD9->CD9_PESOLI,;
@@ -2018,6 +2006,7 @@ If cTipo == "1"
 				Else
 				    aadd(aveicProd,{})
 				EndIf			
+
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³Tratamento para Anfavea - Cabecalho e Itens                             ³
 				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ				
@@ -2038,7 +2027,12 @@ If cTipo == "1"
 	   			EndIf				
 
 				//Anfavea Cabecalho
-				cAnfavea := ""
+				If Len(cAnfavea) > 0
+					cAnfavea += cAnfavea
+				Else
+					cAnfavea := ""
+				EndIf
+				
 				If lAnfavea
 					If !Empty(aAnfC) .And. !Empty(aAnfC[01,01]) .And. lCabAnf
 						lCabAnf := .F.
@@ -2077,16 +2071,16 @@ If cTipo == "1"
 					Endif  
 				Endif
 
-					DbSelectArea("SF2")
-					DbSetOrder(1)
-					MsSeek(xFilial("SF2")+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA)
+				DbSelectArea("SF2")
+				DbSetOrder(1)
+				MsSeek(xFilial("SF2")+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA)
 				dbSelectArea("CD2")
 				If !(cAliasSD2)->D2_TIPO $ "DB"
 					dbSetOrder(1)
 				Else
 					dbSetOrder(2)
 				EndIf
-			    
+				    
 			    DbSelectArea("SFT")
 			    DbSetOrder(1)
 			    If SFT->(DbSeek(xFilial("SFT")+"S"+(cAliasSD2)->(D2_SERIE+D2_DOC+D2_CLIENTE+D2_LOJA+PadR(D2_ITEM,TamSx3("FT_ITEM")[1])+D2_COD)))
@@ -2112,7 +2106,7 @@ If cTipo == "1"
 				EndIf
 								     
 				CD2->(dbSeek(xFilial("CD2")+"S"+SF2->F2_SERIE+SF2->F2_DOC+SF2->F2_CLIENTE+SF2->F2_LOJA+PadR((cAliasSD2)->D2_ITEM,4)+(cAliasSD2)->D2_COD))
-	
+		
 				While CD2->(!Eof()) .And. xFilial("CD2") == CD2->CD2_FILIAL .And.;
 					"S" == CD2->CD2_TPMOV .And.;
 					SF2->F2_SERIE == CD2->CD2_SERIE .And.;
@@ -2124,13 +2118,14 @@ If cTipo == "1"
 				
 				    nMargem :=  IiF(CD2->CD2_PREDBC>0,IiF(CD2->CD2_PREDBC == 100,CD2->CD2_PREDBC,IF(CD2->CD2_PREDBC > 100,0,100-CD2->CD2_PREDBC)),CD2->CD2_PREDBC)              		 					
 
-					DbSelectArea("SF7")				
-					DbSetOrder(1)											
+					/*DbSelectArea("SF7")				
+						DbSetOrder(1)											
 						If DbSeek(xFilial("SF7")+SB1->B1_GRTRIB+SA1->A1_GRPTRIB)														
 							If SF7->F7_BASEICM > 0
 								nMargem := SF7->F7_BASEICM
 							EndIf										
-						EndIf										
+						EndIf*/									
+
 					// Verifica se existe percentual de reducao na SFT referête ao RICMS 43080/2002 MG.
 					If SFT->(FieldPos("FT_PR43080")) <> 0 .And. SFT->FT_PR43080 <> 0 .And. IIF(!lEndFis,ConvType(SM0->M0_ESTCOB),ConvType(SM0->M0_ESTENT)) == "MG"
 						nMargem := SFT->FT_PR43080
@@ -2194,8 +2189,8 @@ If cTipo == "1"
 								If (Alltrim((cAliasSD2)->D2_CF) $ cMVCFOPREM)  .And. !Empty(nValIPI) 
 									aTail(aIPI) := {SB1->B1_SELOEN,SB1->B1_CLASSE,0,"999",CD2->CD2_CST,0,0,CD2->CD2_PAUTA,0,0,CD2->CD2_MODBC,0}
 								EndIf
-								If !lIpiDev .And. !(Alltrim((cAliasSD2)->D2_CF) $ cMVCFOPREM)
-									If ( (cAliasSD2)->D2_TIPO=="D" .And. !Empty(nValIPI) ).OR. ( (cAliasSD2)->D2_TIPO=="P" .And. lComplDev .And. !Empty(nValIPI) )
+								If !lIpiDev .And. !(Alltrim((cAliasSD2)->D2_CF) $ cMVCFOPREM) .OR. lIpiBenef
+									If ( (cAliasSD2)->D2_TIPO=="D" .And. !Empty(nValIPI) ).OR. ( (cAliasSD2)->D2_TIPO=="P" .And. lComplDev .And. !Empty(nValIPI) ) .OR. ( (cAliasSD2)->D2_TIPO=="B" .And. lIpiBenef .and. !Empty(nValIPI) )
 										aAdd(aIPIDev, {nValIPI,cNCM})
 										nValIPI := 0
 										cNCM	:= ""
@@ -2233,7 +2228,7 @@ If cTipo == "1"
 							If Empty(aISS)
 								aISS := {0,0,0,0,0}
 							EndIf
-							aISS[01] += (cAliasSD2)->D2_TOTAL // CCAB - Substituido por daniel em 27/04/2011 +(cAliasSD2)->D2_DESCON
+							aISS[01] += (cAliasSD2)->D2_TOTAL // CCAB - Substituido por daniel em 27/04/2011 (cAliasSD2)->D2_TOTAL+(cAliasSD2)->D2_DESCON
 							aISS[02] += CD2->CD2_BC
 							aISS[03] += CD2->CD2_VLTRIB	
 							cMunISS := ConvType(aUF[aScan(aUF,{|x| x[1] == aDest[09]})][02]+aDest[07])
@@ -2258,9 +2253,9 @@ If cTipo == "1"
 					dbSelectArea("CD2")
 					dbSkip()
 				EndDo
-				
+					
 				//Tratamento para que o valor de PIS ST e COFINS ST venha a compor o valor total da tag vOutros  (NT 2011/004). E devolução de compra com IPI não tributado
-				If ((cAliasSD2)->D2_TIPO == "D" .and. !lIpiDev)  .Or. lConsig .Or. (Alltrim((cAliasSD2)->D2_CF) $ cMVCFOPREM )
+				If ((cAliasSD2)->D2_TIPO == "D" .and. !lIpiDev)  .Or. lConsig .Or. (Alltrim((cAliasSD2)->D2_CF) $ cMVCFOPREM ) .OR. ((cAliasSD2)->D2_TIPO == "B" .and. lIpiBenef)
 					aTotal[01] += (cAliasSD2)->D2_DESPESA + (cAliasSD2)->D2_VALPS3 + (cAliasSD2)->D2_VALCF3 + (cAliasSD2)->D2_VALIPI + nIcmsST
 				Else 
 					aTotal[01] += (cAliasSD2)->D2_DESPESA + (cAliasSD2)->D2_VALPS3 + (cAliasSD2)->D2_VALCF3 + nIcmsST
@@ -2269,7 +2264,7 @@ If cTipo == "1"
 				If (cAliasSD2)->D2_TIPO == "I"
 					If (cAliasSD2)->D2_ICMSRET > 0
 						aTotal[02] += (cAliasSD2)->D2_VALBRUT
-					ElseIf SubStr(SM0->M0_CODMUN,1,2) == "31" .And. SF4->F4_AJUSTE == "S" 
+					ElseIf (SubStr(SM0->M0_CODMUN,1,2) == "31" .And. SF4->F4_AJUSTE == "S") .Or. ( (SF4->F4_AGREG == "S" .And. SF4->F4_AJUSTE == "S") .And. ("RESSARCIMENTO" $ Upper(cNatOper) .And. "RESSARCIMENTO" $ Upper(cDescProd)))
 						aTotal[02] += (cAliasSD2)->D2_TOTAL
 					Else
 						aTotal[02] += 0
@@ -2277,6 +2272,7 @@ If cTipo == "1"
 				Else
                     aTotal[02] += (cAliasSD2)->D2_VALBRUT
                 EndIf							
+
 				If lCalSol .OR.  lMVCOMPET
 					dbSelectArea("SF3")
 					dbSetOrder(4)
@@ -2288,20 +2284,18 @@ If cTipo == "1"
 							aAdd (aIEST, SubStr (cMVSUBTRIB, nPosI, nPosF))	//01 - IE_ST
 						EndIf
 					EndIf
-			    Endif
-				
-				
-				
+				Endif
+					
 				If SFT->(FieldPos("FT_CSTPIS")) > 0 .And. SFT->(FieldPos("FT_CSTCOF")) > 0
 					
 					dbSelectArea("SFT") //Livro Fiscal Por Item da NF
 					dbSetOrder(1) //FT_FILIAL+FT_TIPOMOV+FT_SERIE+FT_NFISCAL+FT_CLIEFOR+FT_LOJA+FT_ITEM+FT_PRODUTO
 					If MsSeek(xFilial("SFT")+"S"+SF2->F2_SERIE+SF2->F2_DOC+SF2->F2_CLIENTE+SF2->F2_LOJA+PadR((cAliasSD2)->D2_ITEM,4)+(cAliasSD2)->D2_COD)
 						
-						IF Empty(aPis[Len(aPis)]) .And. (SFT->FT_CSTPIS$"09,06,04,99" .Or. SFT->FT_CSTPIS$"70")
+						IF Empty(aPis[Len(aPis)]) .And. !empty(SFT->FT_CSTPIS)
 							aTail(aPisAlqZ):= {SFT->FT_CSTPIS}
 						EndIf
-						IF Empty(aCOFINS[Len(aCOFINS)]) .And. (SFT->FT_CSTCOF$"09,06,04,99" .Or. SFT->FT_CSTCOF$"70")
+						IF Empty(aCOFINS[Len(aCOFINS)]) .And. !empty(SFT->FT_CSTCOF)
 							aTail(aCofAlqZ) := {SFT->FT_CSTCOF}
 						EndIf
 						
@@ -2309,15 +2303,15 @@ If cTipo == "1"
 					
 				Else
 					
-					IF Empty(aPis[Len(aPis)]) .And. (SF4->F4_CSTPIS$"09,06,04,99" .Or. SF4->F4_CSTPIS$"70")
+					IF Empty(aPis[Len(aPis)]) .And. !empty(SF4->F4_CSTPIS)
 						aTail(aPisAlqZ):= {SF4->F4_CSTPIS}		
 					EndIf
-					IF Empty(aCOFINS[Len(aCOFINS)]) .And. (SF4->F4_CSTCOF$"09,06,04,99" .Or. SF4->F4_CSTCOF$"70")
+					IF Empty(aCOFINS[Len(aCOFINS)]) .And. !empty(SF4->F4_CSTCOF)
 						aTail(aCofAlqZ):= {SF4->F4_CSTCOF}
 					EndIf
 					
 				EndIf
-				
+					
 				If !len(aCofAlqZ)>0 .or. !len(aPisAlqZ)>0
 					aadd(aCofAlqZ,{})  
 			   		aadd(aPisAlqZ,{})					
@@ -2332,10 +2326,19 @@ If cTipo == "1"
 				If !len(aCsosn)>0 
 					aadd(aCsosn,"")  
 			   	Endif
+
+				If (cAliasSD2)->D2_TIPO == "B"
+					lNotaBenef := .T.
+				EndIf
+
 				dbSelectArea(cAliasSD2)
 				dbSkip()
 		    EndDo
-		    
+            
+			if !lContinua
+				cMensCli     += MsgM4(cD2Tes, xFilial("SF2") )  // VALDEMIR JOSE 18/04/2013
+            Endif   
+            
 		    // Adicionado por Valdemir Jose 18/01/2013
 		    if Len(aOrigExt) > 0
                cMsgOriExt  := ' - RESOL.SEN.FED.13/12 VLR DA PARC.IMPORT.: '
@@ -2345,8 +2348,16 @@ If cTipo == "1"
                    cMsgOriExt  += ' R$ '+alltrim(Transform(aOrigExt[nOriExt][2],"@E 999,999,999.99"))
                Next
                cMensCli += cMsgOriExt
-		    Endif
+		    Endif        
 		    
+		    // Adicionado por Valdemir Jose 12/04/2013
+			if !Empty(SA1->A1_XDANFE1)
+				cMensCli  += ' - '+alltrim(SA1->A1_XDANFE1)
+			Endif
+			if !Empty(SA1->A1_XDANFE2)
+				cMensCli  += ' '+alltrim(SA1->A1_XDANFE2)
+			Endif                                   
+			
 		     //Retira o desconto referênte ao RICMS 43080/2002
 		    If nDescRed > 0                                           				
 				aTotal[2] -= nDescRed 
@@ -2408,13 +2419,23 @@ If cTipo == "1"
 					EndIf
 				EndDo
 	
-				For nX := 1 To Len(aIPIAux)
-					cValIPI  := AllTrim(Str(aIPIAux[nX][1],15,2))
-					cMensCli += " "
-					cMensCli += "(Valor do IPI: R$ "+cValIPI+" - "+"Classificação fiscal: "+aIPIAux[nX][2]+") "
-					cValIPI  := ""
-					cNCMAux  := ""
-				Next nX
+				If !lNotaBenef
+					For nX := 1 To Len(aIPIAux)
+						cValIPI  := AllTrim(Str(aIPIAux[nX][1],15,2))
+						cMensCli += " "
+						cMensCli += "(Valor do IPI: R$ "+cValIPI+" - "+"Classificação fiscal: "+aIPIAux[nX][2]+") "
+						cValIPI  := ""
+						cNCMAux  := ""
+					Next nX
+				Else
+					For nX := 1 To Len(aIPIAux)
+						cValIPI  := AllTrim(Str(aIPIAux[nX][1],15,2))
+						cMensCli += " "
+						cMensCli += "(Valor do IPI: R$ "+cValIPI+") "
+						cValIPI  := ""
+						cNCMAux  := ""
+					Next nX
+				EndIf
 			EndIf
 			If nValSTAux > 0 
 				cValST  := AllTrim(Str(nValSTAux,15,2))
@@ -2452,7 +2473,7 @@ Else
 			aadd(aNota,SF1->F1_EMISSAO)
 			aadd(aNota,cTipo)
 			aadd(aNota,SF1->F1_TIPO)
-			aadd(aNota,SF1->F1_HORA)  
+			aadd(aNota,SF1->F1_HORA)			
 			// CCAB - Daniel - 04/06/2009
 			If !Empty(SF1->F1_TRANSP)
 				dbSelectArea("SA4")
@@ -2466,7 +2487,6 @@ Else
 				aadd(aTransp,SA4->A4_MUN)
 				aadd(aTransp,Upper(SA4->A4_EST)	)
 			EndIf
-			
 			// CCAB - Daniel - 04/06/2009
 			If Alltrim(SF1->F1_XOBSERV) <> ""
 				cMensCli += Alltrim(SF1->F1_XOBSERV)
@@ -2474,7 +2494,6 @@ Else
 			
 			// CCAB - Daniel - 04/06/2009
 			// aadd(aEspVol,{SF1->F1_ESPECI1, SF1->F1_VOLUME1, SF1->F1_PLIQUI , SF1->F1_PBRUTO})	
-			
 			// CCAB - Mensagens de importacao
 			_cDI := IIf(SF1->F1_EST="EX" .AND. !Empty(SF1->F1_XDI)    ,"* * * D.I. " + AllTrim(SF1->F1_XDI) + " de " + Dtoc(SF1->F1_XDATADI),"")
 			_cDI += IIf(SF1->F1_EST="EX" .AND. !Empty(SF1->F1_XLOCDES),"* * * Mercadoria saindo de " + SF1->F1_XLOCDES                       ,"")			
@@ -2482,15 +2501,21 @@ Else
 			    dbSelectArea("SA1")
 				dbSetOrder(1)
 				MsSeek(xFilial("SA1")+cClieFor+cLoja)
-				
+
+				If cMVNFEMSA1=="C" .And. !Empty(SA1->A1_MENSAGE)
+					cMensCli	:=	SA1->(Formula(A1_MENSAGE))
+				ElseIf cMVNFEMSA1=="F" .And. !Empty(SA1->A1_MENSAGE)
+					cMensFis	:=	SA1->(Formula(A1_MENSAGE))
+				EndIf				
+
 				aadd(aDest,AllTrim(SA1->A1_CGC))
 				aadd(aDest,SA1->A1_NOME)
 				aadd(aDest,MyGetEnd(SA1->A1_END,"SA1")[1])
 
-		   		If "/" $ MyGetEnd(SA1->A1_END,"SA1")[3]
-					aadd(aDest,IIF(MyGetEnd(SA1->A1_END,"SA1")[3]<>"",MyGetEnd(SA1->A1_END,"SA1")[3],"SN"))
-				Else
-					aadd(aDest,IIF(MyGetEnd(SA1->A1_END,"SA1")[2]<>0,MyGetEnd(SA1->A1_END,"SA1")[2],"SN"))
+		   		If MyGetEnd(SA1->A1_END,"SA1")[2]<>0
+					aadd(aDest,MyGetEnd(SA1->A1_END,"SA1")[3]) 
+				Else 
+					aadd(aDest,"SN") 
 				EndIf
 
 //				aadd(aDest,MyGetEnd(SA1->A1_END,"SA1")[4])
@@ -2605,6 +2630,15 @@ Else
 					nDescRed += SF3->F3_VL43080
 				EndIF
 			EndIF
+
+			// Faz o destaque do IPI nos dados complementares caso seja uma venda que possuir IPI
+			If SF3->F3_VALIPI > 0 .And. SF3->F3_TIPO == "D"
+				If Len(cMensFis) > 0 .And. SubStr(cMensFis, Len(cMensFis), 1) <> " "
+					cMensFis += " "
+				EndIf
+				cMensFis += "Valor do IPI: R$ " + AllTrim(Transform(SF3->F3_VALIPI, "@ze 9,999,999,999,999.99")) + " "
+			EndIf			
+		
 			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 			//³Verifica Duplicatas da nota de entrada                                  ³
 			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ		
@@ -2767,12 +2801,12 @@ Else
 				//Tratamento para nota sobre Cupom 
 				DbSelectArea("SFT")
 			    DbSetOrder(1)
-			    IF   SFT->(DbSeek(xFilial("SFT")+"E"+(cAliasSD1)->(D1_SERIE+D1_DOC+D1_FORNECE+D1_LOJA)))
-					IF  AllTrim(SFT->FT_OBSERV) <> " " .AND.(cAliasSD1)->D1_ORIGLAN=="LO"
-						IF !Alltrim(SFT->FT_OBSERV) $ Alltrim(cMensCli)  
+			    IF SFT->(DbSeek(xFilial("SFT")+"E"+(cAliasSD1)->(D1_SERIE+D1_DOC+D1_FORNECE+D1_LOJA)))
+					IF AllTrim(SFT->FT_OBSERV) <> " " .AND.(cAliasSD1)->D1_ORIGLAN=="LO"
+						If !Alltrim(SFT->FT_OBSERV) $ Alltrim(cMensCli)  
 							cMensCli +=" " + AllTrim(SFT->FT_OBSERV)
-						EndIF       
-	           		EndIF
+						EndIf       
+           		EndIf
 	        	EndIF			
 	
 				dbSelectArea("SF4")
@@ -2803,6 +2837,25 @@ Else
 	    			nRedBC := IiF(SF4->F4_BASEICM>0,IiF(SF4->F4_BASEICM == 100,SF4->F4_BASEICM,IiF(SF4->F4_BASEICM > 100,0,100-SF4->F4_BASEICM)),SF4->F4_BASEICM)
 	    			cCST   := SF4->F4_SITTRIB 
 	    		Endif
+	    		
+	    		//Tratamento para o campo F4_FORMULA,onde atraves do parametro MV_NFEMSF4 se determina se o conteudo da formula devera compor a mensagem do cliente(="C") ou do fisco(="F").
+				If (cAliasSD1)->D1_FORMUL=="S"
+					If !Empty(SF4->F4_FORMULA) .And. Formula(SF4->F4_FORMULA) <> NIL .And. ( ( cMVNFEMSF4=="C" .And. !AllTrim(Formula(SF4->F4_FORMULA)) $ cMensCli ) .Or. (cMVNFEMSF4=="F" .And. !AllTrim(Formula(SF4->F4_FORMULA))$cMensFis) )
+	
+						If cMVNFEMSF4=="C"
+							If Len(cMensCli) > 0 .And. SubStr(cMensCli, Len(cMensCli), 1) <> " "
+								cMensCli += " "
+							EndIf
+							cMensCli	+=	SF4->(Formula(F4_FORMULA))
+						ElseIf cMVNFEMSF4=="F"
+							If Len(cMensFis) > 0 .And. SubStr(cMensFis, Len(cMensFis), 1) <> " "
+								cMensFis += " "
+							EndIf
+							cMensFis	+=	SF4->(Formula(F4_FORMULA))
+						EndIf
+					EndIf
+				EndIf
+	    		
 				// CCAB - Daniel - 04/06/2009
 				If !Empty(Posicione("SF4",1,xFilial("SF4")+(cAliasSD1)->D1_TES,"F4_FORMULA")) .And. !AllTrim(Formula(Posicione("SF4",1,xFilial("SF4")+(cAliasSD1)->D1_TES,"F4_FORMULA"))) $ cMensFis
 					If !Empty(cMensFis)
@@ -2818,10 +2871,11 @@ Else
 					cMensFis += AllTrim(Formula(Posicione("SF4",1,xFilial("SF4")+(cAliasSD1)->D1_TES,"F4_XFORMU2")))
 				EndIf				
 				cNatOper := fGroupTES(@aNatOper,(cAliasSD1)->D1_TES,IIf(!(cAliasSD1)->D1_TIPO$"IP",(cAliasSD1)->D1_TOTAL,0))	    		
+
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³Verifica as notas vinculadas                                            ³
 				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ			
-				If !Empty((cAliasSD1)->D1_NFORI) 
+				If !Empty((cAliasSD1)->D1_NFORI)
 					
 					aOldReg  := SD1->(GetArea())
 					
@@ -2830,13 +2884,18 @@ Else
 					nRecnoSF1	:= SF1->( recno() )
 					
 					dbSelectArea("SD1")
-					dbSetOrder(1)                     
+					dbSetOrder(1)
+					If ((cAliasSD1)->D1_TIPO) $ "NC" // Tratamento para notas de entrada normais e complementares buscar o fornecedor original corretamente
+						cSeekD1 := (cAliasSD1)->D1_NFORI+(cAliasSD1)->D1_SERIORI+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA+(cAliasSD1)->D1_COD+(cAliasSD1)->D1_ITEMORI
+					Else
+						cSeekD1 := (cAliasSD1)->D1_NFORI+(cAliasSD1)->D1_SERIORI
+					EndIf
 					//Alterado a chave de busca completa devido ao procedimento de complemento de notas de devolucao de VENDA.						
 					//If MsSeek(xFilial("SD1")+(cAliasSD1)->D1_NFORI+(cAliasSD1)->D1_SERIORI)+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA+(cAliasSD1)->D1_COD+(cAliasSD1)->D1_ITEMORI)
-					If MsSeek(xFilial("SD1")+(cAliasSD1)->D1_NFORI+(cAliasSD1)->D1_SERIORI)
-						
-						SF1->( dbSetOrder( 1 ) )
-						SF1->( msSeek( xFilial( "SF1" ) + SD1->D1_DOC + SD1->D1_SERIE + SD1->D1_FORNECE + SD1->D1_LOJA + SD1->D1_TIPO ) )
+					If MsSeek(xFilial("SD1")+cSeekD1)
+						dbSelectArea("SF1")
+						dbSetOrder(1)
+						MsSeek(xFilial("SF1")+SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA+SD1->D1_TIPO)
 						lSeekOk := .T.
 						If SD1->D1_TIPO $ "DB"
 							dbSelectArea("SA1")
@@ -2847,7 +2906,7 @@ Else
 							dbSetOrder(1)
 							MsSeek(xFilial("SA2")+SD1->D1_FORNECE+SD1->D1_LOJA)
 						EndIf
-				        lRural := AllTrim(SF1->F1_ESPECIE) == "NFP"
+				        lRural := AllTrim(SF1->F1_ESPECIE) $ "NFP-NFA"
 						
 					Else
 						lSeekOk := .F.
@@ -2865,7 +2924,7 @@ Else
 						//³    formulario proprio igual a SIM ou NAO. No caso do NAO, os dados a serem obtidos retornara ³
 						//³    da tabela SA2.                                                                            ³
 						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-						If AllTrim(SF1->F1_ESPECIE)=="NFP" .and. lSeekOk
+						If AllTrim(SF1->F1_ESPECIE)$ "NFP-NFA" .and. lSeekOk
 							//para nota de entrada tipo devolucao o emitente eh o cliente ou o sigamat no caso de formulario proprio=sim
 							If SD1->D1_TIPO$"DB"
 								aadd(aNfVincRur,{SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,SF1->F1_ESPECIE,;
@@ -2887,17 +2946,25 @@ Else
 						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ|
 						If AllTrim(SF1->F1_ESPECIE)=="CF" .and. lSeekOk
 							aadd(aRefECF,{SD1->D1_DOC,SF1->F1_ESPECIE})
-						Endif  
-						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-						//³Outros documentos referenciados³
-						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ 
-						If !lRural .and. lSeekOk
-							If cChave <> (SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,IIF(SD1->D1_TIPO $ "DB",IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA1->A1_CGC),IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA2->A2_CGC)),SM0->M0_ESTCOB,SF1->F1_ESPECIE,SF1->F1_CHVNFE) .OR. (cAliasSD2)->D2_ITEM <> cItemOr
-							aadd(aNfVinc,{SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,IIF(SD1->D1_TIPO $ "DB",IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA1->A1_CGC),IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA2->A2_CGC)),SM0->M0_ESTCOB,SF1->F1_ESPECIE,SF1->F1_CHVNFE})
-								cChave := (SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,IIF(SD1->D1_TIPO $ "DB",IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA1->A1_CGC),IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA2->A2_CGC)),SM0->M0_ESTCOB,SF1->F1_ESPECIE,SF1->F1_CHVNFE)
-						    EndIf
-					    	cItemOr:=(cAliasSD1)->D1_ITEM
-					    EndIf
+						Endif
+						
+						// Outros documentos referenciados
+						if !lRural .and. lSeekOk
+							
+							if cChave <> dToS( SD1->D1_EMISSAO ) + SD1->D1_SERIE + SD1->D1_DOC + iIf( SD1->D1_TIPO $ "DB", iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA1->A1_CGC ), iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA2->A2_CGC ) ) + SM0->M0_ESTCOB + SF1->F1_ESPECIE + SF1->F1_CHVNFE;
+								.or. ( cAliasSD2 )->D2_ITEM <> cItemOr
+								
+								aAdd( aNfVinc, { SD1->D1_EMISSAO, SD1->D1_SERIE, SD1->D1_DOC, iIf( SD1->D1_TIPO $ "DB", iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA1->A1_CGC ), iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA2->A2_CGC ) ), SM0->M0_ESTCOB, SF1->F1_ESPECIE, SF1->F1_CHVNFE } )
+								cChave	:= dToS( SD1->D1_EMISSAO ) + SD1->D1_SERIE + SD1->D1_DOC + iIf( SD1->D1_TIPO $ "DB", iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA1->A1_CGC ), iIf( SD1->D1_FORMUL == "S", SM0->M0_CGC, SA2->A2_CGC ) ) + SM0->M0_ESTCOB + SF1->F1_ESPECIE + SF1->F1_CHVNFE
+								
+								//Busca NFP vinculada, da nota Original.
+								aNfVincRur :=	RetNfpVinc(SD1->D1_DOC,SD1->D1_SERIE,SD1->D1_FORNECE,SD1->D1_LOJA)
+						
+						    endIf
+						    
+					    	cItemOr	:= ( cAliasSD1 )->D1_ITEM
+					    	
+					    endIf
 					
 					Else
 						dbSelectArea("SD2")
@@ -2916,6 +2983,14 @@ Else
 								dbSelectArea("SA1")
 								dbSetOrder(1)
 								MsSeek(xFilial("SA1")+SD2->D2_CLIENTE+SD2->D2_LOJA)
+								
+								//Tratamento para os campos do Loja(cNfRefcup = Numero da Nota de complemento sobre cupom /cSerRefcup = Serie da Nota de complemento sobre cupom)
+								if SD2->(FieldPos("D2_NFCUP")) <> 0
+									cNfRefcup := SD2->D2_NFCUP
+								else
+									cNfRefcup := ""
+								endif
+								cSerRefcup := SD2->D2_SERIORI
 							Else
 								dbSelectArea("SA2")
 								dbSetOrder(1)
@@ -2945,11 +3020,14 @@ Else
 							   		dbSetOrder(4) 
 							   		MsSeek(xFilial("SF3")+SFT->FT_CLIEFOR+SFT->FT_LOJA+SFT->FT_NFISCAL+SFT->FT_SERIE)
 							   		If Empty(SF3->F3_CODRSEF) .Or. SF3->F3_CODRSEF == "101"
-						   				If cChave <> (SF3->F3_EMISSAO,SF3->F3_SERIE,SF3->F3_NFISCAL,SA2->A2_CGC,SM0->M0_ESTCOB,SF3->F3_ESPECIE,SF3->F3_CHVNFE) .OR. (cAliasSD1)->D1_ITEM <> cItemOr
-											aadd(aNfVinc,{SF3->F3_EMISSAO,SF3->F3_SERIE,SF3->F3_NFISCAL,SA2->A2_CGC,SM0->M0_ESTCOB,SF3->F3_ESPECIE,SF3->F3_CHVNFE})
-											cChave := (SF3->F3_EMISSAO,SF3->F3_SERIE,SF3->F3_NFISCAL,SA2->A2_CGC,SM0->M0_ESTCOB,SF3->F3_ESPECIE,SF3->F3_CHVNFE)
-										EndIf 
-										cItemOr:=(cAliasSD1)->D1_ITEM
+						   				If cChave <> dToS( SF3->F3_EMISSAO ) + SF3->F3_SERIE + SF3->F3_NFISCAL + SA2->A2_CGC + SM0->M0_ESTCOB + SF3->F3_ESPECIE + SF3->F3_CHVNFE;
+						   					.or. ( cAliasSD1 )->D1_ITEM <> cItemOr
+						   					
+											aAdd( aNfVinc, { SF3->F3_EMISSAO, SF3->F3_SERIE, SF3->F3_NFISCAL, SA2->A2_CGC, SM0->M0_ESTCOB, SF3->F3_ESPECIE, SF3->F3_CHVNFE } )
+											cChave	:= dToS( SF3->F3_EMISSAO ) + SF3->F3_SERIE + SF3->F3_NFISCAL + SA2->A2_CGC + SM0->M0_ESTCOB + SF3->F3_ESPECIE + SF3->F3_CHVNFE
+											
+										endIf
+										cItemOr	:= ( cAliasSD1 )->D1_ITEM
 									EndIf
 								EndIf
 							EndIf				
@@ -2989,7 +3067,6 @@ Else
 						Endif
 					Endif
 				EndIf    
-	
 				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 				//³Obtem os dados do produto                                               ³
 				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ			
@@ -3055,40 +3132,36 @@ Else
 					EndIf								
 				Else
 					cModFrete := IIF(SF1->F1_FRETE>0,"0","1")
-				EndIf     
-				
-				If !Empty((cAliasSD1)->D1_OBS)
-					cMensCli += " "+ALLTRIM((cAliasSD1)->D1_OBS)+" "
-				Endif			
-				
+				EndIf
 				aAdd(aInfoItem,{(cAliasSD1)->D1_PEDIDO,(cAliasSD1)->D1_ITEMPC,(cAliasSD1)->D1_TES,(cAliasSD1)->D1_ITEM})
 							
 				aadd(aProd,	{Len(aProd)+1,;  
 					(cAliasSD1)->D1_COD,;
-					IIf(Val(SB1->B1_CODBAR)==0,"",Str(Val(SB1->B1_CODBAR),Len(SB1->B1_CODBAR),0)),;
+					IIf(Val(SB1->B1_CODBAR)==0,"",StrZero(Val(SB1->B1_CODBAR),Len(Alltrim(SB1->B1_CODBAR)),0)),;
 					SB1->B1_DESC,;
 					SB1->B1_POSIPI,;
 					SB1->B1_EX_NCM,;
 					(cAliasSD1)->D1_CF,;
 					SB1->B1_UM,;
 					(cAliasSD1)->D1_QUANT,;
-				 IIF(!(cAliasSD1)->D1_TIPO$"IP",(cAliasSD1)->D1_TOTAL,0),;// CCAB - Substituido por daniel em 27/04/2011 //IIF(!(cAliasSD1)->D1_TIPO$"IP".And.((cAliasSD1)->D1_CUSTO <> 0),IIF(!(cAliasSD1)->D1_TIPO$"D",Iif((cAliasSD1)->D1_TIPO$"B",(cAliasSD1)->D1_TOTAL,(cAliasSD1)->D1_TOTAL-(cAliasSD1)->D1_VALDESC),(cAliasSD1)->D1_TOTAL),0),;				
+					IIF(!(cAliasSD1)->D1_TIPO$"IP",(cAliasSD1)->D1_TOTAL,0),;// CCAB - Substituido por daniel em 27/04/2011 IIF(!(cAliasSD1)->D1_TIPO$"IP",IIF(!(SubStr((cAliasSD1)->D1_CF,1,1) $ "3"),(cAliasSD1)->D1_TOTAL,(cAliasSD1)->D1_TOTAL - (cAliasSD1)->D1_II),0),;
 					IIF(Empty(SB5->B5_UMDIPI),SB1->B1_UM,SB5->B5_UMDIPI),;
 					IIF(Empty(SB5->B5_CONVDIPI),(cAliasSD1)->D1_QUANT,SB5->B5_CONVDIPI*(cAliasSD1)->D1_QUANT),;
 					(cAliasSD1)->D1_VALFRE,;
 					(cAliasSD1)->D1_SEGURO,;
 					(cAliasSD1)->D1_VALDESC,;
-					IIF(!(cAliasSD1)->D1_TIPO$"IP",(cAliasSD1)->D1_VUNIT,0),;
-					IIF(SB1->(FieldPos("B1_CODSIMP"))<>0,SB1->B1_CODSIMP,""),; //codigo ANP do combustivel
+				   	IIF(!(cAliasSD1)->D1_TIPO$"IP",(cAliasSD1)->D1_VUNIT,0),;     // IIF(!(cAliasSD1)->D1_TIPO$"IP",IIF(!(SubStr((cAliasSD1)->D1_CF,1,1) $ "3"),(cAliasSD1)->D1_VUNIT,((cAliasSD1)->D1_VUNIT)-((cAliasSD1)->D1_II/(cAliasSD1)->D1_QUANT)),0),;
+				   	IIF(SB1->(FieldPos("B1_CODSIMP"))<>0,SB1->B1_CODSIMP,""),; //codigo ANP do combustivel
 					IIF(SB1->(FieldPos("B1_CODIF"))<>0,SB1->B1_CODIF,""),; //CODIF  
 					(cAliasSD1)->D1_LOTECTL,;//Controle de Lote
 					(cAliasSD1)->D1_NUMLOTE,;//Numero do Lote 
-					(cAliasSD1)->D1_DESPESA,;
+					(cAliasSD1)->D1_DESPESA + (cAliasSD1)->D1_VALPS3 + (cAliasSD1)->D1_VALCF3,; 	//Outras despesas + PISST + COFINSST  (Inclusão do valor de PIS ST e COFINS ST na tag vOutros - NT 2011/004).
 					nRedBC,;//% Redução da Base de Cálculo
 					cCST,;//Cód. Situação Tributária
-					SF4->F4_AGREG,;// Tipo de agregação de valor ao total do documento
-					cInfAdic,; //Informacoes adicionais do produto(B5_DESCNFE)
-					0})
+					IIF(SF4->F4_AGREG='N' .Or. (SF4->F4_ISS='S' .And. SF4->F4_ICM='N'),"0","1"),;// Tipo de agregação de valor ao total do documento
+					cInfAdic,;//Informacoes adicionais do produto(B5_DESCNFE)
+					0,;
+					(cAliasSD1)->D1_TES})        
 				aadd(aCST,{IIF(!Empty((cAliasSD1)->D1_CLASFIS),SubStr((cAliasSD1)->D1_CLASFIS,2,2),'50'),;
 					IIF(!Empty((cAliasSD1)->D1_CLASFIS),SubStr((cAliasSD1)->D1_CLASFIS,1,1),'0')})
 				aadd(aICMS,{})
@@ -3140,12 +3213,11 @@ Else
 					aAdi := aDI
 				// Se não o parâmetro de integração entre o SIGAEIC e o SIGAFAT estiver desabilitado,
 				//   procura as informações da importação da tabela CD5 (complemento de importação).
-				/*
-				ElseIf !lEasy
+				ElseIf (!lEasy) .AND. (!lCD5)
 					DbSelectArea("CD5")
 					DbSetOrder(4)
 					// Procura algum registro na CD5 referente a nota que foi complementada
-					If MsSeek(xFilial("CD5")+(cAliasSD1)->D1_DOC+(cAliasSD1)->D1_SERIE+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA+(cAliasSD1)->D1_ITEM)
+					If SD5->(MsSeek(xFilial("CD5")+(cAliasSD1)->D1_DOC+(cAliasSD1)->D1_SERIE+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA+(cAliasSD1)->D1_ITEM) )
 							aAdd(aDI,{;
 								{"I04","NCM",SB1->B1_POSIPI},;
 								{"I15","vFrete",0},;
@@ -3179,7 +3251,6 @@ Else
 						aadd(aAdi,{})
 						aadd(aDi,{})											
 					EndIf
-				*/
 				Else
 					// CCAB - 11/03/11 - NF  de importacao
 					If SF1->F1_FORMUL=="S" .AND. SF1->F1_EST=="EX"
@@ -3193,12 +3264,12 @@ Else
 						If !Empty((cAliasSD1)->D1_XNUMCON) .and. !(AllTrim((cAliasSD1)->D1_XNUMCON) $ _cContain)
 							_cContain += AllTrim((cAliasSD1)->D1_XNUMCON) + ","
 						EndIf
-					Else
+					Else					
 						aadd(aAdi,{})
 						aadd(aDi,{})
 					Endif
 				EndIf
-				
+
 				If (cAliasSD1)->D1_BASEIRR > 0  .And. (cAliasSD1)->D1_VALIRR > 0 
 					nBaseIrrf += (cAliasSD1)->D1_BASEIRR
 					nValIrrf  += (cAliasSD1)->D1_VALIRR 
@@ -3395,19 +3466,19 @@ Else
 				If MsSeek(xFilial("SFT")+"E"+SF1->F1_SERIE+SF1->F1_DOC+SF1->F1_FORNECE+SF1->F1_LOJA+PadR((cAliasSD1)->D1_ITEM,4)+(cAliasSD1)->D1_COD) .And. ;
 					SFT->(FieldPos("FT_CSTPIS")) > 0 .And. SFT->(FieldPos("FT_CSTCOF")) > 0
 					
-					IF Empty(aPis[Len(aPis)]) .And. (SFT->FT_CSTPIS$"09,06,04,99" .Or. SFT->FT_CSTPIS$"70")
+					IF Empty(aPis[Len(aPis)]) .And. !empty(SFT->FT_CSTPIS) .And. (SFT->FT_CSTPIS$"09,06,04,99" .Or. SFT->FT_CSTPIS$"70")
 						aTail(aPisAlqZ):= {SF4->F4_CSTPIS}						
 					EndIf
-					IF Empty(aCOFINS[Len(aCOFINS)]) .And. (SFT->FT_CSTCOF$"09,06,04,99" .Or. SFT->FT_CSTCOF$"70")
+					IF Empty(aCOFINS[Len(aCOFINS)]) .And. !empty(SFT->FT_CSTCOF) .And. (SFT->FT_CSTCOF$"09,06,04,99" .Or. SFT->FT_CSTCOF$"70")
 						aTail(aCofAlqZ):= {SF4->F4_CSTCOF}					
 					EndIf
 
 				Else
 
-					IF Empty(aPis[Len(aPis)]) .And. (SF4->F4_CSTPIS$"09,06,04,99" .Or. SF4->F4_CSTPIS$"70")
+					IF Empty(aPis[Len(aPis)]) .And. !empty(SF4->F4_CSTPIS) .And. (SF4->F4_CSTPIS$"09,06,04,99" .Or. SF4->F4_CSTPIS$"70")
 						aTail(aPisAlqZ):= {SF4->F4_CSTPIS}	
 					EndIf
-					IF Empty(aCOFINS[Len(aCOFINS)]) .And. (SF4->F4_CSTCOF$"09,06,04,99" .Or. SF4->F4_CSTCOF$"70") 
+					IF Empty(aCOFINS[Len(aCOFINS)]) .And. !empty(SF4->F4_CSTCOF) .And. (SF4->F4_CSTCOF$"09,06,04,99" .Or. SF4->F4_CSTCOF$"70") 
 						aTail(aCofAlqZ):= {SF4->F4_CSTCOF}	
 					EndIf
 
@@ -3475,8 +3546,7 @@ Else
 		    EndIf
 		EndIf
 	EndIf
-EndIf     
-
+EndIf
 // CCAB - Mensagens de importacao
 If !Empty(_cDI)
 	cMensCli += Alltrim(_cDI)
@@ -3484,7 +3554,6 @@ Endif
 If  !Empty(_cContain)
 	cMensCli += "Container(s) - " + Substr(_cContain,1,Len(_cContain)-1)
 Endif
-
 IF ExistBlock("PE01NFESEFAZ")                   
 
 	aParam := {aProd,cMensCli,cMensFis,aDest,aNota,aInfoItem,aDupl,aTransp,aEntrega,aRetirada,aVeiculo,aReboque}
@@ -3508,7 +3577,8 @@ IF ExistBlock("PE01NFESEFAZ")
 	
 Endif 
 
-aIPICST := aCSTIPI // Tratamento para CST IPI.
+nLenaIpi := Len(aCstIpi) // Tratamento para CST IPI.
+aIPICST  := aCSTIPI // Tratamento para CST IPI.
 
 //Geracao do arquivo XML
 If !Empty(aNota)
@@ -3519,15 +3589,20 @@ If !Empty(aNota)
 	cString += NfeLocalRetirada(aRetirada)
 	cString += NfeLocalEntrega(aEntrega)
 	For nX := 1 To Len(aProd)
-		If Len(aIPICST)> 0
-			cIpiCst := aIPICST[nX][1] 
+		If nLenaIpi > 0
+			If  nCstIpi <= nLenaIpi
+				cIpiCst := aCSTIPI[nX][1]
+				nCstIpi += 1
+			Else
+				cIpiCst := ""
+			EndIf
 		EndIf
-		cString += NfeItem(aProd[nX],aICMS[nX],aICMSST[nX],aIPI[nX],aPIS[nX],aPISST[nX],aCOFINS[nX],aCOFINSST[nX],aISSQN[nX],aCST[nX],aMed[nX],aArma[nX],aveicProd[nX],aDI[nX],aAdi[nX],aExp[nX],aPisAlqZ[nX],aCofAlqZ[nX],aAnfI[nX],cTipo,cVerAmb, aComb[Nx],@cMensFis,aCsosn[Nx],aPedCom[nX],aNota[5],aICMSZFM[nX],cIpiCst)
+		cString += NfeItem(aProd[nX],aICMS[nX],aICMSST[nX],aIPI[nX],aPIS[nX],aPISST[nX],aCOFINS[nX],aCOFINSST[nX],aISSQN[nX],aCST[nX],aMed[nX],aArma[nX],aveicProd[nX],aDI[nX],aAdi[nX],aExp[nX],aPisAlqZ[nX],aCofAlqZ[nX],aAnfI[nX],cTipo,cVerAmb, aComb[Nx],@cMensFis,aCsosn[Nx],aPedCom[nX],aNota[5],aICMSZFM[nX],aDest,cIpiCst)
 	Next nX
   	cString += NfeTotal(aTotal,aRetido,aICMS,aICMSST)
 	cString += NfeTransp(cModFrete,aTransp,aImp,aVeiculo,aReboque,aEspVol,cVerAmb,aReboqu2)
 	cString += NfeCob(aDupl)
-	cString += NfeInfAd(cMensCli,cMensFis,aPedido,aExp,cAnfavea,aMotivoCont,aNota,aNfVinc,aProd,aDI,aNfVincRur)
+	cString += NfeInfAd(cMensCli,cMensFis,aPedido,aExp,cAnfavea,aMotivoCont,aNota,aNfVinc,aProd,aDI,aNfVincRur,aRetido,cNfRefcup,cSerRefcupc,cTipo)
 	cString += "</infNFe>"
 EndIf
 Return({cNfe,EncodeUTF8(cString),cNotaOri,cSerieOri})
@@ -3622,7 +3697,11 @@ If !Empty(aNfVinc)
 				cString += '<mod>'+AModNot(aNfVinc[nX][06])+'</mod>'
 				cString += '<serie>'+ConvType(Val(aNfVinc[nX][02]),3)+'</serie>'
 				cString += '<nNF>'+ConvType(Val(aNfVinc[nX][03]),9)+'</nNF>'
-				cString += '<cNF>'+Inverte(StrZero(Val(aNfVinc[nX][03]),9))+'</cNF>'
+				if cVerAmb < "2.00"
+					cString += '<cNF>' + convType( inverte( strZero( val( aNfVinc[nX][03] ), len( aNfVinc[nX][03] ) ) ), 9 ) + '</cNF>'
+				else
+					cString += '<cNF>' + strZero( val( convType( inverte( strZero( val( aNfVinc[nX][03] ), len( aNfVinc[nX][03] ) ) ), 8 ) ), 9 ) + '</cNF>'
+				endIf
 				cString += '</RefNF>'
 		
 				cNFVinc += ConvType(aUF[aScan(aUF,{|x| x[1] == aNfVinc[nX][05]})][02],02)+;
@@ -3652,11 +3731,11 @@ If !Empty(aNfVincRur)
 				cString += '<CNPJ></CNPJ>'         
 			EndIf	               
 			cString += '<IE>'+ConvType(aNfVincRur[nX][07])+'</IE>'
-			cString += '<mod>'+AModNot(aNfVincRur[nX][04])+'</mod>'	
+			cString += '<mod>'+IIf(Alltrim(aNfVincRur[nX][04]) == "NFA","01",AModNot(aNfVincRur[nX][04]))+'</mod>'	
 			cString += '<serie>'+ConvType(Val(aNfVincRur[nX][02]),3)+'</serie>'
 			cString += '<nNf>'+ConvType(Val(aNfVincRur[nX][03]),9)+'</nNf>'
  			cString +='</refNFP>'
-			
+		Exit 	
   		Next nX          
   		cString += '</NFRef>'
 	Endif
@@ -3920,18 +3999,29 @@ Endif
 EndIf
 Return(cString)
 
-Static Function NfeItem(aProd,aICMS,aICMSST,aIPI,aPIS,aPISST,aCOFINS,aCOFINSST,aISSQN,aCST,aMed,aArma,aveicProd,aDI,aAdi,aExp,aPisAlqZ,aCofAlqZ,aAnfI,cTipo,cVerAmb,aComb,cMensFis,cCsosn,aPedCom,cF2Tipo,aICMSZFM,cIpiCst)
+Static Function NfeItem(aProd,aICMS,aICMSST,aIPI,aPIS,aPISST,aCOFINS,aCOFINSST,aISSQN,aCST,aMed,aArma,aveicProd,aDI,aAdi,aExp,aPisAlqZ,aCofAlqZ,aAnfI,cTipo,cVerAmb,aComb,cMensFis,cCsosn,aPedCom,cF2Tipo,aICMSZFM,aDest,cIpiCst)
 
 Local cString 		:= ""
 Local cMVCODREG		:= SuperGetMV("MV_CODREG", ," ")  
+Local cLoteProd		:= "" 
+Local cVunCom		:= ""
+Local cVunTrib		:= ""  
+Local cMotDesICMS	:= ""
+Local cMensDeson	:= ""
 
 Local lAnfProd		:= SuperGetMV("MV_ANFPROD",,.T.)
 Local lArt186	    := SuperGetMV("MV_ART186",,.F.)
 Local lIssQn     	:= .F.
-Local lSimpNac   	:= SuperGetMV("MV_CODREG")== "1" .Or. SuperGetMV("MV_CODREG")== "2" 
+Local lMvPisCofD 	:= GetNewPar("MV_DPISCOF",.F.)   // Parâmetro para informar os valores de Cofins e Pis nas Informações complementares do Danfe 
+//Local lSimpNac   	:= SuperGetMV("MV_CODREG")== "1" .Or. SuperGetMV("MV_CODREG")== "2" 
+Local lUnTribCom	:= GetNewPar("MV_VTRICOM",.F.) /* Parâmetro para informar o valor unitário comercial e valor unitário tributável nas
+													informações complementares do DANFE (quando vuncom e vuntrib forem diferentes)*/
 
-Local nValICM	 	:= 0
 Local nBaseIcm   	:= 0
+Local nValCof 		:= 0
+Local nValICM	 	:= 0
+Local nValPis		:= 0
+Local nDesonICM		:= 0
 
 DEFAULT cCsosn    	:= ""
 DEFAULT aICMS    	:= {}
@@ -3969,7 +4059,7 @@ If len(aDI)> 0
 	EndIf
 Else
     If cVerAmb >= "2.00"
-		cString +='<NCM>'+ConvType(aProd[05])+'</NCM>'
+		cString +='<NCM>'+ConvType(aProd[05])+'</NCM>'   
 	Else
 		cString += NfeTag('<NCM>',ConvType(aProd[05]))
 	EndIf                                       
@@ -3977,42 +4067,43 @@ EndIf
 cString += NfeTag('<EXTIPI>',ConvType(aProd[06]))
 cString += '<CFOP>'+ConvType(aProd[07])+'</CFOP>'
 cString += '<uCom>'+ConvType(aProd[08])+'</uCom>'
-cString += '<qCom>'+ConvType(aProd[09],15,4)+'</qCom>'   
-
+cString += '<qCom>'+ConvType(aProd[09],15,4)+'</qCom>'
 If cVerAmb== "2.00"
-	cString += '<vUnCom>'+ConvType(aProd[16],21,6)+'</vUnCom>'	
+	cString += '<vUnCom>'+ConvType(aProd[16],21,8)+'</vUnCom>'	
 Else                                       
-	cString += '<vUnCom>'+ConvType(aProd[16],16,6)+'</vUnCom>'	
+	cString += '<vUnCom>'+ConvType(aProd[16],16,4)+'</vUnCom>'	
 Endif
-cString += '<vProd>' +ConvType(aProd[10],15,2)+'</vProd>'
+cString += '<vProd>' +ConvType(aProd[10],15,2)+'</vProd>' 
 cString += '<eantrib>'+ConvType(aProd[03])+'</eantrib>'
 cString += '<uTrib>'+ConvType(aProd[11])+'</uTrib>'
 cString += '<qTrib>' + ConvType(aProd[12], 15, Min(IIf(cTipo == "0", TamSX3("D1_QUANT")[2], TamSX3("D2_QUANT")[2]), 4)) + '</qTrib>'
 If cVerAmb== "2.00"
-	cString += '<vUnTrib>'+ConvType(aProd[10]/aProd[12],21,6)+'</vUnTrib>'		
+	cString += '<vUnTrib>'+ConvType(aProd[10]/aProd[12],21,8)+'</vUnTrib>'		
 Else
-	cString += '<vUnTrib>'+ConvType(aProd[10]/aProd[12],16,6)+'</vUnTrib>'	
+	cString += '<vUnTrib>'+ConvType(aProd[10]/aProd[12],16,4)+'</vUnTrib>'	
 Endif
 cString += NfeTag('<vFrete>',ConvType(aProd[13],15,2))
 cString += NfeTag('<vSeg>'  ,ConvType(aProd[14],15,2))
-
-If cF2Tipo $ "D"
-	cString += NfeTag("<vDesc>", ConvType(0, 15, 2))
-Else
-	cString += NfeTag('<vDesc>' ,ConvType(aProd[15],15,2))
-EndIf
+cString += NfeTag('<vDesc>' ,ConvType((aProd[15]+aProd[26]),15,2))
 
 If cVerAmb== "2.00" 
 	cString += NfeTag('<vOutro>' ,ConvType(aProd[21],15,2))
 	// Define se o valor do produto <vProd> será agregado ao valor total
 	//   dos produtos do documento <vProd> dentro de <total>
-	If aProd[24] <> "N"
-		cString += "<indTot>1</indTot>"
-	Else
-		cString += "<indTot>0</indTot>"
-	EndIf
+	cString += '<indTot>'+aProd[24]+'</indTot>'
 Endif
 
+/*Nas situações em que o valor unitário comercial (vUnCom) for diferente do valor unitário tributável (vUnTrib), 
+ambas as informações deverão estar expressas e identificadas no DANFE - CH:TGCOQA*/
+
+cVunCom := ConvType(aProd[16],21,8)
+cVunTrib:= ConvType(aProd[10]/aProd[12],21,8)
+
+If (cVunCom <> cVunTrib) .and. lUnTribCom
+	cMensFis += " "
+	cMensFis += "(Valor unitario comercial: "+cVunCom+ ", "
+	cMensFis += "Valor unitario tributavel: "+cVunTrib+ ") "	
+EndIf
 //Ver II - Average - Tag da Declaração de Importação aDI
 If Len(aDI)>0 .And. ConvType(aDI[04][1]) == "I19"
 	cString += '<DI>'
@@ -4178,19 +4269,11 @@ If  !lIssQn
 		If cCsosn$"900" .And. Len(aIcms)>0	    
 			cString += '<modBC>'+ConvType(aICMS[03])+'</modBC>'
 			cString += '<vBC>'+ConvType(aICMS[05],15,2)+'</vBC>'
-					If Len(aDI)>0 .And. ConvType(aDI[04][1]) == "I19"
-				If !Empty(aAdi[14][03])
-					cString += '<pRedBC>'+ConvType(aAdi[14][03],5,2)+'</pRedBC>'
-				Else
-					cString += '<pRedBC>'+ConvType(aICMS[04],5,2)+'</pRedBC>'
-				EndIf
-			Else
-				//CCAB - INCLUIDO EM 28/03/11
-				If aICMS[04]!=0 
-					cString += '<pRedBC>'+ConvType(aICMS[04],5,2)+'</pRedBC>'
-				Endif
+			If Len(aDI)>0 .And. ConvType(aDI[04][1]) == "I19" .And. !Empty(aAdi[14][03])			 
+				cString += '<pRedBC>'+ConvType(aAdi[14][03],5,2)+'</pRedBC>'
+		   	Else
+				cString += '<pRedBC>'+ConvType(aICMS[04],5,2)+'</pRedBC>'		   	
 			EndIf
-
 			cString += '<pICMS>'+ConvType(aICMS[06],5,2)+'</pICMS>'
 			cString += '<vICMS>'+ConvType(aICMS[07],15,2)+'</vICMS>'
 			
@@ -4223,7 +4306,7 @@ If  !lIssQn
 		
 		If cCsosn$"500" 
 			If aCST[01] = "60" .AND. cTipo=="1"	
-				SPEDRastro(aProd[20],aProd[19],aProd[02],@nBaseIcm,@nValICM)      
+				SPEDRastro2(aProd[20],aProd[19],aProd[02],@nBaseIcm,@nValICM)      
 		 		If nBaseIcm > 0
 		   			cString += '<vBCSTRet>'+ConvType(nBaseIcm,15,2)+'</vBCSTRet>' 
 	   			Else
@@ -4266,34 +4349,27 @@ If  !lIssQn
 	   		If(aCST[1] $ '40,41,50' .And. cVerAmb== "2.00") .Or. ((aCST[1] == '51') .And. lArt186)
 	   			cString += '<vBC>'+'0'+'</vBC>'     
 				If Len(aICMSZFM)>0 .And. aCST[1] $ '40'
-					cString += '<motDesICMS>'+ConvType(aICMSZFM[02])+'</motDesICMS>'  			
+					cString += '<motDesICMS>'+ConvType(aICMSZFM[02])+'</motDesICMS>'
+					cMotDesICMS:= ConvType(aICMSZFM[02])   			
 				Else
-					cString += '<motDesICMS>'+ConvType(aICMS[11])+'</motDesICMS>'  
+					cString += '<motDesICMS>'+ConvType(aICMS[11])+'</motDesICMS>' 
+					cMotDesICMS:= ConvType(aICMS[11])
 				EndIf		
-			Else///
-				///*
+			Else
 				If aICMS[04] == 100 .And. aICMS[02] == "20"
 					cString += '<vBC>'+ConvType(0,15,2)+'</vBC>'
 				Else
 		    		cString += '<vBC>'+ConvType(aICMS[05],15,2)+'</vBC>'
-		    	EndIf		
-		    	///*/		    	
+		    	EndIf			
 	   		EndIf	
 			cString += '<modBC>'+ConvType(aICMS[03])+'</modBC>'
 			
-			If Len(aDI)>0 .And. ConvType(aDI[04][1]) == "I19"
-				If !Empty(aAdi[14][03])
-					cString += '<pRedBC>'+ConvType(aAdi[14][03],5,2)+'</pRedBC>'
-			Else
-					cString += '<pRedBC>'+ConvType(aICMS[04],6,2)+'</pRedBC>'
-				EndIf
-			Else
-			//CCAB - INCLUIDO EM 28/03/11
-			If aICMS[04]!=0 
-				cString += '<pRedBC>'+ConvType(aICMS[04],5,2)+'</pRedBC>'
-			Endif
+			If Len(aDI)>0 .And. ConvType(aDI[04][1]) == "I19" .And. !Empty(aAdi[14][03])
+				cString += '<pRedBC>'+ConvType(aAdi[14][03],5,2)+'</pRedBC>'
+	    	Else
+				cString += '<pRedBC>'+ConvType(aICMS[04],6,2)+'</pRedBC>'
 			EndIf
-		
+			
 			If ( aCST[1] == '51' .And. lArt186 )
 				cString += '<aliquota>0</aliquota>'		
 			Else
@@ -4308,6 +4384,9 @@ If  !lIssQn
 				cString += '<valor>0</valor>' 				
 			Else
 				cString += '<valor>'+ConvType(aICMS[07],15,2)+'</valor>'
+				if !empty(cMotDesICMS)
+					nDesonICM := ConvType(aICMS[07],15,2)
+				endif	
 			EndIf	
 			cString += '<qtrib>'+ConvType(aICMS[09],16,4)+'</qtrib>'
 			cString += '<vltrib>'+ConvType(aICMS[10],15,4)+'</vltrib>'			
@@ -4378,7 +4457,7 @@ If  !lIssQn
 		cString += '<Tributo>'
 		cString += '<CST>'+ConvType(aCST[01])+'</CST>'          
 		If aCST[01] = "60" .AND. cTipo=="1"		
-			SPEDRastro(aProd[20],aProd[19],aProd[02],@nBaseIcm,@nValICM)      
+			SPEDRastro2(aProd[20],aProd[19],aProd[02],@nBaseIcm,@nValICM)      
 			If nBaseIcm > 0 .and. nValICM>0
 		   		If Len(cMensFis) > 0 .And. SubStr(cMensFis, Len(cMensFis), 1) <> " "
 					cMensFis += " "
@@ -4440,7 +4519,7 @@ If  !lIssQn
 		cString += '<valor>'+ConvType(AIPI[10],15,2)+'</valor>'
 		cString += '</Tributo>'
 		cString += '</imposto>'
-	ElseIf Len(aCSTIPI) > 0
+	ElseIf Len(aCSTIPI) > 0  .And. !Empty(cIpiCst)
 		cString += '<imposto>'
 		cString += '<codigo>IPI</codigo>'
 		cString += '<Tributo>'
@@ -4456,7 +4535,7 @@ If  !lIssQn
 		cString += '<qTrib>'+ConvType(0,16,4)+'</qTrib>'
 		cString += '<valor>'+ConvType(0,15,2)+'</valor>'
 		cString += '</Tributo>'
-		cString += '</imposto>'   	
+		cString += '</imposto>'
 	EndIf
 Else
 	If Len(aISSQN)>0 .and. !Empty(aISSQN[01])
@@ -4488,13 +4567,14 @@ If Len(aPIS)>0
 	cString += '<qTrib>'+ConvType(aPIS[05],16,4)+'</qTrib>'
 	cString += '<valor>'+ConvType(aPIS[04],15,2)+'</valor>'
 	cString += '</Tributo>'
+	nValPis += aPIS[04]
 Else
 	cString += '<Tributo>'
 	
-	If (lSimpNac .And. ( !Empty(aPisAlqZ) .And. aPisAlqZ[01] == "99" )) .Or. ( !Empty(aPisAlqZ) .And. aPisAlqZ[01] == "70" )
+	If len(aPisAlqZ) > 0 .and. !empty(aPisAlqZ[01])
 		cString += '<CST>'+aPisAlqZ[01]+'</CST>'
 	Else
-		cString += '<CST>'+(IIF(Len(aPisAlqZ)>0 .And. aPisAlqZ[01]$"09,06,04,07",aPisAlqZ[01],"08"))+'</CST>'
+		cString += '<CST>08</CST>'
 	EndIf
 	cString += '<modBC></modBC>'
 	cString += '<pRedBC></pRedBC>'
@@ -4520,6 +4600,7 @@ If Len(aPISST)>0
 	cString += '<valor>'+ConvType(aPISST[04],15,2)+'</valor>'
 	cString += '</Tributo>'
 	cString += '</imposto>'
+	nValPis += aPISST[04]
 EndIf
 cString += '<imposto>'
 cString += '<codigo>COFINS</codigo>'
@@ -4534,13 +4615,14 @@ If Len(aCOFINS)>0
 	cString += '<qTrib>'+ConvType(aCOFINS[05],16,4)+'</qTrib>'
 	cString += '<valor>'+ConvType(aCOFINS[04],15,2)+'</valor>'
 	cString += '</Tributo>'
+	nValCof += aCOFINS[04]
 Else
 	cString += '<Tributo>'
 	
-	If (lSimpNac .And. ( !Empty(aCofAlqZ) .And. aCofAlqZ[01] == "99" )) .Or. ( !Empty(aCofAlqZ) .And. aCofAlqZ[01] == "70" )
+	If len(aCofAlqZ) > 0 .and. !Empty(aCofAlqZ[01])
 		cString += '<CST>'+aCofAlqZ[01]+'</CST>'
 	Else
-		cString += '<CST>'+(IIF(Len(aCofAlqZ)>0 .And. aCofAlqZ[01]$"09,06,04,07",aCofAlqZ[01],"08"))+'</CST>'
+		cString += '<CST>08</CST>'
 	EndIf                       
 	
 	cString += '<modBC></modBC>'
@@ -4568,8 +4650,13 @@ If Len(aCOFINSST)>0
 	cString += '<valor>'+ConvType(aCOFINSST[04],15,2)+'</valor>'
 	cString += '</Tributo>'
 	cString += '</imposto>'
+	nValCof += aCOFINSST[04]
 EndIf 
-
+ 	If lMvPisCofD  .And. aDest[9] == 'PR'  // Lei Est. PR 17.127/12 informar todos os impostos na Danfe
+		cMensFis += " Conforme Lei Estadual PR 17.127/12 segue o Valor Pis / Cofins:"
+		cMensFis += " Valor Pis R$ " + ConvType(nValPis,15,2) 
+		cMensFis += " Valor Cofins R$ " + ConvType(nValCof,15,2)
+	EndIf
 If cVerAmb <> "2.00"
 	If Len(aISSQN)>0 .and. !Empty(aISSQN[01])	
 		cString += '<imposto>'
@@ -4707,13 +4794,35 @@ If lAnfavea
 	Endif
 Endif
 
-//cString += '<infadprod>'+ConvType(aProd[25],500)+'</infadprod>'
+cLoteProd := aProd[19]   // aProd[20] LOTE:
 
-If cTipo == "1" 
-  	cString += '<infAdProd>'+ConvType(aProd[19]+aProd[26],255)+'</infAdProd>' // CCAB - substituido em 14/03/11 - cString += '<infadprod></infadprod>'
-Else
-  	cString += '<infadprod></infadprod>'
-Endif
+if !empty(aProd[15]) .And. !empty(cMotDesICMS) 
+	cMensDeson := 'Valor Dispensado R$ '+ cValtoChar(nDesonICM) + ', Motivo da Desoneracao do ICMS: '+cMotDesICMS+'.(Ajuste SINIEF 25/12, efeitos a partir de 20.12.12)'
+else
+	dbSelectArea("SB5")  // adicionado por Valdemir Jose
+	dbSetOrder(1)
+	If MsSeek(xFilial("SB5")+aProd[2])
+		cMensDeson := ALLTRIM(SB5->B5_XDESCR1)+" "+ALLTRIM(SB5->B5_XDESCR2)+" "+ALLTRIM(SB5->B5_XDESCR3)+" "+ALLTRIM(SB5->B5_XDESCR4)+" "+ALLTRIM(SB5->B5_XDESCR5)+" "+ALLTRIM(SB5->B5_XDESCR6)+" "+ALLTRIM(SB5->B5_XDESCR7)   // Valdemir 15/04/2013
+	endif
+endif  
+
+MsSeek(xFilial("SF4")+aProd[27]) 
+if SF4->(FieldPos("F4_MSGLT"))>0
+	if SF4->F4_MSGLT $ "1" .And. !empty(aProd[19])    //aProd[20]
+		if !empty(aProd[25])
+			cString += '<infadprod>'+cLoteProd+" - "+ConvType(aProd[25],500)+ cMensDeson+'</infadprod>'
+		else
+			cString += '<infadprod>'+ cLoteProd +" "+ cMensDeson+'</infadprod>'
+		endif	
+	elseif !SF4->F4_MSGLT $ "2"
+		cString += '<infadprod>'+ConvType(aProd[25],500)+" "+cMensDeson+'</infadprod>'  
+	endif 
+else                        
+	IF Empty(aProd[19])
+		cLoteProd := ""
+	endif
+ 	cString += '<infadprod>'+cLoteProd+" "+cMensDeson+'</infadprod>'     // ConvType(aProd[25],500)
+endif
 
 cString += '</det>'
 Return(cString)
@@ -4763,6 +4872,12 @@ If Len(aRet)>0
 		cString += NfeTag('<BC>'     ,ConvType(aRet[nX,02],15,2))
 		cString += NfeTag('<valor>',ConvType(aRet[nX,03],15,2))
 		cString += '</TributoRetido>'
+/*	    If aRet[nX,01] =='PIS'
+	    	nValPis += ConvType(aRet[nX,03],15,2)
+	    EndIf
+	    If aRet[nX,01] =='COFINS'
+	    	nValCof += ConvType(aRet[nX,03],15,2)
+	    EndIf		*/
 	Next nX
 EndIf
 cString += '</total>'
@@ -4887,7 +5002,7 @@ EndIf
 
 Return(cString)
 
-Static Function NfeInfAd(cMsgCli,cMsgFis,aPedido,aExp,cAnfavea,aMotivoCont,aNfSa,aNfVinc,aProd,aDI,aNfVincRur)
+Static Function NfeInfAd(cMsgCli,cMsgFis,aPedido,aExp,cAnfavea,aMotivoCont,aNfSa,aNfVinc,aProd,aDI,aNfVincRur,aRet,cNfRefcup,cSerRefcup,cTipo)
 
 Local cString   := ""
 Local cCfor     := ""
@@ -4911,6 +5026,7 @@ Local cChvNFe	:= ""
 Local cNfVincRur:= ""
 Local nValII	:= 0
 Local lEasy		:= SuperGetMV("MV_EASY") == "S"
+Local lImpRet	:= GetNewPar("MV_IMPRET",.F.) 
 DEFAULT cAnfavea:= ""
 DEFAULT aPedido := {}
 DEFAULT aExp	:= {}
@@ -4991,10 +5107,6 @@ EndIf
 
 cString += '<Cpl>[ContrTSS='+StrZero(Year(ddatabase),4)+'-'+StrZero(Month(ddatabase),2)+'-'+StrZero(Day(ddatabase),2)+'#'+AllTrim(Time())+'#'+AllTrim(SubStr(cUsuario,7,15))+']'
 
-If Len(cMsgFis)>0    
-	cString += '<Fisco>'+ConvType(cMsgFis,Len(cMsgFis))+'</Fisco>'
-EndIf
-
 If Len(cInfRem)>0
 	cString += ConvType(cInfRem,Len(cInfRem))+" "
 EndIf
@@ -5008,6 +5120,15 @@ If Len(aMotivoCont)>0
 EndIf 
 If Len(cMsgCli)>0
             cString += ConvType(cMsgCli,Len(cMsgCli))+" "  
+            //A Nota Fiscal de devolução deve ser preenchida com a nota e a data Original de acordo com a legislação:
+			//Fundamento: Artigo 136 do RICMS-SP - O contribuinte,  excetuado o produtor,  emitirá Nota Fiscal (Lei nº 6374/89,  art. 67,  
+			//Parágrafo 1º,  e Convênio de 15.12.70 - SINIEF, arts. 54 e 56, na redação do Ajuste SINlEF- 3/94, cláusula primeira, XII):.
+			IF (SM0->M0_ESTENT) $ "SP" .AND. cTipo=='0'
+				SFT->(dbSetOrder(6))
+				If SFT->(dbSeek(xFilial("SFT")+"S"+cNfRefcup+cSerRefcup))
+					cString += " Artigo 136 do RICMS-SP Emissao Original NF-e: "+cSerRefcup+" "+cNfRefcup+" "+Dtoc(SFT->FT_EMISSAO)+" " 
+				EndIf
+			Endif
 EndIf   
 
 If Len( aNfVinc ) > 0 .Or. Len( aNfVincRur ) > 0 
@@ -5042,6 +5163,24 @@ Next
 If nValII > 0
 	cString += ("Valor total do Imposto de Importaçao : R$ " + ConvType(nValII,15,2)+ " .O valor do Imposto de Importaçao nao está embutido no valor dos produtos, somente ao valor total da NF-e.")
 Endif
+
+If Len(aRet) > 0 .And. lImpRet
+	cString += "Retencoes: "
+	For nX :=1 to Len(aRet)
+		Do Case
+			Case aRet[nX,1] == "PIS"
+				cString += "PIS: "+ConvType(aRet[nX,3],15,2)+ "  "
+			Case aRet[nX,1] == "COFINS"
+				cString += 	"COFINS: " + ConvType(aRet[nX,3],15,2) + "  "
+			Case aRet[nX,1] == "CSLL"
+				cString += "CSLL: " + ConvType(aRet[nX,3],15,2) + "  "
+			Case aRet[nX,1] == "IRRF"
+				cString += "IR: " + ConvType(aRet[nX,3],15,2) + "  "
+			Case aRet[nX,1] == "INSS"
+				cString += "INSS: " + ConvType(aRet[nX,3],15,2) 
+		EndCase
+	Next
+EndIf
 	
 cString:=If(Substr(cString,Len(cString)-1,1) $ ",",Substr(cString,1,Len(cString)-2),cString)
 cString += '</Cpl>' 
@@ -5538,93 +5677,13 @@ Else //ISSNET
 	cString +='</tc:InfRps>'
 EndIf
 Return(cString)
-/*/
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
-±±³Fun‡„o    ³SPEDRastro³ Autor ³ Luana Ferrari         ³ Data ³13/10/2009³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Descri‡„o ³Funcao criada para retornar para matxfis a informacao da UF ³±±
-±±³          ³e aliquota da nota original de entrada quando o produto pos-³±±
-±±³          ³suir rastro por sublote.                                    ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Sintaxe   ³SPEDRastro                                                  ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³Retorno   ³Retorna													  ³±±
-±±³ 		 |UF Original da nota de entrada                              ³±±
-±±³ 		 |Aliquota Original da nota de entrada                        ³±±
-±±³ 		 |Quantidade proporcional da venda referente ao lote          ³±±
-±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-±±³ Uso      ³                                                            ³±±
-±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-/*/
-Static Function SPEDRastro(cNumLote,cLoteCtl,cProduto,nBaseIcm,nValICM)
-
-Local aArea		 := GetArea()
-
-Local cSeek	     := ""        
-Local cSeek1     := ""        
-Local cAliasSFT  := GetNextAlias()
-                          	
-dbSelectArea("SB8")
-dbSetOrder(2)
-If MsSeek(xFilial("SB8")+cNumLote+cLoteCtl+cProduto)      		
-	cSeek:= SB8->B8_CLIFOR+SB8->B8_LOJA+SB8->B8_SERIE+SB8->B8_DOC
-	cSeek1:=cProduto+SB8->B8_DOC+SB8->B8_SERIE+SB8->B8_CLIFOR+SB8->B8_LOJA
-EndIf                                                                  
-dbSelectArea("SD1")
-dbSetOrder(2)
-
-If MsSeek(xFilial("SD1")+cSeek1)
-	If !Empty (SD1->D1_BASNDES) .AND. !Empty (SD1->D1_ICMNDES)
-		nBaseIcm   := (SD1->D1_BASNDES / SB8->B8_QTDORI) 
-		nValICM    := (SD1->D1_ICMNDES / SB8->B8_QTDORI)
-	Endif 
-EndIf
-
-If Len (cSeek)>0 .AND. nBaseIcm==0 .AND. nValICM==0 .And. SF4->F4_ART274 == "1" 
-
-	BeginSql Alias cAliasSFT
-		SELECT FT_BASERET,FT_ICMSRET,FT_PRODUTO
-		FROM %Table:SFT% SFT
-		WHERE
-		SFT.FT_FILIAL = %xFilial:SFT% AND
-		SFT.%NotDel% AND 
-		FT_NFISCAL =%Exp:SB8->B8_DOC % AND
-		FT_SERIE   =%Exp:SB8->B8_SERIE% AND
-		FT_TIPOMOV =%Exp:"E" % AND
-		FT_CLIEFOR =%Exp:SB8->B8_CLIFOR% AND
-		FT_LOJA	   =%Exp:SB8->B8_LOJA %AND
-		FT_PRODUTO =%Exp:cProduto%
-	EndSql
-		
-	If (cAliasSFT)->(!Eof()) .And. (cAliasSFT)->FT_BASERET > 0 .And. (cAliasSFT)->FT_ICMSRET > 0
-		nBaseIcm:=(cAliasSFT)->FT_BASERET/SB8->B8_QTDORI
-	 	nValICM	:=(cAliasSFT)->FT_ICMSRET/SB8->B8_QTDORI
-	EndIf
-
-	(cAliasSFT)->(DBCLOSEAREA())
-
-Else
-	dbSelectArea("SFT")
-	dbSetOrder(4)
-	If MsSeek(xFilial("SFT")+"E" + cSeek)  
-		nBaseIcm   := (SFT->FT_BASERET / SB8->B8_QTDORI) 
-		nValICM    := (SFT->FT_ICMSRET / SB8->B8_QTDORI)		
-     EndIf
-
-EndIf 
-RestArea(aArea)
-Return()
 
 //-----------------------------------------------------------------------
 /*/{Protheus.doc} RetPrvUnit
 Funcao que retorna o preço unitario do produto
 
 @author Sergio Sueo Fuzinaka
-@since 30.07.2012
+@since 31.07.2012
 @version 1.0 
 /*/
 //-----------------------------------------------------------------------
@@ -5639,9 +5698,13 @@ If (cAliasSD2)->D2_TIPO $ "IP"
 Else
 
 	If (cAliasSD2)->D2_QUANT < 1
-	
-		nRetorno := ( ( ( (cAliasSD2)->D2_PRUNIT * (cAliasSD2)->D2_QUANT ) + nDesconto + (cAliasSD2)->D2_DESCZFR ) / (cAliasSD2)->D2_QUANT )	
-		
+	    
+		if (cAliasSD2)->D2_PRUNIT == (cAliasSD2)->D2_PRCVEN
+			nRetorno := ( ( ( (cAliasSD2)->D2_PRUNIT * (cAliasSD2)->D2_QUANT ) + nDesconto + (cAliasSD2)->D2_DESCZFR ) / (cAliasSD2)->D2_QUANT )	
+		else
+			nRetorno := ( ( ( (cAliasSD2)->D2_PRUNIT * (cAliasSD2)->D2_QUANT ) + (cAliasSD2)->D2_DESCZFR ) / (cAliasSD2)->D2_QUANT )
+		endif
+				
 	Else
 	
 		nRetorno := ( ( (cAliasSD2)->D2_TOTAL + nDesconto + (cAliasSD2)->D2_DESCZFR ) / (cAliasSD2)->D2_QUANT )
@@ -5650,8 +5713,130 @@ Else
 
 Endif
 
-Return( NoRound( nRetorno, 8 ) )           
+Return( NoRound( nRetorno, 8 ) )
 
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} LgxMsgNfs()
+Funcao que verifica os vinculos entre pedidos de venda e realiza o 
+tratamento do texto do C5_MENNOTA quando a origem do PV é igual a 'LOGIX'
+
+@author Caio Murakami       
+@since 12.12.2012
+@version 1.0 
+/*/
+//-----------------------------------------------------------------------
+Static Function LgxMsgNfs()
+Local aAreaSC5	:= SC5->( GetArea() )
+Local aAreaSC6 := SC6->( GetArea() )
+Local aArea		:= GetArea()  
+Local aPedVinc	:= {} 
+Local bSeek		:= {} 
+Local nX 		:= 0 
+Local cPedVinc	:= ""  
+Local cChave	:= ""  
+Local lAtuSC5	:= .F. 
+Local cMsgNfs  := SC5->C5_MENNOTA
+Local cNumPed 	:= SC5->C5_NUM 
+
+If SC6->( FieldPos("C6_PEDVINC") ) > 0 .And. !Empty(SC6->C6_PEDVINC)  
+	
+	cPedVinc := SC6->C6_PEDVINC 
+		
+   SC5->( dbSetOrder(1) ) 
+	SC6->( dbSetOrder(1) )      
+	
+	If SC5->( MsSeek( cChave := xFilial("SC5") + cPedVinc ) )	
+	   
+	   If SC6->( MsSeek( cChave )  )
+	   	//-- Percorre itens de pedido de venda relacionado o número do pedido com a NF , Série e Data
+	   	While SC6->( C6_FILIAL+C6_NUM ) == cChave .And.  !SC6->( Eof() ) 
+	   		
+	   		If !Empty(SC6->C6_NOTA)    		
+	   			If Ascan( aPedVinc, { | e | e[1]+e[2] == SC6->(C6_NOTA+C6_SERIE) } ) == 0
+		   			Aadd( aPedVinc, { SC6->C6_NOTA , SC6->C6_SERIE , SC6->C6_DATFAT  }  ) 
+		   		EndIf
+		   	EndIf
+		   		   		
+	   		SC6->( dbSkip() )  
+	   		
+	   	EndDo
+	   EndIf   
+	EndIf 
+	//-- Atualiza mensagem do pedido, @N ( Numero da NF ) ; @S ( Série da NF) ; @D ( Data emissao )
+	For nX := 1 To Len(aPedVinc)
+		
+		cMsgNfs := StrTran( cMsgNfs , '@N' , aPedVinc[nX,1] 		 	,, 1 )
+		cMsgNfs := StrTran( cMsgNfs , '@S' , aPedVinc[nX,2] 		 	,, 1 )
+		cMsgNfs := StrTran( cMsgNfs , '@D' , dToC(aPedVinc[nX,3])	,, 1 )
+		
+		If At('@N' , cMsgNfs ) == 0
+			lAtuSC5 := .T.	 
+			Exit
+		EndIf			
+			   
+	Next nX  
+	
+	//-- Atualiza C5_MENNOTA do pedido de venda posicionado inicialmente
+	If lAtuSC5 .And. SC5->( MsSeek( xFilial("SC5") + cNumPed )   ) 
+		If AllTrim(SC5->C5_MENNOTA) <> AllTrim(cMsgNfs)
+			RecLock( "SC5" , .F. )
+			SC5->C5_MENNOTA := cMsgNfs
+			MsUnLock()	
+		EndIf
+	EndIf
+  
+EndIf    
+ 
+RestArea( aAreaSC5 )
+RestArea( aAreaSC6 )
+RestArea( aArea    )
+
+Return NIL  
+
+//-----------------------------------------------------------------------
+/*/{Protheus.doc} RetNfpVinc()
+Funcao que verifica se existe nota de NFP vinculada a Nota , e retorna o 
+arrey com as informações da nota de NFP
+
+@author Fernando Bastos       
+@since 03.01.2013
+@version 1.0 
+/*/
+//-----------------------------------------------------------------------
+Static Function RetNfpVinc(cDocNFP,cSerieNFP,cForneceNFP,cLojaNFP)
+
+local nOrderSF1	:= 0
+local nRecnoSF1	:= 0	
+local nOrderSD1	:= 0	
+local nRecnoSD1	:= 0
+
+Local aNfViRuNFP:={}
+
+	// Realiza o backup do order e recno da SF1 e SD1
+	nOrderSF1	:= SF1->( indexOrd() )
+	nRecnoSF1	:= SF1->( recno() ) 
+	
+	nOrderSD1	:= SD1->( indexOrd() )
+	nRecnoSD1	:= SD1->( recno() )
+		
+	SD1->(dbSetOrder(1))
+		If SD1->(dbSeek(xFilial("SD1")+SD1->D1_NFORI+SD1->D1_SERIORI))//D1_NFORI,D1_SERIORI
+   				SF1->(dbSetOrder(1))
+   				If SF1->(dbSeek(xFilial("SF1")+SD1->D1_DOC+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA) .And. AllTrim(SF1->F1_ESPECIE)=="NFP")
+	   			aadd(aNfViRuNFP,{SD1->D1_EMISSAO,SD1->D1_SERIE,SD1->D1_DOC,SF1->F1_ESPECIE,;
+				IIF(SD1->D1_FORMUL=="S",SM0->M0_CGC,SA2->A2_CGC),; 
+				IIF(SD1->D1_FORMUL=="S",SM0->M0_ESTENT,SA2->A2_EST),; 
+				IIF(SD1->D1_FORMUL=="S",SM0->M0_INSC,SA2->A2_INSCR)})	
+			Endif
+		Endif
+   	// Restaura a ordem e recno da SF1 e SD1
+	SF1->( dbSetOrder( nOrderSF1 ) )
+	SF1->( dbGoTo( nRecnoSF1 ) )
+			        
+	SD1->( dbSetOrder( nOrderSD1 ) )
+	SD1->( dbGoTo( nRecnoSD1 ) )
+								
+Return (aNfViRuNFP) 
 
 /*/
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -5764,3 +5949,113 @@ For xM4 := 1 To Len(aForM4)
 	cTextM4AT := Alltrim(cTextM4AT) + Alltrim(cTextM4PX)
 Next xM4
 Return(cTextM4AT)
+    
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³NFESEFAZ_NEWºAutor  ³Valdemir Jose     º Data ³  18/04/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Carrega Informacao com base na TES e SD2                   º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function MsgM4(cTes, cFilM4)
+	Local cRET       := ""
+	Local _cMensF    := ""
+	Local _cGrupo    := ""
+	Local _cMensF    := ""
+	Local _cMensGrpF := ""
+	Local _cTpOper   := "" 
+	Local xFil_Mens  := ""        
+	Local aArea      := GetArea()
+                                  
+	dbSelectArea('SF4')
+	dbSetOrder(1)
+	if dbSeek(xFilial('SF4')+cTes)
+	
+		_cGrupo	   := Posicione("SB1",1,xFilial("SB1")+SD2->D2_COD	,"B1_GRUPO")
+		_cMensGrpD := Posicione("SBM",1,xFilial("SBM")+_cGrupo		,"BM_XMENSD")
+		_cMensGrpF := Posicione("SBM",1,xFilial("SBM")+_cGrupo		,"BM_XMENSF")
+		
+		If !Empty(_cMensGrpD+_cMensGrpF) // Caso uma das duas esteja preenchida
+			// Verifica se o tipo de entrada eh para dentro ou fora do estado (D=Dentro;F=Fora;A=Ambos)
+			_cTpOper := SF4->F4_XESTADO
+			
+			If _cTpOper=="F" // fora do estado
+				_cMensF := AllTrim(FORMULA(_cMensGrpF))
+				If !Empty(_cMensF) .And. !AllTrim(_cMensF) $ xFil_Mens
+					If !Empty(xFil_Mens)
+						xFil_Mens += " / "
+					EndIf
+					xFil_Mens += AllTrim(_cMensF)
+				EndIf
+			Else
+				_cMensD := AllTrim(FORMULA(_cMensGrpD))
+				If !Empty(_cMensD) .And. !AllTrim(_cMensD) $ xFil_Mens
+					If !Empty(xFil_Mens)
+						xFil_Mens += " / "
+					EndIf
+					xFil_Mens += AllTrim(_cMensD)
+				EndIf
+			Endif
+		Else
+			_cMensTes:= ""
+			If SF4->F4_XESTADO$"D"
+				IF !EMPTY(SF4->F4_FORMULA) .AND. (ALLTRIM(SA1->A1_EST)='EX')      // Valdemir Jose
+					_cMensTes	+= Formula(SF4->F4_FORMULA)
+				ELSE
+					If (!AllTrim(Formula("F01")) $ _cMensTes) .and. (!Empty(Formula("F01")))   // Empty - Acrescentado por Valdemir José 07/02/13
+						_cMensTes	+= Formula("F01")
+					Endif
+				ENDIF
+			Elseif SF4->F4_XESTADO$"F"
+				IF !EMPTY(SF4->F4_FORMULA) .AND. (ALLTRIM(SA1->A1_EST)='EX')      // Valdemir Jose
+					_cMensTes	+= Formula(SF4->F4_FORMULA)
+				ELSE
+					If (!AllTrim(Formula("F02")) $ _cMensTes)  .and. (!Empty(Formula("F02")))   // Empty - Acrescentado por Valdemir José 07/02/13
+						_cMensTes	+= Formula("F02")
+					Endif
+				ENDIF
+			Else
+				IF !EMPTY(SF4->F4_FORMULA) .AND. (ALLTRIM(SA1->A1_EST)='EX')      // Valdemir Jose
+					_cMensTes	+= Formula(SF4->F4_FORMULA)
+				ELSE
+					If (!AllTrim(SF4->(Formula(F4_FORMULA))) $ _cMensTes).and. (!Empty(SF4->F4_FORMULA))   // Empty - Acrescentado por Valdemir José 07/02/13
+						_cMensTes	+= Formula(SF4->F4_FORMULA)
+					Endif
+				ENDIF
+			Endif
+			
+			If !Empty(_cMensTes) .And. !AllTrim(_cMensTes) $ xFil_Mens
+				If !Empty(xFil_Mens)
+					xFil_Mens += " / "
+				EndIf
+				xFil_Mens += AllTrim(_cMensTes)
+			EndIf
+			
+			_cMensTes := Formula(SF4->F4_XFORMU2)
+			If !Empty(_cMensTes) .And. !AllTrim(_cMensTes) $ xFil_Mens
+				If !Empty(xFil_Mens)
+					xFil_Mens += " / "
+				EndIf
+				xFil_Mens += AllTrim(_cMensTes)
+			EndIf
+			
+		Endif                        
+		cRET := xFil_Mens
+	Endif
+
+	RestArea( aArea )
+	
+	
+Return cRET
+
+
