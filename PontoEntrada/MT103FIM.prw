@@ -26,6 +26,7 @@ Local nCnt      := 0
 
 
 	IF (!EMPTY(SD1->D1_PEDIDO)) .AND. (nConfirma = 1) .and. (nOpcao = 3 .or. nOpcao = 4)                                                           
+
 	   lTrue     := (SC7->C7_NUM = SD1->D1_PEDIDO)      // Verifica se as tabelas estão posicionadas no mesmo registro
 	   if !lTrue
 	      SC7->( dbSetOrder(1) )
