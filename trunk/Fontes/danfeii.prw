@@ -1229,7 +1229,9 @@ For nZ := 1 To nLenDet
 	AADD(aAux, AllTrim(TransForm(nValIPI,TM(nValIPI,TamSX3("D2_VALIPI")[1],TamSX3("D2_BASEIPI")[2]))))
 
 	cInfaProdMsg := IIF( Type("oNf:_infnfe:_det[nPrivate]:_Infadprod:TEXT") <> "U",oDet[nX]:_Infadprod:TEXT, "" )
-
+    if Empty(alltrim(cInfaProdMsg))
+    	cInfaProdMsg := iif(Type("oDet[nPrivate]:_Infadprod:TEXT") <> "U", oDet[nX]:_Infadprod:TEXT, "" )
+    endif
 	
 	aadd(aItens,{;
 		SubStr(oDet[nX]:_Prod:_cProd:TEXT,1,nMaxCod),;
@@ -3426,12 +3428,18 @@ Static Function RetTamCol(aCabec, aValores, oPrinter, oFontCabec, oFont)
 
 	nMedida := 893       // Acrescentado por Valdemir Jose 16/04      - 893
 	If nAux < nMedida    //603
-		//aTamCol[2] += nMedida - nAux
-	    aTamCol[2] := 185
-		aTamCol[3] := aTamCol[3] - 10
+		//aTamCol[2] += nMedida - nAux 
+		IF nAux < 650
+		    aTamCol[1] -= 10
+		    aTamCol[2] := 168
+			aTamCol[3] := aTamCol[3] - 10
+		else
+		    aTamCol[2] := 185
+			aTamCol[3] := aTamCol[3] - 10
+		endif
 	EndIf                       
 	If nAux > nMedida            
-	   IF aTamCol[2] > (nAux - nMedida)  //  TROCADO POR VALDEMIR 02/04/2013          
+	   IF aTamCol[2] > (nAux - nMedida)  //  TROCADO POR VALDEMAG-VALDEMIRIR 02/04/2013          
 		aTamCol[2] -= nAux - nMedida
 		IF aTamCol[2] < 185
 		    aTamCol[2] := 185
@@ -3445,7 +3453,7 @@ Static Function RetTamCol(aCabec, aValores, oPrinter, oFontCabec, oFont)
 			aTamCol[3] := aTamCol[3] - 10
 	   	ELSE
 	   	   	//aTamCol[2] := ((nAux - nMedida) - aTamCol[2])-4  //-65
-		   	aTamCol[2] := 185
+		   	aTamCol[2] := 165                    // 185
 			aTamCol[1] := aTamCol[1] - 20        //
 			aTamCol[3] := aTamCol[3] - 10
 	   	Endif
