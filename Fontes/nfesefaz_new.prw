@@ -1,6 +1,8 @@
 #INCLUDE "PROTHEUS.CH"
+#INCLUDE "RWMAKE.CH"
 #INCLUDE "COLORS.CH"
 #INCLUDE "TBICONN.CH"  
+#DEFINE ENTER CHR(13) + CHR(10) 
 
 /*/
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -89,6 +91,7 @@ Local aTotal    	:= {0,0}
 Local aNatOper      := {} 		// CCAB - Incluido por Rodrigo em 16/02/2011
 Local aIPICST		:= {}
 Local aOrigExt      := {}     	// Adicionado por Valdemir JOse 18/01/2013
+Local aMsgFCI       := {}       // Valdemir 24/04/2013
 
 Local cString    	:= ""
 Local cNatOper   	:= ""
@@ -1445,7 +1448,18 @@ If cTipo == "1"
 				    aOrigExt[nPosOrigExt][1] := SB1->B1_DESC
 				    aOrigExt[nPosOrigExt][2] += (cAliasSD2)->D2_TOTAL
 				endif                                     
-				
+                
+				// Valdemir Jose 24/04/2013
+				aMsgFCI := {}
+				if Substr(SD2->D2_CF,1,1)='6' .AND. (SB1->B1_INDUSTR='S')   // Verifica se está dentro da condição		    
+				    nPosFCI := aScan(aMsgFCI,{|x| ALLTRIM(X[1])=ALLTRIM(SB1->B1_DESC)})	
+				    if nPosFCI = 0
+				    	aAdd(aMsgFCI,{'',''} )
+				    	nPosFCI := Len(aMsgFCI)
+				    Endif  
+				    aMsgFCI[nPosFCI][1] := SB1->B1_DESC
+				    aMsgFCI[nPosFCI][2] := U_FiltraFCI(SD2->D2_COD)
+				Endif								
    				dbSelectArea("SB5")
 				dbSetOrder(1)
 				If MsSeek(xFilial("SB5")+(cAliasSD2)->D2_COD)
@@ -2339,17 +2353,36 @@ If cTipo == "1"
 				cMensCli     += MsgM4(cD2Tes, xFilial("SF2") )  // VALDEMIR JOSE 18/04/2013
             Endif   
             
-		    // Adicionado por Valdemir Jose 18/01/2013
+		    // Adicionado por Valdemir Jose 18/01/2013 
+		    lFCI := .F.
 		    if Len(aOrigExt) > 0
                cMsgOriExt  := ' - RESOL.SEN.FED.13/12 VLR DA PARC.IMPORT.: '
                For nOriExt := 1 To Len(aOrigExt)
+               		nPosFCI := aScan(aMsgFCI,{|x| ALLTRIM(X[1])=alltrim(aOrigExt[nOriExt][1])})	
+               		if !lFCI 
+               		   lFCI := (nPosFCI > 0)
+               		endif
                    cMsgOriExt  += ' / '
                    cMsgOriExt  += alltrim(aOrigExt[nOriExt][1])
-                   cMsgOriExt  += ' R$ '+alltrim(Transform(aOrigExt[nOriExt][2],"@E 999,999,999.99"))
+                   cMsgOriExt  += ' R$ '+alltrim(Transform(aOrigExt[nOriExt][2],"@E 999,999,999.99"))+if(nPosFCI > 0,' Numero FCI: '+aMsgFCI[nPosFCI][2],'')  // Valdemir 24/04
                Next
-               cMensCli += cMsgOriExt
-		    Endif        
-		    
+               if !Empty(Alltrim(cMsgOriExt))
+               		cMensCli += cMsgOriExt        
+               Endif
+		    Endif          
+
+		    // Adicionado por Valdemir 24/04/2013
+		    if !lFCI 
+               cMsgOriExt  := ' '
+               For nOriExt := 1 To Len(aMsgFCI)
+                   cMsgOriExt  += ' / '
+                   cMsgOriExt  += 'Produto: '+alltrim(aMsgFCI[nOriExt][1])
+                   cMsgOriExt  += ' FCI Nº '+alltrim(aMsgFCI[nOriExt][2])+' '
+               Next 
+               if !Empty(Alltrim(cMsgOriExt))
+               		cMensCli += cMsgOriExt        
+               Endif
+		    Endif
 		    // Adicionado por Valdemir Jose 12/04/2013
 			if !Empty(SA1->A1_XDANFE1)
 				cMensCli  += ' - '+alltrim(SA1->A1_XDANFE1)
@@ -6059,3 +6092,47 @@ Static Function MsgM4(cTes, cFilM4)
 Return cRET
 
 
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³M460MARK  ºAutor  ³Valdemir Jose       º Data ³  24/04/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Filtra informaçoes do numero da FCI, conforme regra passadaº±±
+±±º          ³ por Paulo                                                  º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function FiltraFCI(pPRODUTO)
+	Local cRET := ""
+	Local cQry := ""
+	Local aArea:= GetArea()
+	
+	cQry += "SELECT * FROM "+RETSQLNAME('SZI')+" SZI "+ENTER
+	cQry += " WHERE SZI.D_E_L_E_T_ = ' '"+ENTER
+	cQry += " AND   SZI.ZI_XPRODUT = '"+pPRODUTO+"'      "+ENTER
+	cQry += " AND   SZI.ZI_FILIAL =  '"+XFILIAL('SZI')+"'"+ENTER
+	cQry += "ORDER BY ZI_XORDEM   "+ENTER
+	
+	IF SELECT('TMPFCI') > 0
+		TMPFCI->( dbCloseArea() )
+	Endif
+	
+	Memowrite("M460MARK-FCI.SQL",cQry)
+	
+	DbUseArea(.T., "TopConn", TCGenQry( NIL, NIL, cQry), "TMPFCI", .F., .F.)
+    dbSelectArea('TMPFCI')
+    TMPFCI->(dbGotop() ) 
+    While !Eof()
+   		cRET := TMPFCI->ZI_XNUMFCI
+   		dbSkip()
+   	EndDo
+   	
+   	TMPFCI->( dbCloseArea() )
+	
+	RestArea( aArea )
+	
+Return cRET
