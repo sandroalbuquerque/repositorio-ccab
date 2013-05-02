@@ -3439,7 +3439,7 @@ Static Function RetTamCol(aCabec, aValores, oPrinter, oFontCabec, oFont)
 		endif
 	EndIf                       
 	If nAux > nMedida            
-	   IF aTamCol[2] > (nAux - nMedida)  //  TROCADO POR VALDEMAG-VALDEMIRIR 02/04/2013          
+	   IF aTamCol[2] > (nAux - nMedida)  //  TROCADO POR VALDEMIR 02/04/2013          
 		aTamCol[2] -= nAux - nMedida
 		IF aTamCol[2] < 185
 		    aTamCol[2] := 185
