@@ -1438,7 +1438,7 @@ If cTipo == "1"
 				dbSetOrder(1)
 				MsSeek(xFilial("SB1")+(cAliasSD2)->D2_COD)
 				
-				// Adicionado por Valdemir Jose - 18/01/2013 as 14:33
+				// Adicionado por Valdemir Jose - 18/01/2013 as 14:33  - REGRA ORIGEM
 				if (SB1->B1_ORIGEM $ cOriExt)
 				    nPosOrigExt := aScan(aOrigExt,{|x| ALLTRIM(X[1])=ALLTRIM(SB1->B1_DESC)})
 				    if nPosOrigExt = 0
@@ -1449,16 +1449,19 @@ If cTipo == "1"
 				    aOrigExt[nPosOrigExt][2] += (cAliasSD2)->D2_TOTAL
 				endif                                     
                 
-				// Valdemir Jose 24/04/2013
+				// Valdemir Jose 24/04/2013  -  REGRA CFOP / INDUSTRIAL
 				aMsgFCI := {}
 				if Substr(SD2->D2_CF,1,1)='6' .AND. (SB1->B1_INDUSTR='S')   // Verifica se está dentro da condição		    
 				    nPosFCI := aScan(aMsgFCI,{|x| ALLTRIM(X[1])=ALLTRIM(SB1->B1_DESC)})	
 				    if nPosFCI = 0
-				    	aAdd(aMsgFCI,{'',''} )
+				    	aAdd(aMsgFCI,{'','','',0} )
 				    	nPosFCI := Len(aMsgFCI)
-				    Endif  
+				    Endif                  
+				    cRetFiltra := U_FiltraFCI(SD2->D2_COD)
 				    aMsgFCI[nPosFCI][1] := SB1->B1_DESC
-				    aMsgFCI[nPosFCI][2] := U_FiltraFCI(SD2->D2_COD)
+				    aMsgFCI[nPosFCI][2] := Substr(cRetFiltra,1,at('/',cRetFiltra)-1)
+				    aMsgFCI[nPosFCI][3] := Substr(cRetFiltra,at('/',cRetFiltra)+1,Len(cRetFiltra))   // Adicionado por Valdemir 30/04/2013 solicitação Paulo
+				    aMsgFCI[nPosFCI][4] += (cAliasSD2)->D2_TOTAL
 				Endif								
    				dbSelectArea("SB5")
 				dbSetOrder(1)
@@ -1486,7 +1489,7 @@ If cTipo == "1"
 				           	//--Obtem informacoes do item do pedido de venda e do produto
 				           	ElseIf cInfAdPr == "3" 
 				           	   cInfAdPed := SubStr(AllTrim(cInfAdPed),1,250)
-				           	   cInfAdic  := SubStr(AllTrim(cInfAdic),1,249)
+				           	   cInfAdic  := SubStr(AllTrim(cInfAdic) ,1,249)
 				           	   cInfAdic  += " " + cInfAdPed
 				           	EndIf 
 				      	EndIf
@@ -2356,15 +2359,18 @@ If cTipo == "1"
 		    // Adicionado por Valdemir Jose 18/01/2013 
 		    lFCI := .F.
 		    if Len(aOrigExt) > 0
-               cMsgOriExt  := ' - RESOL.SEN.FED.13/12 VLR DA PARC.IMPORT.: '
+               cMsgOriExt  := ' - RESOL.SEN.FED.13/12 '
                For nOriExt := 1 To Len(aOrigExt)
                		nPosFCI := aScan(aMsgFCI,{|x| ALLTRIM(X[1])=alltrim(aOrigExt[nOriExt][1])})	
                		if !lFCI 
                		   lFCI := (nPosFCI > 0)
-               		endif
-                   cMsgOriExt  += ' / '
+               		endif                                                                            
+                   IF nOriExt > 1
+                   	cMsgOriExt  += ' / '
+                   ENDIF
                    cMsgOriExt  += alltrim(aOrigExt[nOriExt][1])
-                   cMsgOriExt  += ' R$ '+alltrim(Transform(aOrigExt[nOriExt][2],"@E 999,999,999.99"))+if(nPosFCI > 0,' Numero FCI: '+aMsgFCI[nPosFCI][2],'')  // Valdemir 24/04
+                   cMsgOriExt  += ' VLR.PARC.IMP.: R$ '+alltrim(Transform(aOrigExt[nOriExt][2],"@E 999,999,999.99"))
+                   cMsgOriExt  += if(nPosFCI > 0,' Nro. FCI: '+aMsgFCI[nPosFCI][2]+'Nro. CI: '+aMsgFCI[nPosFCI][3]+'% VLR IMPORT.'+alltrim(Transform(aOrigExt[nOriExt][2],"@E 999,999,999.99")) ,'')  // Valdemir 24/04
                Next
                if !Empty(Alltrim(cMsgOriExt))
                		cMensCli += cMsgOriExt        
@@ -2373,16 +2379,23 @@ If cTipo == "1"
 
 		    // Adicionado por Valdemir 24/04/2013
 		    if !lFCI 
-               cMsgOriExt  := ' '
-               For nOriExt := 1 To Len(aMsgFCI)
-                   cMsgOriExt  += ' / '
-                   cMsgOriExt  += 'Produto: '+alltrim(aMsgFCI[nOriExt][1])
-                   cMsgOriExt  += ' FCI Nº '+alltrim(aMsgFCI[nOriExt][2])+' '
-               Next 
-               if !Empty(Alltrim(cMsgOriExt))
-               		cMensCli += cMsgOriExt        
+               if Len(aMsgFCI) > 0
+	               cMsgOriExt  := ' - RESOL.SEN.FED.Nº 13/12, ' 
+	               For nOriExt := 1 To Len(aMsgFCI)
+	                   IF nOriExt > 1
+	                   	cMsgOriExt  += ' / '
+	                   ENDIF
+	                   cMsgOriExt  += alltrim(aMsgFCI[nOriExt][1])
+	                   cMsgOriExt  += ' FCI Nº '+alltrim(aMsgFCI[nOriExt][2])+' '
+	                   cMsgOriExt  += ' Nº CI  '+alltrim(aMsgFCI[nOriExt][3])+'% '
+	                   cMsgOriExt  += ' VLR.PARC.IMP.: R$ '+alltrim(Transform(aMsgFCI[nOriExt][4],'@E 999,999,999.99'))+' '
+	               Next 
+	               if !Empty(Alltrim(cMsgOriExt))
+	               		cMensCli += cMsgOriExt        
+	               Endif
                Endif
-		    Endif
+		    Endif                                                  
+		    
 		    // Adicionado por Valdemir Jose 12/04/2013
 			if !Empty(SA1->A1_XDANFE1)
 				cMensCli  += ' - '+alltrim(SA1->A1_XDANFE1)
@@ -6127,7 +6140,7 @@ User Function FiltraFCI(pPRODUTO)
     dbSelectArea('TMPFCI')
     TMPFCI->(dbGotop() ) 
     While !Eof()
-   		cRET := TMPFCI->ZI_XNUMFCI
+   		cRET := ALLTRIM(TMPFCI->ZI_XNUMFCI)+'/ 100' //+ALLTRIM(STR(TMPFCI->ZI_XCI))
    		dbSkip()
    	EndDo
    	
