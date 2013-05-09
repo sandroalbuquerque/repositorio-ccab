@@ -514,11 +514,18 @@ Static Function fGravaGD(oObjct,cAlias,aCposAdd,nTpOper,nOrdSeek,cCndSeek,cCpoIt
 Local x := 1
 Local y := 1
 Local k := 1
+Local nReg := 1
 Private cCodItem := StrZero(1,Len(CriaVar(cCpoItm)))
 
 DbSelectArea(cAlias)
-If  nTpOper == 3		// VALDEMIR JOSE 27/03/2013
+If  nTpOper == 3		// VALDEMIR JOSE 27/03/2013 - Fará a validação antes de efetuar a gravação
     M->Z2_NUM := ValidSXENum()
+	DbSelectArea(cAlias)
+	DbSetOrder(nOrdSeek)
+	While dbSeek( &(cCndSeek) )
+	   M->Z2_NUM := StrZero(Val(M->Z2_NUM)+nReg, 6)
+	   nReg++
+	enddo
 Endif
 
 For x:=1 To Len(oObjct:aCols)
@@ -4169,6 +4176,7 @@ For x:=1 To Len(oGdTrt:aCols)
 			{"C5_FILIAL"	,cTratarFil																,Nil},;
 			{"C5_NUM"		,cNumeroDoc																,Nil},;
 			{"C5_MOEDA"		,SZ2->Z2_MOEDA															,Nil},;
+			{"C5_XDMOEDA"	,SZ2->Z2_XDMOEDA														,Nil},;
 			{"C5_XDESPER"	,SZ2->Z2_XDESPER														,Nil},;
 			{"C5_XTPPED"	,Alltrim(Str(mv_par46))													,Nil},;
 			{"C5_XTPFIN"	,SZ2->Z2_XTPFIN     													,Nil},;						

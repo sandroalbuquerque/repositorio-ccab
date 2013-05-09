@@ -1661,7 +1661,7 @@ nVPage -= VBOX
 //읕컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴켸
 
 oDanfe:Box(000,000,010,501)
-oDanfe:Say(006, 002, "RECEBEMOS DE "+NoChar(oEmitente:_xNome:Text,lConverte)+" OS PRODUTOS CONSTANTES DA NOTA FISCAL INDICADA AO LADO", oFont07:oFont)
+oDanfe:Say(006, 002, "RECEBEMOS DE "+NoChar(oEmitente:_xNome:Text,lConverte)+" "+oEmitente:_EnderEmit:_xMun:Text+" OS PRODUTOS CONSTANTES DA NOTA FISCAL INDICADA AO LADO", oFont07:oFont)
 oDanfe:Box(009,000,037,101)
 oDanfe:Say(017, 002, "DATA DE RECEBIMENTO", oFont07N:oFont)
 oDanfe:Box(009,100,037,500)
