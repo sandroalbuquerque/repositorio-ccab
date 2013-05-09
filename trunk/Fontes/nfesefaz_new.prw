@@ -155,7 +155,7 @@ Local cMVCODREG		:= SuperGetMV("MV_CODREG", ," ")
 Local cValLiqB		:= SuperGetMv("MV_BX10925", ,"2")
 Local cDescServ 	:= SuperGetMV("MV_NFESERV", ,"2")
 Local cCfop			:= SuperGetMV("MV_SIMPREM", ," ")           // Parametro do cadastro das CFOPs para Simples Remessa e cliente optante pelo Simples Nacional
-Local cOriExt       := SuperGetMV('ES_ORIEXT',.F.,'')    		// Valdemir Jose 18/01/2013
+Local cOriExt       := SuperGetMV('ES_ORIEXT',.F.,'')    		// Valdemir Jose 18/01/2013 1,2,3,4,5,6
 Local cMsgOriExt    := ''                                       // Valdemir Jose 18/01/2013
 Local cCliLoja		:= "" 
 Local cCliNota		:= ""
@@ -1211,7 +1211,8 @@ If cTipo == "1"
 
 			#ELSE
 				MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA)
-			#ENDIF
+			#ENDIF 
+			nTOTAL := 0
 			While !Eof() .And. xFilial("SD2") == (cAliasSD2)->D2_FILIAL .And.;
 				SF2->F2_SERIE == (cAliasSD2)->D2_SERIE .And.;
 				SF2->F2_DOC == (cAliasSD2)->D2_DOC
@@ -1439,7 +1440,7 @@ If cTipo == "1"
 				MsSeek(xFilial("SB1")+(cAliasSD2)->D2_COD)
 				
 				// Adicionado por Valdemir Jose - 18/01/2013 as 14:33  - REGRA ORIGEM
-				if (SB1->B1_ORIGEM $ cOriExt)
+				if (SB1->B1_ORIGEM $ cOriExt) .AND. (SB1->B1_INDUSTR='N') // Industrializado igual a "N", adicionado 08/05/2013
 				    nPosOrigExt := aScan(aOrigExt,{|x| ALLTRIM(X[1])=ALLTRIM(SB1->B1_DESC)})
 				    if nPosOrigExt = 0
 				    	aAdd(aOrigExt,{'',0} )
@@ -1458,10 +1459,17 @@ If cTipo == "1"
 				    	nPosFCI := Len(aMsgFCI)
 				    Endif                  
 				    cRetFiltra := U_FiltraFCI(SD2->D2_COD)
+				    nValCus    := 0                                                      
 				    aMsgFCI[nPosFCI][1] := SB1->B1_DESC
-				    aMsgFCI[nPosFCI][2] := Substr(cRetFiltra,1,at('/',cRetFiltra)-1)
-				    aMsgFCI[nPosFCI][3] := Substr(cRetFiltra,at('/',cRetFiltra)+1,Len(cRetFiltra))   // Adicionado por Valdemir 30/04/2013 solicita็ใo Paulo
-				    aMsgFCI[nPosFCI][4] += (cAliasSD2)->D2_TOTAL
+				    aMsgFCI[nPosFCI][2] := alltrim(TrataBuffer(@cRetFiltra))  
+				    aMsgFCI[nPosFCI][3] := alltrim(TrataBuffer(@cRetFiltra))       // Pega valor CI
+				    nValCus             := Val(alltrim(TrataBuffer(@cRetFiltra)))
+//				    aMsgFCI[nPosFCI][3] := Substr(aMsgFCI[nPosFCI][3],1,at('/',aMsgFCI[nPosFCI][3])-1)   // Pega Valor Custo Unitario e retira
+				    if Val(aMsgFCI[nPosFCI][3]) < 100
+				    	aMsgFCI[nPosFCI][4] += (nValCus *  (cAliasSD2)->D2_QUANT)   // Pega valor do custo unitario
+				    else
+				    	aMsgFCI[nPosFCI][4] += (cAliasSD2)->D2_PRCVEN *  (cAliasSD2)->D2_QUANT
+				    endif
 				Endif								
    				dbSelectArea("SB5")
 				dbSetOrder(1)
@@ -2370,7 +2378,7 @@ If cTipo == "1"
                    ENDIF
                    cMsgOriExt  += alltrim(aOrigExt[nOriExt][1])
                    cMsgOriExt  += ' VLR.PARC.IMP.: R$ '+alltrim(Transform(aOrigExt[nOriExt][2],"@E 999,999,999.99"))
-                   cMsgOriExt  += if(nPosFCI > 0,' Nro. FCI: '+aMsgFCI[nPosFCI][2]+'Nro. CI: '+aMsgFCI[nPosFCI][3]+'% VLR IMPORT.'+alltrim(Transform(aOrigExt[nOriExt][2],"@E 999,999,999.99")) ,'')  // Valdemir 24/04
+                   //cMsgOriExt  += if(nPosFCI > 0,' Nro. FCI: '+aMsgFCI[nPosFCI][2]+'Nro. CI: '+aMsgFCI[nPosFCI][3]+'% VLR IMPORT.'+alltrim(Transform(aOrigExt[nOriExt][2],"@E 999,999,999.99")) ,'')  // Valdemir 24/04 /    Removido Valdemir 08/05/13 ( removido por solicita็ใo das regras contabeis)
                Next
                if !Empty(Alltrim(cMsgOriExt))
                		cMensCli += cMsgOriExt        
@@ -2387,7 +2395,7 @@ If cTipo == "1"
 	                   ENDIF
 	                   cMsgOriExt  += alltrim(aMsgFCI[nOriExt][1])
 	                   cMsgOriExt  += ' FCI Nบ '+alltrim(aMsgFCI[nOriExt][2])+' '
-	                   cMsgOriExt  += ' Nบ CI  '+alltrim(aMsgFCI[nOriExt][3])+'% '
+	                   cMsgOriExt  += ' CI  '+alltrim(aMsgFCI[nOriExt][3])+'% '
 	                   cMsgOriExt  += ' VLR.PARC.IMP.: R$ '+alltrim(Transform(aMsgFCI[nOriExt][4],'@E 999,999,999.99'))+' '
 	               Next 
 	               if !Empty(Alltrim(cMsgOriExt))
@@ -6139,8 +6147,8 @@ User Function FiltraFCI(pPRODUTO)
 	DbUseArea(.T., "TopConn", TCGenQry( NIL, NIL, cQry), "TMPFCI", .F., .F.)
     dbSelectArea('TMPFCI')
     TMPFCI->(dbGotop() ) 
-    While !Eof()
-   		cRET := ALLTRIM(TMPFCI->ZI_XNUMFCI)+'/ 100' //+ALLTRIM(STR(TMPFCI->ZI_XCI))
+    While !Eof()        
+   		cRET := ALLTRIM(TMPFCI->ZI_XNUMFCI)+'|'+ALLTRIM(STR(TMPFCI->ZI_XCI))+'|'+ALLTRIM(STR(TMPFCI->ZI_XCUSTUN)) 
    		dbSkip()
    	EndDo
    	
@@ -6149,3 +6157,32 @@ User Function FiltraFCI(pPRODUTO)
 	RestArea( aArea )
 	
 Return cRET
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณTrataBuffer  บAutor  ณValdemir Jos้    บ Data ณ  09/05/13   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Rotina que farแ a quebra das informa็๕es-"|"               บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบRetorno   ณ Conteudo                                                   บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿*/
+Static Function TrataBuffer(cTmpBuffer)
+Local cRetorno := ""
+Local i        := 0
+
+For i := 1 To Len(cTmpBuffer)
+ if SUBSTR(cTmpBuffer,i,1) == "|"
+  cRetorno   := SUBSTR(cTmpBuffer,1,i-1)
+  cTmpBuffer := SUBSTR(cTmpBuffer,i+1,500)
+  Exit
+ endif  
+ cRetorno  := SUBSTR(cTmpBuffer,1,Len(cTmpBuffer))
+Next
+
+Return cRetorno
