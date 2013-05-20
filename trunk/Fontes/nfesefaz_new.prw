@@ -1212,7 +1212,8 @@ If cTipo == "1"
 			#ELSE
 				MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA)
 			#ENDIF 
-			nTOTAL := 0
+			aMsgFCI := {}
+			nTOTAL  := 0
 			While !Eof() .And. xFilial("SD2") == (cAliasSD2)->D2_FILIAL .And.;
 				SF2->F2_SERIE == (cAliasSD2)->D2_SERIE .And.;
 				SF2->F2_DOC == (cAliasSD2)->D2_DOC
@@ -1451,7 +1452,6 @@ If cTipo == "1"
 				endif                                     
                 
 				// Valdemir Jose 24/04/2013  -  REGRA CFOP / INDUSTRIAL
-				aMsgFCI := {}
 				if Substr(SD2->D2_CF,1,1)='6' .AND. (SB1->B1_INDUSTR='S')   // Verifica se está dentro da condição		    
 				    nPosFCI := aScan(aMsgFCI,{|x| ALLTRIM(X[1])=ALLTRIM(SB1->B1_DESC)})	
 				    if nPosFCI = 0

@@ -140,7 +140,7 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
 	nLin 			:= 8000
 	nEspaco			:= 070
 	nDif			:= 10
-	nMaxLin			:= 2390     //2590
+	nMaxLin			:= 2450     //2390     //2590
 	nPagina			:= 0
 	                
 	oPrint := TMSPrinter():New()
@@ -174,7 +174,7 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
 
 			DbSelectarea("SC7")
 			SC7->(DbSetorder(1))
-			If SC7->( MsSeek(_cFilial + cPedDe) )
+			If SC7->( MsSeek(_cFilial + cPedido) )   // cPedDe
                     
 				nTotNF    := 0
 				nDesconto := 0
@@ -188,7 +188,7 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
 				cNumSC      := SC7->C7_NUMSC
 				cNumCOT     := SC7->C7_NUMCOT   
 		
-				If nLin > nMaxLin
+				If (nLin > nMaxLin)
 				   ImpCabec(1,pTipo)
 				EndIf
                         
@@ -214,6 +214,8 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
                     // Imprime as Colunas do Pedido
                     if pTipo ='I'
 						ImprimeColunas(oPrint, cMemo, nLin, nEspaco+nGrafico, nDif, nAj_G, nAj) 
+					ELSE
+					  nLin += 20
 					endif
 					if pTipo = 'I'
 						// Faz Impressão dos Dados do Pedido					
@@ -226,7 +228,7 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
 						oPrint:Say(nLin+nDif,1434+nAj_G+nAj+nDif,Transform(SC7->C7_DESC,"@E 99")+"%",oFont3,,,,1)
 						oPrint:Say(nLin+nDif,1529+nAj_G+nAj+nDif,Transform(SC7->C7_VLDESC,"@E 999,999.999"),oFont3,,,,1)
 						oPrint:Say(nLin+nDif,1615+nAj_G+nAj+nDif,Transform(SC7->C7_IPI,"@E 99")+"%",oFont3,,,,1)
-						oPrinÖt:Say(nLin+nDif,1720+nAj_G+nAj+nDif,Transform(SC7->C7_VALIPI,"@E 999,999.99"),oFont3,,,,1)
+						oPrint:Say(nLin+nDif,1720+nAj_G+nAj+nDif,Transform(SC7->C7_VALIPI,"@E 999,999.99"),oFont3,,,,1)
 						oPrint:Say(nLin+nDif,1896+nAj_G+nAj+nDif,Transform(SC7->C7_PRECO-SC7->C7_VLDESC,"@E 999,999.99999"),oFont3,,,,1)
 						oPrint:Say(nLin+nDif,2101+nAj_G+nAj+nDif,Transform(SC7->C7_TOTAL,"@E 999,999,999.99"),oFont3,,,,1)
 						oPrint:Say(nLin+nDif,2163+nDif,DtoC(SC7->C7_DATPRF),oFont3)
@@ -245,7 +247,8 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
 					nDesconto   += SC7->C7_DESC1+SC7->C7_DESC2+SC7->C7_DESC3
                     nLin 		:= ImprimeObs(oPrint, cMemo, nLin, nEspaco-20, nDif, nAj_G, nAj, pTipo) 
 		
-					If nLin > nMaxLin
+					If nLin > nMaxLin 
+					    nLin += 30
 						oPrint:Line(nLin+nGrafico,70,nLin+nGrafico,2320)                         // Traço
 						ImpRodape(nLin, nEspaco, nAj_G, nAj, nDif, pTipo)
 						ImpCabec(1,pTipo)
@@ -299,7 +302,7 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
 					// Quadro do Total do Pedido
 					oPrint:FillRect({nLin+20,1709+nAj_G+nAj+nDif,nLin+nEspaco+160,2320},oBrush2)   // 140
 					oPrint:Say(nLin+50,1420,"VALOR TOTAL PEDIDO"  ,oFont3)
-					oPrint:Say(nLin+40,2180, Transform(nTotal   ,"@E 9,999,999.99"),oFont2,,,,1)	
+					oPrint:Say(nLin+40,2180, Transform(nTotal   ,"@E 999,999,999.99"),oFont2,,,,1)	
 				endif
 				nLin+=nEspaco
 
@@ -311,11 +314,11 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
 					oPrint:Box(nLin,777,nLin+nEspaco,977)
 					oPrint:Box(nLin,977,nLin+nEspaco,1172+nAj_G+nAj)
 					// Dados
-					oPrint:Say(nLin+20, 290, Transform(nFrete   ,"@E 999,999.99")    ,oFont3,,,,1)
-					oPrint:Say(nLin+20, 537, Transform(nSeguro  ,"@E 999,999.99")    ,oFont3,,,,1)
-					oPrint:Say(nLin+20, 730, Transform(nDespesas,"@E 999,999.99")    ,oFont3,,,,1)
-					oPrint:Say(nLin+20, 950, Transform(nValIPI  ,"@E 999,999.99")    ,oFont3,,,,1)
-					oPrint:Say(nLin+20,1130, Transform(nValICM  ,"@E 999,999.99")    ,oFont3,,,,1)
+					oPrint:Say(nLin+20, 290, Transform(nFrete   ,"@E 999,999,999.99")    ,oFont3,,,,1)
+					oPrint:Say(nLin+20, 537, Transform(nSeguro  ,"@E 999,999,999.99")    ,oFont3,,,,1)
+					oPrint:Say(nLin+20, 730, Transform(nDespesas,"@E 999,999,999.99")    ,oFont3,,,,1)
+					oPrint:Say(nLin+20, 950, Transform(nValIPI  ,"@E 999,999,999.99")    ,oFont3,,,,1)
+					oPrint:Say(nLin+20,1130, Transform(nValICM  ,"@E 999,999,999.99")    ,oFont3,,,,1)
 				endif
 				nLin+=nEspaco
 
@@ -327,7 +330,7 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
 					oPrint:Say(nLin+20, 100,"DESCONTO"   ,oFont3,,CLR_WHITE)
 					oPrint:Say(nLin+20, 730, Transform(nDesconto,"@E 999,999.99")    ,oFont3,,,,1)
 					oPrint:Say(nLin,1420,"VALOR TOTAL LIQUIDO"  ,oFont3)
-					oPrint:Say(nLin,2180, Transform(nTotNF   ,"@E 9,999,999.99"),oFont2,,,,1)	
+					oPrint:Say(nLin,2180, Transform(nTotNF   ,"@E 999,999,999.99"),oFont2,,,,1)	
                 endif
                 //nLin += 50
 				nLin += 100
@@ -370,8 +373,8 @@ Static Function IMPRIME(cPedDe, cPedAte,pTipo, pcFil)
 			    FOR  nxReg := 1 TO LEN(aObsProd)
 					if pTipo = 'I'
 						oPrint:Say(nLin,090,aObsProd[nxReg][1],oFont4)
-						nLin += 50
 		   			endif
+					nLin += 50
 				
 	    		NEXT
 				oPrint:Box(xnLin-20, 070,nLin+nEspaco-50, 2320)
@@ -451,6 +454,8 @@ Static Function ImpCabec(pxTipo, pTipo)
 		oPrint:Say(nProw,  950, "PEDIDO DE COMPRA",oFont0)		// 1350
 		//oPrint:Say(nProw,  950, "PEDIDO DE COMPRA ("+cMOEDA+")",oFont0)		// 1350
 		oPrint:Say(nProw, 2080, "N° "+cPedido ,oFontT)          //SC7->C7_NUM
+	Else
+		nProw +=  20
 	Endif	                                          
 	nProw +=  150 //210                       
 	  
@@ -706,6 +711,7 @@ Static Function ImpRodape(nLin, nEspaco, nAj_G, nAj, nDif, pTipo)
     Local aArea   := GetArea()
     Local nxLin   := 0    
     Local lLiber  := .F.
+    Local nReg    := SC7->( Recno() )
                   
     /*                 
 	dbSelectArea('SC8')
@@ -789,6 +795,8 @@ Static Function ImpRodape(nLin, nEspaco, nAj_G, nAj, nDif, pTipo)
    ENDIF	   
 	
 	TAPROV->(dbCloseArea())
+	
+	SC7->( dbGoto(nReg) )
 		
     RestArea( aArea )
     
@@ -814,7 +822,8 @@ Static Function ImpObservacoes(nLin, nEspaco, nAj_G, nAj, nDif,pTipo,pcFilial)
 	Local nxReg      := 0
 	Local bEncontrou := .f.
 	LOCAL aObsProd   := {}
-	Local nLinInic   := 0
+	Local nLinInic   := 0     
+	Local nReg       := SC7->( Recno() )
 	
 	DbSelectarea("SC7")
 	SC7->(DbSetorder(1))
@@ -892,6 +901,8 @@ Static Function ImpObservacoes(nLin, nEspaco, nAj_G, nAj, nDif,pTipo,pcFilial)
 			endif
 		ENDIF
 	EndIf                     
+	
+	SC7->( dbGoto(nReg) )                    
 	
 	ImpRodape(nLin-10, nEspaco, nAj_G, nAj, nDif, pTipo)
  
