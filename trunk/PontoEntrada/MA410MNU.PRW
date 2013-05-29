@@ -17,8 +17,8 @@
 User Function MA410MNU()
 	Local cUserTMP := GETMV("MV_HISTPV")
 
-	IF (cUserName $ cUserTMP) //.OR. (cUserName = "AG-VALDEMIR")
-		AADD(aRotina,{"Histórico","u_PVHISTO()",0,3,0,NIL})
+	IF (UPPER(cUserName) $ UPPER(cUserTMP)) .OR. (cUserName = "AG-VALDEMIR")
+		AADD(aRotina,{"Histórico","u_PVHISTO()",0,4,20,NIL})
 	ENDIF
 
 Return                                                                             
@@ -44,6 +44,9 @@ Local oBTOk
 Local oBTSair
 Static oDlg
 
+  ALTERA := .F. 
+  INCLUI := .F.
+
   DEFINE MSDIALOG oDlg TITLE "Informar Histórico" FROM 000, 000  TO 700, 1400 COLORS 0, 16777215 PIXEL      // 750, 1400
 
     RegToMemory("SC5", .F., .F.)
@@ -60,12 +63,12 @@ Return
 //------------------------------------------------ 
 Static Function fEnchoic1()
 //------------------------------------------------ 
-Local aXFields := {"C5_NUM","C5_XTPPED","C5_CLIENTE","C5_LOJA","C5_CLIENT","C5_LOJAENT","C5_TIPOCLI","C5_TIPO","C5_XTES","C5_EMISSAO","C5_TPFRETE","C5_FRETE","C5_SEGURO","C5_CONDPAG","C5_TABELA","C5_MOEDA","C5_XHISTCO"}  //
+Local aXFields := {"C5_NUM","C5_XTPPED","C5_CLIENTE","C5_LOJA","C5_XCLIENT","C5_CLIENT","C5_LOJAENT","C5_TIPOCLI","C5_TIPO","C5_XTES","C5_EMISSAO","C5_TPFRETE","C5_FRETE","C5_SEGURO","C5_CONDPAG","C5_DESCOND","C5_TABELA","C5_XTABDES","C5_MOEDA","C5_XHISTCO","NOUSER"}  //
 Local aXAlterFields := {"C5_XHISTCO"}  
 Local nOPC          := 4
 Static oEnchoic1
 
-  oEnchoic1 := MsMGet():New("SC5",0,nOPC,,,,aXFields,{4,5,240,1100},aXAlterFields,,,,,oDlg,,.T.)
+  oEnchoic1 := MsMGet():New("SC5",0,nOPC,,,,aXFields,{4,5,240,700},aXAlterFields,,,,,oDlg,,.T.)  // 1100
 
 Return                                                                           
 

@@ -51,6 +51,7 @@ Local cPortadSyn := AllTrim(GetMV("MV_XSYNPOR"))
 Local nPercLimit := GetMV("MV_XSYNPER")
 Local cAgencSyn  := Posicione("SA6", 1, xFilial("SA6") + cPortadSyn, "A6_AGENCIA")
 Local cContaSyn  := Posicione("SA6", 1, xFilial("SA6") + cPortadSyn, "A6_NUMCON")
+Local _cTPPED   := ""
 
 _DOC	 := SD2->D2_DOC
 _SERIE	 := SF2->F2_PREFIXO
@@ -339,8 +340,10 @@ If SC5->(DbSeek( xFilial("SC5") + SD2->D2_CLIENTE + SD2->D2_LOJA + SD2->D2_PEDID
 				SC5->(MsUnLock())
 			EndIf
 		EndIf
-		cTABELA := SC5->C5_TABELA     // Adicionado por Valdemir Jose 14/05/2013
-		cXTPPED := SC5->C5_XTPPED     // Adicionado por Valdemir Jose
+		cTABELA  := SC5->C5_TABELA     // Adicionado por Valdemir Jose 14/05/2013
+		if Empty(_cTPPED)
+			_cTPPED := SC5->C5_XTPPED     // Adicionado por Valdemir Jose
+		Endif
 		//旼컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴커
 		//� Cria cabecalho do Pedido de Entrega com base no Pedido Original    �
 		//읕컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴켸
@@ -518,7 +521,7 @@ If SC5->(DbSeek( xFilial("SC5") + SD2->D2_CLIENTE + SD2->D2_LOJA + SD2->D2_PEDID
 			MostraErro()
 		Else
 			ConfirmSX8()
-			If (cXTPPED = '1') .OR. (cXTPPED = '2')    //  Adicionado por Valdemir Jose 14/05/2013
+			If (_cTPPED = '1') .OR. (_cTPPED = '2')    //  Adicionado por Valdemir Jose 14/05/2013
 				dbSelectArea('SC5')
 				dbSetOrder(1)
 				if SC5->(DbSeek( xFilial("SC5") + _cNumPed ))
@@ -527,20 +530,7 @@ If SC5->(DbSeek( xFilial("SC5") + SD2->D2_CLIENTE + SD2->D2_LOJA + SD2->D2_PEDID
 					MsUnlock()
 				EndIf
 			EndIf
-			/* 
-			If _lEmp // Conta e Ordem
-				DbSelectArea("SC6")
-				SC6->(DbSetOrder(1))
-				If SC6->(DbSeek( xFilial("SC6") + _cNumPed ))
-					While !SC6->(Eof()) .And. xFilial("SC6") == SC6->C6_FILIAL .And. SC6->C6_NUM == _cNumPed
-						MaLibDoFat(SC6->(RecNo()),SC6->C6_QTDVEN,.F.,.F.,.F.,.T.,.F.,.F.)
-						a450Grava(1,.T.,.T.)
-						SC6->(MaLiberOk({_cNumPed},.F.))
-						SC6->(DbSkip())
-					EndDo
-				EndIf
-			EndIf
-			*/
+
 		EndIf
 	EndIf
 Else
