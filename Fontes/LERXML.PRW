@@ -31,6 +31,7 @@ Static lTipo
 ±±º(Agility)         ³            ³ pois estava buscando incorretamente.  º±±
 ±±º                  ³            ³ nas operacoes de CT-e.                º±±
 ±±ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±º Versão: Valdemir Jose - 23/05/2013                                    º±±
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
@@ -38,7 +39,9 @@ User Function LERXML()
 Local nComboBo1     := 1   
 Local oComboBo1      
 Local oSay1
-Local oBTExecuta
+Local oBTExecuta  
+Local oBTSair      
+Local oResName
 
 Private oXml
 Private __cTES 		:= space(len(SD1->D1_TES))
@@ -52,8 +55,34 @@ Private aNFITEM     := {}
 Private cNatOp      := ''
 Private cServer     := GetSrvProfString( 'ROOTPATH', '' ) + GetSrvProfString( 'STARTPATH', '' )  
 Private cXML        := '\XML'
-Private cLocal      := ''
-Private cServ       := ''
+Private cServ       := '' 
+Private _cLocal     := ''
+Private aXML        := {}
+Private cSerie      := ''
+Private cSerieNF    := ''
+Private cZeros      := .F.
+Private cUnidades   := ''
+Private cPedCom     := .F. 
+Private cAlmox      := ''
+Private cCamSel     := ''
+Private cCamLoc     := ''
+Private cEspecie    := '' 
+Private cNDF        := .F.
+Private aTituloX    := {}
+Private aTitulo     := {} 
+Private aCores      := {}  
+Private cChave         
+Private _cFornecedor:= ''
+Private _cCNPJ      := ''
+Private cNota
+Private _cEnd
+Private _cCidade
+Private cNatOP
+Private _cEmissao
+Private nTotalNF
+Private nTotIt
+Private _cOpcao 
+Private xSel       := .F.
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Fontes do windows usadas											³
@@ -67,18 +96,21 @@ DEFINE FONT oFont6 NAME "Courier New" SIZE 6,20
 DEFINE FONT oFont7 NAME "Courier New" SIZE 7,20
 
 _cUsuario := ALLTRIM(UPPER(SUBSTR(CUSUARIO,7,15)))
-_cEmpresa := SM0->M0_CODIGO
+_cEmpresa := SM0->M0_CODIGO                                        
 _cEmpCorr := _cEmpresa
 _cCorrente:= SM0->M0_CODFIL
 cArqTxt   := "\xml\config\cfgxml.txt"
        
 // Caminhos a serem transitados
-cLocal := "C:\microsiga\EMP_"+_cEmpCorr+"\"+_cCorrente
-cServ  := GetSrvProfString( 'ROOTPATH', '' )+"\XML\EMP_"+_cEmpCorr+"\"+_cCorrente
-cXML   := '\XML'
+cServ   := "\XML\EMP_"+_cEmpCorr+"\"+_cCorrente
+cXML    := '\XML'  
+_cLocal := "C:\microsiga\EMP_"+_cEmpresa+"\"+_cCorrente
+aXML    := {} 
+
+cCamSel := ''  //cServ
 
 // Valida XML para ser movido para pasta da filial correta
-Processa({ || ValidaMoveXML()}, 'Validando arquivos da raiz...')
+Processa({ || ValidaMoveXML(,_cLocal,cSERV)}, 'Validando arquivos da raiz...')
 
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -139,180 +171,27 @@ DbSelectarea("SM0")
 Dbsetorder(1)
 Dbgotop()
 Dbseek(_cEmpCorr+_cCorrente)
-                 
-// Move os arquivos (XML) da empresa corrente
-Processa({ ||ValidaMoveXML('M')}, 'Movendo registros da pasta corrente, para pasta XML' )
 
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Lendo o arquivo de configuracao										³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-cArqTxt := "\xml\config\cfgxml.txt"
-cBuffer   := ""
-
-IF !File("\xml")
-	msgbox("Não existe o diretório XML no ROOTPATH")
-	Return
-Endif
-IF !File("\xml\config")
-	msgbox("Não existe o diretório CONFIG no diretório \XML")
-	Return
-Endif
-IF !File("\xml\importados")
-	msgbox("Não existe o diretório IMPORTADOS no diretório \XML")
-	Return
-Endif
-IF !File("\xml\duplicados")
-	msgbox("Não existe o diretório DUPLICADOS no diretório \XML")
-	Return
-Endif
-IF !File("\xml\recusadas")
-	msgbox("Não existe o diretório RECUSADAS no diretório \XML")
-	Return
-Endif
-IF !File("\xml\corrompidos")
-	msgbox("Não existe o diretório CORROMPIDOS no diretório \XML")
-	Return
-Endif
-
-cSerie   :=''
-cEspecie :=''
-cAlmox   :=''
-cUnidades:=''
-cPedCom  :=.F.
-cNDF     :=.F.
-cAlmoPed :=space(02)
-cZeros:=.F.
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Analisando configuracoes da rotina									³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-If File(cArqTxt)
-	FT_FUSE(cArqTxt)
-	FT_FGOTOP()
-	ProcRegua(FT_FLASTREC())
-	
-	While !FT_FEOF()
-		cBuffer := FT_FREADLN()
-		
-		If UPPER(SUBSTR(cBuffer,1,9))=="EMAIL"+SM0->M0_CODIGO+SM0->M0_CODFIL
-			xEMAILREC:=lower(ALLTRIM(SUBSTR(cBuffer,11,400)))
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,3))=="POP"
-			xPOP:=lower(ALLTRIM(SUBSTR(cBuffer,5,400)))
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,5))=="CONTA"
-			xCONTA:=lower(ALLTRIM(SUBSTR(cBuffer,7,400)))
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,5))=="SENHA"
-			xSENHA:=lower(ALLTRIM(SUBSTR(cBuffer,7,400)))
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,4))==SM0->M0_CODIGO+SM0->M0_CODFIL
-			cSerie:=UPPER(SUBSTR(cBuffer,6,3))
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,7))=="ESP"+SM0->M0_CODIGO+SM0->M0_CODFIL
-			cEspecie:=UPPER(SUBSTR(cBuffer,9,5))
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,5))=="S"+SM0->M0_CODIGO+SM0->M0_CODFIL
-			cAlmox:=UPPER(SUBSTR(cBuffer,7,2))
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,2))=="UM"
-			cUnidades:=ALLTRIM(UPPER(SUBSTR(cBuffer,4,400)))
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,4))=="LOGO"
-			cLogo:=ALLTRIM(UPPER(SUBSTR(cBuffer,6,200)))+space(200)
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,5))=="P"+SM0->M0_CODIGO+SM0->M0_CODFIL
-			cAlmoPed:=ALLTRIM(UPPER(SUBSTR(cBuffer,7,2)))
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,6))=="PEDIDO"
-			cPedCom:=.T.
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,3))=="NDF"
-			cNDF:=.T.
-		Endif
-		If UPPER(SUBSTR(cBuffer,1,7))=="NFZEROS"
-			cZeros:=.T.
-		Endif
-		FT_FSKIP()
-	EndDo
-	FT_FUSE()
-Else
-	Msgbox("Arquivo de configuracao CFGXML.TXT não encontrado no diretório \XML\CONFIG")
-	Return
-Endif
-
-cSerieNF := cSerie
-
-If Empty(cUnidades)
-	Msgbox("Favor informar as Unidades de medidas fracionadas!")
-	Return
-Endif
+// Ler Configuração Sistema
+LerConfigura()
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Recebendo emails dos fornecedores									³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 ///MsgRun("Recebendo XML "+xCONTA,,{||POPEMAIL()})
-
-//movendo arquivos para protheus_data
-aXML:={}
-ADir("C:\microsiga\EMP_"+_cEmpresa+"\"+_cCorrente+"\*.XML",aXML)
-//__CopyFile("C:\microsiga\xml\*.*","\xml\")
-For i:=1 to len(aXML) //mover o arquivo para o protheus_data
-	//CpyT2S("C:\microsiga\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+aXML[i], '\XML\', .T.)   //copiando para pasta XML
-	CpyT2S("C:\microsiga\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+aXML[i], "\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\", .T.)   //Copiando para Pasta xml\EMP_01\09
-	ferase("C:\microsiga\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i])))
-Next
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Apagando arquivos diferentes de XML									³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-aXML:={}
-//ADir("\XML\*.*",aXML)    
-ADir("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.*",aXML)
-
-For i:=1 to len(aXML)
-	If !"XML" $ UPPER(ALLTRIM(aXML[i]))
-		ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i])))
-	Endif
-Next
-
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Resolucao da tela													³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-aSize := MsAdvSize()
-IF aSize[5] >=1220
-	_nTop:=760
-	_nRight:=1225
-	_nSize:=590
-Else
-	@ 120,040 TO 750,1010 DIALOG oTela TITLE "Importação nota fiscal eletrônica - "+SM0->M0_CODIGO+"/"+SM0->M0_CODFIL+"-"+SM0->M0_FILIAL
-	_nTop:=750
-	_nRight:=1010
-	_nSize:=485
-Endif
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Lista dos XML dos fornecedores										³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-aXML:={}
-ADir("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.xml",aXML)
-
-If Len(aXml)==0
-	Msgbox("Não existem arquivos para serem importados no momento...","Atenção...","INFO")
-	Return
-Endif
+                           
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Produto alterados													³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 aCampos5:= {{"PRODUTO","C",15,0 }}
 
-cArqTrab5  := CriaTrab(aCampos5)
-dbUseArea( .T.,, cArqTrab5, "LS5", if(.F. .OR. .F., !.F., NIL), .F. )
-IndRegua("LS5",cArqTrab5,"PRODUTO",,,)
-dbSetIndex( cArqTrab5 +OrdBagExt())
+if Select('LS5')=0
+	cArqTrab5  := CriaTrab(aCampos5)
+	dbUseArea( .T.,, cArqTrab5, "LS5", .F., .F. )     //if(.F. .OR. .F., !.F., NIL)
+	IndRegua("LS5",cArqTrab5,"PRODUTO",,,)
+	dbSetIndex( cArqTrab5 +OrdBagExt())
+Endif
 dbSelectArea("LS5")
 //{"CAIXAS","N",9,0 },;
 aCampos	:= {{"SEQ","N",5,0 },;
@@ -345,17 +224,19 @@ aCampos	:= {{"SEQ","N",5,0 },;
 {"LOTECTL","C",10,0 },;
 {"OP","C",13,0 };
 }
-
-cArqTrab  := CriaTrab(aCampos)
-dbUseArea( .T.,, cArqTrab, "LS1", if(.F. .OR. .F., !.F., NIL), .F. )
-IndRegua("LS1",cArqTrab,"SEQ",,,)
-dbSetIndex( cArqTrab +OrdBagExt())
+              
+if Select('LS1')=0
+	cArqTrab  := CriaTrab(aCampos)
+	dbUseArea( .T.,, cArqTrab, "LS1",.f. , .F. )   //if(.F. .OR. .F., !.F., NIL)
+	IndRegua("LS1",cArqTrab,"SEQ",,,)
+	dbSetIndex( cArqTrab +OrdBagExt())
+Endif
 dbSelectArea("LS1")
 
 aCampos3:= {{"EMISSAO","D",8,0 },;
 {"NATOPER","C",30,0 },;							// Valdemir Jose 22/02/2013
 {"FORNEC","C",6,0 },;
-{"LOJA","C",2,0 },;
+{"LOJA","C",2,0 },;        
 {"NOTA","C",9,0 },;
 {"NOME","C",35,0 },;
 {"VENDEDOR","C",30,0 },;
@@ -363,10 +244,12 @@ aCampos3:= {{"EMISSAO","D",8,0 },;
 {"XML","C",150,0 },;
 {"CHAVE","C",150,0 }}
 
-cArqTrab3  := CriaTrab(aCampos3)
-dbUseArea( .T.,, cArqTrab3, "LS3", if(.F. .OR. .F., !.F., NIL), .F. )
-IndRegua("LS3",cArqTrab3,"NOME+NOTA",,,)
-dbSetIndex( cArqTrab3 +OrdBagExt())
+if Select('LS3')=0
+	cArqTrab3  := CriaTrab(aCampos3)
+	dbUseArea( .T.,, cArqTrab3, "LS3", .f., .F. )  //if(.F. .OR. .F., !.F., NIL)
+	IndRegua("LS3",cArqTrab3,"NOME+NOTA",,,)
+	dbSetIndex( cArqTrab3 +OrdBagExt())
+Endif
 dbSelectArea("LS3")
 
 _cCNPJ:=''
@@ -376,18 +259,22 @@ lAchou:=.F.
 	Processa({|| XMLFOUND()})
 	Return
 	Static Function XMLFOUND()
-#ENDIF
+#ENDIF      
 
 aCampos4:= {{"NOTA","C",9,0 },;
 {"FORNECEDOR","C",6,0 },;
-{"LOJA","C",2,0 }}
+{"LOJA","C",2,0 },;
+{"BLQ","C",1}}
 
-cArqTrab4  := CriaTrab(aCampos4)
-dbUseArea( .T.,, cArqTrab4, "LS4", if(.F. .OR. .F., !.F., NIL), .F. )
-IndRegua("LS4",cArqTrab4,"FORNECEDOR+LOJA+NOTA",,,)
-dbSetIndex( cArqTrab4 +OrdBagExt())
+if Select('LS4')=0
+	cArqTrab4  := CriaTrab(aCampos4)
+	dbUseArea( .T.,, cArqTrab4, "LS4", if(.F. .OR. .F., !.F., NIL), .F. )
+	IndRegua("LS4",cArqTrab4,"FORNECEDOR+LOJA+NOTA",,,)
+	dbSetIndex( cArqTrab4 +OrdBagExt())
+Endif
 dbSelectArea("LS4")
 
+// Limpa Variaveis
 cNota   :=''
 cEmissao:=''
 cChave  :=''
@@ -420,105 +307,21 @@ If "CONQUISTA" $ ALLTRIM(UPPER(SM0->M0_NOME))
 	@ 015,060 BUTTON "Confirma" SIZE 40,10 ACTION oGrupo:end()
 	Activate Dialog oGrupo CENTERED
 Endif
-
-Procregua(len(aXML))
-For i:=1 to len(aXML)
-	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Dados do XML														³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	XML()
-	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Fornecedor															³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	If !Empty(_cCNPJ)
-		DbSelectarea("SA2")
-		DbSetorder(3)
-		Dbgotop()
-		Dbseek(xFilial("SA2")+_cCNPJ)
-		If Found()
-			
-			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-			//³ Verificando grupo													³
-			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-			lFornec:=.T.
-			If !Empty(_cOpcao) .and. alltrim(_cOpcao)<>"TODOS"
-				If ALLTRIM(SA2->A2_GRPCOM)==_cOpcao
-					lFornec:=.T.
-				Else
-					lFornec:=.F.
-				Endif
-				
-				If Empty(SA2->A2_GRPCOM)
-					Msgbox("Fornecedor "+SA2->A2_COD+"/"+ALLTRIM(SA2->A2_NREDUZ)+" está sem o grupo de compras informado!","Atenção...","ALERT")
-				Endif
-			Endif
-			
-			If lFornec
-				Incproc(SA2->A2_NREDUZ)
-				
-				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-				//³ Verifico arquivos XML duplicados									³
-				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-				DbSelectarea("LS4")
-				DbSetorder(1)
-				Dbgotop()
-				dbseek(SA2->A2_COD+SA2->A2_LOJA+cNota)
-				If !Found()
-					Reclock("LS4",.T.)
-					LS4->NOTA		:= cNota
-					LS4->FORNECEDOR := SA2->A2_COD
-					LS4->LOJA		:= SA2->A2_LOJA
-					MsUnlock()
-					
-					Reclock("LS3",.T.)
-					LS3->EMISSAO  := STOD(cEmissao)
-					LS3->NATOPER  := cNatOp                         // Valdemir 23/02/2013
-					LS3->FORNEC   := SA2->A2_COD
-					LS3->LOJA     := SA2->A2_LOJA
-					LS3->VENDEDOR := SUBSTR(SA2->A2_REPRES,1,30)
-					LS3->TELEFONE := alltrim(SA2->A2_DDD)+" "+alltrim(SUBSTR(SA2->A2_TEL,1,20))
-					LS3->NOME	  := SA2->A2_NREDUZ
-					LS3->XML	  := UPPER(aXML[i])
-					LS3->NOTA	  := cNota
-					LS3->CHAVE    := cChave
-					MsUnlock()
-					lAchou:=.T.
-				Endif
-			Endif
-		Else
-			FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i])),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".dup")
-			__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.dup","\xml\duplicados\")
-			ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".dup")
-		Endif
-	Endif
-Next
-
-Dbselectarea("LS4")
-dbCloseArea("LS4")
-fErase( cArqTrab4+ ".DBF" )
-fErase( cArqTrab4+ OrdBagExt() )
-
+                  
+// Zera Tabelas
 If lAchou==.F.
-	Msgbox("Não existem arquivos para serem importados no momento...","Atenção...","ALERT")
-	Dbselectarea("LS1")
-	dbCloseArea("LS1")
-	fErase( cArqTrab+ ".DBF" )
-	fErase( cArqTrab+ OrdBagExt() )
-	
-	Dbselectarea("LS5")
-	dbCloseArea("LS5")
-	fErase( cArqTrab5+ ".DBF" )
-	fErase( cArqTrab5+ OrdBagExt() )
-	
-	Dbselectarea("LS3")
-	dbCloseArea("LS3")
-	fErase( cArqTrab3+ ".DBF" )
-	fErase( cArqTrab3+ OrdBagExt() )
-	Return
-Endif
+   dbSelectArea('LS1')
+   Zap
 
+   dbSelectArea('LS3')
+   Zap
+
+   dbSelectArea('LS5')
+   Zap
+   
+endif
+
+// Limpa Variaveis
 cNota	:=space(09)
 cNatOp	:=''
 _cCNPJ	:=space(18)
@@ -581,6 +384,21 @@ aCores := {{ 'LS1->OK=="X" ', 'BR_VERMELHO'  },;
 { 'EMPTY(LS1->OK) ', 'BR_VERDE'  },;
 { 'LS1->OK=="O" ', 'BR_CANCEL'  }}
 
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Resolucao da tela													³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+aSize := MsAdvSize()
+IF aSize[5] >=1220
+	_nTop:=760
+	_nRight:=1225
+	_nSize:=590
+Else
+	@ 120,040 TO 750,1010 DIALOG oTela TITLE "Importação nota fiscal eletrônica - "+SM0->M0_CODIGO+"/"+SM0->M0_CODFIL+"-"+SM0->M0_FILIAL
+	_nTop:=750
+	_nRight:=1010
+	_nSize:=485
+Endif
+
 cMarca    := GetMark()
 linverte  :=.f.          
 nComboBo1 := 1
@@ -588,26 +406,32 @@ nComboBo1 := 1
 //³ Tela principal da rotina											³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 @ 120,040 TO _nTop,_nRight DIALOG oTela TITLE "Importação nota fiscal eletrônica - "+SM0->M0_CODIGO+"/"+SM0->M0_CODFIL+"-"+SM0->M0_FILIAL
-@ 004,005 BITMAP ResName "OPEN" OF oTela Size 15,15 ON CLICK (MsgRun("Verificando pedidos em aberto...",,{||IMPORTA()})) NoBorder  Pixel
+@ 004,005 BITMAP oResName PROMPT ResName "OPEN" OF oTela Size 15,15 ON CLICK (MsgRun("Verificando pedidos em aberto...",,{|| IMPORTA() })) NoBorder  Pixel
 @ 005,025 BUTTON "Recusar Recebimento" SIZE 65,10 ACTION RECUSAR()
 @ 005,095 BUTTON "Re_fazer Nota Fiscal" SIZE 65,10 ACTION MsgRun("Restaurando informações originais...",,{||REFAZER()})
 @ 005,165 BUTTON "Excluir Identificação" SIZE 65,10 ACTION EXCAMA()
 @ 005,235 BUTTON "Cons_ultar SEFAZ" SIZE 65,10 ACTION MsgRun("Processando NFE no site da SEFAZ...",,{||SEFAZ()})
 @ 005,305 BUTTON "Histórico" SIZE 65,10 ACTION MsgRun("Processando histórico do fornecedor...",,{||HISTFOR()})
 //---------------------- Adicionado por Valdemir Jose 22/02/2013
-@ 006, 401 COMBOBOX oComboBo1 VAR nComboBo1 ITEMS {"Retorno Armazenagem","Devolução Compras","Devolução de Troca"} SIZE 072, 010 PIXEL OF oTela  //ON CHANGE U_Selecao() 
+@ 006, 401 COMBOBOX oComboBo1 VAR nComboBo1 ITEMS {"Vendas","Retorno Armazenagem","Devolução Compras","Devolução de Troca"} SIZE 072, 010 PIXEL OF oTela  //ON CHANGE U_Selecao() 
 @ 008, 375 SAY oSay1 PROMPT "Seleção" SIZE 025, 007 OF oTela COLORS 0, 16777215 PIXEL
-@ 005, 474 BUTTON oBTExecuta PROMPT "Executa" SIZE 026, 011 OF oTela ACTION ExecSelecao(oComboBo1:nAT) PIXEL
+@ 005, 474 BUTTON oBTExecuta PROMPT "Carregar" SIZE 026, 011 OF oTela ACTION ExecSelecao(oComboBo1:nAT) PIXEL
+oBTExecuta:cToolTip := "Carregar o arquivo correspondente a seleção"
+oResName:cToolTip := "Verifica pedidos em aberto"
 //-------------------------------------------------------------
 @ 005,510 say "NOTA FISCAL ELETRÔNICA" FONT oFont5 OF oTela PIXEL COLOR CLR_HRED
 
 @ 020,005 TO 110,_nSize BROWSE "LS3" OBJECT OBRWP FIELDS aTituloX
-OBRWP:oBrowse:BCHANGE := {||PROCESS(), REAPRESENTA()}
+OBRWP:oBrowse:BCHANGE := {|| PROCESS(), REAPRESENTA()}
 OBRWP:oBrowse:oFont := TFont():New ("Arial", 06, 18)
+OBRWP:oBrowse:nAt   := 1
+OBRWP:oBrowse:REFRESH()
 
 OBRWI:=MsSelect():New("LS1","","",aTitulo,@lInverte,@cMarca,{125,005,240,_nSize},,,,,aCores)
-OBRWI:oBrowse:bLDblClick := {||CORRIGE()}
+OBRWI:oBrowse:bLDblClick := {|| CORRIGE() }
 OBRWI:oBrowse:oFont := TFont():New ("Arial", 05, 18)
+OBRWI:oBrowse:nAt   := 1
+OBRWI:oBrowse:REFRESH()
 
 @ 245,003 TO 315,235
 @ 250,005 say "FORNECEDOR" SIZE 150,40 FONT oFont4 OF oTela PIXEL COLOR CLR_GREEN
@@ -639,40 +463,34 @@ OBRWI:oBrowse:oFont := TFont():New ("Arial", 05, 18)
 @ 112,355 BUTTON "_Eliminar Pedido do item" SIZE 65,10 ACTION ELIMPED()
 @ 112,425 BUTTON "Eliminar _Todos Pedidos" SIZE 65,10 ACTION ELIMPEDT()
 @ 112,495 BUTTON "Origem Pedido" SIZE 65,10 ACTION B103NFORI()     // Valdemir 21/02/2013
+@ 245,530 BUTTON oBTSair PROMPT "Sair" SIZE 55,30 OF oTela ACTION {|| SairTela(), oTela:End()} PIXEL
+oBTSair:cToolTip := "Sair da importação"
+
 If aSize[5] >=1220
 	@ 018,055 BITMAP SIZE 110,110 FILE "NFE.BMP" NOBORDER
 	//	@ 018,065 BITMAP SIZE 110,110 FILE alltrim(cLogo)+".BMP" NOBORDER
 Endif
-ACTIVATE DIALOG oTela CENTER VALID ValidaMoveXML()
 
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Apagando arquivos temporarios										³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-Dbselectarea("LS1")
-dbCloseArea("LS1")
-fErase( cArqTrab+ ".DBF" )
-fErase( cArqTrab+ OrdBagExt() )
+ACTIVATE DIALOG oTela CENTER //VALID ValidaMoveXML()
 
-Dbselectarea("LS5")
-dbCloseArea("LS5")
-fErase( cArqTrab5+ ".DBF" )
-fErase( cArqTrab5+ OrdBagExt() )
-
-Dbselectarea("LS3")
-dbCloseArea("LS3")
-fErase( cArqTrab3+ ".DBF" )
-fErase( cArqTrab3+ OrdBagExt() )
 Return
+        
+
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Gerando pre nota													³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static Function IMPORTA()
-
+                          
+IF EMPTY(cCamSel)
+	msgbox("Não foi processado nenhuma importação no momento","Atenção...","ALERT")
+	RETURN
+ENDIF
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Verifico se existe a nota fiscal									³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-IF !file("\xml\"+lower(LS3->XML)) .and. !file("\XML\"+lower(LS3->XML))
+IF !file(cCamSel+"\"+lower(LS3->XML)) .and. !file(cServ+"\"+lower(LS3->XML))
 	msgbox("Este arquivo já foi processado por outro usuário!","Atenção...","ALERT")
 	Reclock("LS3",.F.)
 	dbdelete()
@@ -1090,6 +908,7 @@ If cPedCom
 			@ 005,215 BUTTON "_Eliminar" SIZE 55,10 ACTION ELIMINAR()
 			@ 020,005 TO 140,275 BROWSE "LS2" ENABLE " LS2->OK<>'X' " OBJECT OBRWT FIELDS aTitulo2
 			OBRWT:oBrowse:oFont := TFont():New ("Arial", 05, 18)
+			OBRWT:oBrowse:REFRESH()
 			ACTIVATE DIALOG oPedido CENTER
 		Else
 			//Msgbox("Não existem pedidos em aberto para este fornecedor!")
@@ -1217,9 +1036,10 @@ If cResp
 	If Found() .and. SF1->F1_TIPO=="N"
 		
 		Msgbox("Nota fiscal já existe!","Atenção...","ALERT")
+		FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(LS3->XML)),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(LS3->XML))+".imp")
 		FRename("\XML\"+ALLTRIM(LS3->XML),"\xml\"+ALLTRIM(LS3->XML)+".imp")
-		__CopyFile("\XML\*.imp","\xml\importados\")
-		ferase("\XML\"+ALLTRIM(LS3->XML)+".imp")
+		__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.imp","\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\importados\")
+		ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML)+".imp")
 		
 		Reclock("LS3",.F.)
 		dbdelete()
@@ -1307,9 +1127,9 @@ If cResp
 		End
 		
 		DbSelectarea("LS3")
-		FRename("\XML\"+ALLTRIM(LS3->XML),"\XML\"+ALLTRIM(LS3->XML)+".imp")
-		__CopyFile("\XML\*.imp","\XML\importados\")
-		ferase("\XML\"+ALLTRIM(LS3->XML)+".imp")
+		FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML)+".imp")
+		__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.imp","\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\importados\")
+		ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML)+".imp")
 		
 		Reclock("LS3",.F.)
 		dbdelete()
@@ -1342,6 +1162,12 @@ If LS1->OK=="X"
 	{"PEDIDO","C",3,0 },;
 	{"BLQ","C",5,0 }}
 	
+	IF SELECT("LS4") > 0  
+		dbSelectArea('LS4')
+		LS4->( dbCloseArea() )
+		fErase( cArqTrab4+ ".DBF" )
+		fErase( cArqTrab4+ OrdBagExt() )	
+	ENDIF
 	cArqTrab6  := CriaTrab(aCampos6)
 	dbUseArea( .T.,, cArqTrab6, "LS4", if(.F. .OR. .F., !.F., NIL), .F. )
 	IndRegua("LS4",cArqTrab6,"DESCRICAO",,,)
@@ -1393,26 +1219,33 @@ If LS1->OK=="X"
 	
 	_cFiltrox	:=SUBSTR(LS1->DESCRICAO,1,4)+space(30)
 	lCheck1		:=.F.
-	
-	@ 120,040 TO 450,880 DIALOG oAmarra TITLE "Produto do fornecedor..."
-	@ 005,005 say LS1->DESCRICAO SIZE 200,40 FONT oFont1 OF oAmarra PIXEL
-	@ 020,005 TO 140,417 BROWSE "LS4" OBJECT OBRWX FIELDS aTitulo6
-	OBRWX:OBROWSE:bLDblClick   := {|| SELECIONA(LS4->PRODUTO,2) }
-	OBRWX:oBrowse:oFont := TFont():New ("Arial", 07, 18)
-	
-	@ 005,210 say "Filtro" SIZE 200,40 FONT oFont1 OF oAmarra PIXEL COLOR CLR_HRED
-	@ 005,230 get _cFiltrox SIZE 70,20 Picture "@!"
-	@ 005,300 BUTTON "_Filtrar" SIZE 35,10 ACTION MsgRun("Processando produtos...",,{||FILTRE()})
-	If cPedCom                            	
-		@ 005,340 CHECKBOX "Somente com Pedidos" VAR lCheck1
-	Endif
-	@ 150,010 BUTTON "Reativar Produto" SIZE 60,12 ACTION DESBLOQ()
-	ACTIVATE DIALOG oAmarra CENTER
+
+	if !xSel
+		@ 120,040 TO 450,880 DIALOG oAmarra TITLE "Produto do fornecedor..."
+		@ 005,005 say LS1->DESCRICAO SIZE 200,40 FONT oFont1 OF oAmarra PIXEL
+		@ 020,005 TO 140,417 BROWSE "LS4" OBJECT OBRWX FIELDS aTitulo6
+		OBRWX:OBROWSE:bLDblClick   := {|| SELECIONA(LS4->PRODUTO,2) }
+		OBRWX:oBrowse:oFont := TFont():New ("Arial", 07, 18)
+		OBRWX:oBrowse:REFRESH()
+		
+		@ 005,210 say "Filtro" SIZE 200,40 FONT oFont1 OF oAmarra PIXEL COLOR CLR_HRED
+		@ 005,230 get _cFiltrox SIZE 70,20 Picture "@!"
+		@ 005,300 BUTTON "_Filtrar" SIZE 35,10 ACTION MsgRun("Processando produtos...",,{||FILTRE()})
+		If cPedCom                            	
+			@ 005,340 CHECKBOX "Somente com Pedidos" VAR lCheck1
+		Endif
+		@ 150,010 BUTTON "Reativar Produto" SIZE 60,12 ACTION DESBLOQ()
+		ACTIVATE DIALOG oAmarra CENTER
+	ELSE
+	  xSel := .F.
+	endif
 	
 	Dbselectarea("LS4")
 	dbCloseArea("LS4")
 	fErase( cArqTrab6+ ".DBF" )
 	fErase( cArqTrab6+ OrdBagExt() )
+
+
 	Return
 Endif
 
@@ -1430,14 +1263,14 @@ Return
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Processando arquivos												³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-Static Function XML(pSelecao)
+Static Function XML(pSelecao,pArq,pCaminho)
 Local iSelecao   := if(pSelecao<>2,0,2)
 private _oXml    := NIL
 private cError   := ''
 private cWarning := ''
 
 nXmlStatus := XMLError()
-cFile	   := "\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))
+cFile	   := pCaminho+"\"+lower(ALLTRIM(pArq))
 oXml 	   := XmlParserFile(cFile,"_",@cError, @cWarning )
 lTipo	   :=3
 
@@ -1575,9 +1408,9 @@ If Empty(@cError) .and. lTipo<>3
 		 	Dbseek(xFilial("SF1")+SA2->A2_COD+SA2->A2_LOJA+alltrim(cNota)+Space(cSpaco))
 		 	If Found() .and. SF1->F1_TIPO=="N"
 		 		_cCNPJ:=''
-		 		FRename("\xml\"+lower(ALLTRIM(aXML[i])),"\xml\"+lower(ALLTRIM(aXML[i]))+".imp")
-		 		__CopyFile("\xml\*.imp","\xml\importados\")
-		 		ferase("\xml\"+lower(ALLTRIM(aXML[i]))+".imp")
+		 		FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i])),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".imp")
+		 		__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.imp","\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\importados\")
+		 		ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".imp")
 		 		MsgAlert("A Nota Fiscal de Número "+cNota+" já encontra-se no sistema!")
 		 	Endif
 		 Endif
@@ -1593,18 +1426,18 @@ If Empty(@cError) .and. lTipo<>3
 		 	Dbseek(xFilial("SF1")+SA1->A1_COD+SA1->A1_LOJA+alltrim(cNota)+Space(cSpaco))
 		 	If Found() .and. SF1->F1_TIPO=="N"
 		 		_cCNPJ:=''
-		 		FRename("\xml\"+lower(ALLTRIM(aXML[i])),"\xml\"+lower(ALLTRIM(aXML[i]))+".imp")
-		 		__CopyFile("\xml\*.imp","\xml\importados\")
-		 		ferase("\xml\"+lower(ALLTRIM(aXML[i]))+".imp")
+		 		FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i])),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".imp")
+		 		__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.imp","\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\importados\")
+		 		ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".imp")
 		 		MsgAlert("A Nota Fiscal de Número "+cNota+" já encontra-se no sistema!")
 		 	Endif
 		 Endif
 	   endif
 	EndIf
 Else
-	FRename("\xml\"+lower(ALLTRIM(aXML[i])),"\xml\"+lower(ALLTRIM(aXML[i]))+".err")
-	__CopyFile("\xml\*.err","\xml\corrompidos\")
-	ferase("\xml\"+lower(ALLTRIM(aXML[i]))+".err")
+	FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i])),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".err")
+	__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.err","\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\corrompidos\")
+	ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".err")
 	MsgAlert("Arquivo "+aXML[1]+" Inválido!")
 Endif
 Return
@@ -2135,6 +1968,10 @@ EndIf
 DbSelectarea("LS1")
 Dbgotop()
 Return
+        
+
+
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Processando arquivo													³
@@ -2143,10 +1980,10 @@ Static Function PROCESS()
 
 private _oXml    := NIL
 private cError    := ''
-private cWarning := ''
-
+private cWarning := ''     
+     
 If LS3->(eof())
-	msgbox("Não existem notas fiscais eletrônicas para serem importadas!")
+	//msgbox("Não existem notas fiscais eletrônicas para serem importadas!")
 	OBRWI:obrowse:refresh()
 	OBRWP:obrowse:refresh()
 	OBRWI:obrowse:setfocus()
@@ -2158,7 +1995,7 @@ Endif
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Verifico se existe a nota fiscal									³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-IF !file("\xml\"+lower(LS3->XML))
+IF !file(cCamSel+"\"+lower(LS3->XML))
 	msgbox("Este arquivo já foi processado por outro usuário!","Atenção...","ALERT")
 	Reclock("LS3",.F.)
 	dbdelete()
@@ -2206,7 +2043,7 @@ IF lAltera
 Endif
 
 nXmlStatus  := XMLError()
-cFile		:="\xml\"+lower(ALLTRIM(LS3->XML))
+cFile		:= cCamSel+"\"+lower(ALLTRIM(LS3->XML))
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Apagando dados da tabela temporaria									³
@@ -2667,9 +2504,9 @@ If cResp
 		Endif
 	Endif
 	
-	FRename("\xml\"+ALLTRIM(LS3->XML),"\xml\"+ALLTRIM(LS3->XML)+".rec")
-	__CopyFile("\xml\*.rec","\xml\recusadas\")
-	ferase("\xml\"+ALLTRIM(LS3->XML)+".rec")
+	FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML)+".rec")
+	__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.rec","\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\recusadas\")
+	ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML)+".rec")
 	Msgbox("Nota Fiscal recusada com sucesso!","Atenção...","INFO")
 	
 	Reclock("LS3",.F.)
@@ -3693,6 +3530,9 @@ While !Eof()
 	Dbskip()
 End
 Return(_nExcedido)
+                       
+
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Manipulando arquivo de configuracao									³
@@ -4084,6 +3924,7 @@ aCampos2	:= {{"OK","C",1,0 },;
 {"QUANTIDADE","N",12,3 },;
 {"PRECO","N",18,2 },;
 {"ENTREGA","D",8,0 }}
+//{"TES","C",3,0 },;
 
 cArqTrab2  := CriaTrab(aCampos2)
 cIndice:="Descend(DTOS(EMISSAO))"
@@ -4100,7 +3941,7 @@ _nQuantXml:=LS1->QUANTIDADE
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 cSeq:=LS1->SEQ
 //cQuery:=" SELECT C7_EMISSAO EMISSAO,Case C7_MOEDA When 1 Then C7_PRECO When 2 Then C7_PRECO * C7_TXMOEDA End As PRECO,C7_ITEM ITEM,C7_NUM PEDIDO,(C7_QUANT-C7_QUJE-C7_QTDACLA) QUANTIDADE,C7_DATPRF ENTREGA FROM "+RetSqlName("SC7")+" WHERE C7_FILIAL='"+xFilial("SC7")+"' " //#ECV20121127.o
-cQuery:=" SELECT C7_EMISSAO EMISSAO,Case C7_MOEDA When 1 Then C7_PRECO When 2 Then C7_PRECO * C7_TXMOEDA End As PRECO,C7_ITEM ITEM,C7_NUM PEDIDO,(C7_QUANT-C7_QUJE-C7_QTDACLA) QUANTIDADE,C7_DATPRF ENTREGA, C7_MOEDA MOEDA, C7_TXMOEDA TAXA FROM "+RetSqlName("SC7")+" WHERE C7_FILIAL='"+xFilial("SC7")+"' " //#ECV20121127.n
+cQuery:=" SELECT C7_EMISSAO EMISSAO,Case C7_MOEDA When 1 Then C7_PRECO When 2 Then C7_PRECO * C7_TXMOEDA End As PRECO,C7_ITEM ITEM,C7_NUM PEDIDO,(C7_QUANT-C7_QUJE-C7_QTDACLA) QUANTIDADE,C7_DATPRF ENTREGA, C7_MOEDA MOEDA, C7_TXMOEDA TAXA  FROM "+RetSqlName("SC7")+" WHERE C7_FILIAL='"+xFilial("SC7")+"' " //#ECV20121127.n
 cQuery:=cQuery + " AND C7_FORNECE='"+LS3->FORNEC+"' "
 cQuery:=cQuery + " AND C7_LOJA='"+LS3->LOJA+"' "
 cQuery:=cQuery + " AND C7_PRODUTO='"+LS1->PRODUTO+"' "
@@ -4139,7 +3980,8 @@ While !Eof()
 		LS2->ITEM:=TCQ->ITEM
 		//LS2->PRECO:=TCQ->PRECO //#ECV20121127.o
 		LS2->PRECO:=IIF(TCQ->MOEDA <> 1 .And. TCQ->TAXA == 0, fCalcPrc(TCQ->PEDIDO,TCQ->ITEM),TCQ->PRECO) //#ECV20121127.n
-		LS2->QUANTIDADE:=(TCQ->QUANTIDADE-_nUsados)
+		LS2->QUANTIDADE:=(TCQ->QUANTIDADE-_nUsados) 
+		//LS2->TES := TCQ->TES
 		LS2->ENTREGA:=STOD(TCQ->ENTREGA)
 		Msunlock()
 		lAchou:=.T.
@@ -4164,6 +4006,7 @@ AADD(aTitulo2,{"EMISSAO","Emissão"})
 AADD(aTitulo2,{"PEDIDO","Pedido"})
 AADD(aTitulo2,{"ITEM","Item"})
 AADD(aTitulo2,{"QUANTIDADE","Disponível","@E 999,999.999"})
+//AADD(aTitulo2,{"TES","Tes"})
 AADD(aTitulo2,{"PRECO","Preço R$","@E 99,999,999.99"})
 AADD(aTitulo2,{"ENTREGA","Dt.Entrega"})
 
@@ -4227,6 +4070,9 @@ OBRWI:obrowse:refresh()
 OBRWI:obrowse:setfocus()
 ObjectMethod(oTela,"Refresh()")
 Return
+                 
+
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Confirma Pedido 													³
@@ -4246,7 +4092,7 @@ Endif
 Reclock("LS1",.F.)
 LS1->PEDIDO:=LS2->PEDIDO
 LS1->ITEM:=LS2->ITEM    
-LS1->TES := LS2->TES
+//LS1->TES := LS2->TES     // ADICIONADO POR VALDEMIR 
 LS1->ALTERADO:="S"
 MsUnlock()
 
@@ -4340,6 +4186,9 @@ DbSeek(cSeqOri)
 
 oPedido:end()
 Return
+                    
+
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Eliminar pedido														³
@@ -4836,9 +4685,9 @@ Dbseek(xFilial("SF1")+LS3->FORNEC+LS3->LOJA+alltrim(cNota)+Space(cSpaco))
 If Found() .and. SF1->F1_TIPO=="N"
 	
 	Msgbox("Nota fiscal já existe!","Atenção...","ALERT")
-	FRename("\xml\"+ALLTRIM(LS3->XML),"\xml\"+ALLTRIM(LS3->XML)+".imp")
-	__CopyFile("\xml\*.imp","\xml\importados\")
-	ferase("\xml\"+ALLTRIM(LS3->XML)+".imp")
+	FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML)+".imp")
+	__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.imp","\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\importados\")
+	ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML)+".imp")
 	
 	Reclock("LS3",.F.)
 	dbdelete()
@@ -4918,9 +4767,9 @@ If cRet
 	End
 	
 	DbSelectarea("LS3")
-	FRename("\xml\"+ALLTRIM(LS3->XML),"\xml\"+ALLTRIM(LS3->XML)+".imp")
-	__CopyFile("\xml\*.imp","\xml\importados\")
-	ferase("\xml\"+ALLTRIM(LS3->XML)+".imp")
+	FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML)+".imp")
+	__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.imp","\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\importados\")
+	ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+ALLTRIM(LS3->XML)+".imp")
 	
 	Reclock("LS3",.F.)
 	dbdelete()
@@ -5016,7 +4865,7 @@ Local nRecSD2   := 0
 Local nX		:= 0
 Local nY		:= 0
 Local lContinua := .T.     
-Local n         := OBRWI:oBROWSE:nAT  
+//Local n         := OBRWI:oBROWSE:nAT  
 Local aTitles   := {}        
 Local aFldCBAtu	:= {}
                     
@@ -5031,8 +4880,9 @@ aAdd(aTitles, OemToAnsi("Duplicatas")) //
 aFldCBAtu	:= Array(Len(aTitles)) // foi alterado por causa do SIGAGSP.
 
 
-PRIVATE bRefresh	:= {|nX| NfeFldChg(nX,nY,,aFldCBAtu)}
-
+PRIVATE bRefresh	:= {|nX| NfeFldChg(nX,nY,,aFldCBAtu)}  
+PUBLIC  n           := OBRWI:oBROWSE:nAT 
+                 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Impede de executar a rotina quando a tecla F3 estiver ativa		    ³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
@@ -5126,172 +4976,74 @@ STATIC Function ExecSelecao(npSelecao)
 Local aXML 			:= {}                                           
 Local cDirDoMonitor := SuperGetMV('ES_DEV_ARMZ',.F.,'C:\MICROSOFT')
 Local _cDIRXML, _cDESTXML
-      
 
 aCampos4:= {{"NOTA","C",9,0 },;
 {"FORNECEDOR","C",6,0 },;
 {"LOJA","C",2,0 }}
+  
+if select('LS4')=0
+  cArqTrab4  := CriaTrab(aCampos4)
+  dbUseArea( .T.,, cArqTrab4, "LS4", if(.F. .OR. .F., !.F., NIL), .F. )
+  IndRegua("LS4",cArqTrab4,"FORNECEDOR+LOJA+NOTA",,,)
+  dbSetIndex( cArqTrab4 +OrdBagExt())
+endif
 
-cArqTrab4  := CriaTrab(aCampos4)
-dbUseArea( .T.,, cArqTrab4, "LS4", if(.F. .OR. .F., !.F., NIL), .F. )
-IndRegua("LS4",cArqTrab4,"FORNECEDOR+LOJA+NOTA",,,)
-dbSetIndex( cArqTrab4 +OrdBagExt())
 dbSelectArea("LS4")
 
 // Selecione o Arquivo a Importar
 IF     npSelecao = 1
-   _cDIRXML := "C:\Microsiga\EMP_"+_cEmpCorr+"\"+_cCorrente+"\RET_ARMZ"
-   _cDESTXML:= "\XML"     // \EMP_"+_cEmpCorr+"\"+_cCorrente+"\RET_ARMZ
+   _cDIRXML := _cLocal+"\"
+   _cDESTXML:= "\XML\EMP_"+_cEmpCorr+"\"+_cCorrente+"\"
 elseif npSelecao = 2
-   _cDIRXML := "C:\Microsiga\EMP_"+_cEmpCorr+"\"+_cCorrente+"\DEV_COMPRAS"
-   _cDESTXML:= "\XML"   // \EMP_"+_cEmpCorr+"\"+_cCorrente+"\DEV_COMPRAS
+   _cDIRXML := _cLocal+"\RET_ARMZ"
+   _cDESTXML:= "\XML\EMP_"+_cEmpCorr+"\"+_cCorrente+"\RET_ARMZ\"
+elseif npSelecao = 3
+   _cDIRXML := _cLocal+"\DEV_COMPRAS"
+   _cDESTXML:= "\XML\EMP_"+_cEmpCorr+"\"+_cCorrente+"\DEV_COMPRAS\"
 else
-   _cDIRXML := "C:\Microsiga\EMP_"+_cEmpCorr+"\"+_cCorrente+"\DEV_TROCA"
-   _cDESTXML:= "\XML"       // \EMP_"+_cEmpCorr+"\"+_cCorrente+"\DEV_TROCA
-endif
+   _cDIRXML := _cLocal+"\DEV_TROCA\"
+   _cDESTXML:= "\XML\EMP_"+_cEmpCorr+"\"+_cCorrente+"\DEV_TROCA\"
+endif                  
 
+xSel := .T.
 
-IF EMPTY(_cDIRXML)
-	MSGINFO('Não foi selecionado nenhuma pasta, por favor verifique.')
-	Return
-ENDIF
-
+// Verificando arquivos da pasta local
+aXML:={}
 ADir(_cDIRXML+"\*.XML",aXML)
-For i:=1 to len(aXML) //mover o arquivo para o protheus_data
-	CpyT2S(_cDIRXML+"\"+aXML[i], _cDESTXML, .T.)
-	ferase(_cDIRXML+"\"+lower(ALLTRIM(aXML[i])))  
-Next
 
-For i:=1 to len(aXML)
-	
-	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	//³ Dados do XML														³
-	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	IF (npSelecao = 1) .OR. (npSelecao = 3)
+// Zera tabelas
+dbSelectArea('LS1')
+Zap
+dbSelectArea('LS3')
+Zap
 
-     XML()
+//Copiando para Pasta Destino do Servidor
+For i:=1 to len(aXML) 
+	CpyT2S(_cDIRXML+"\"+aXML[i], _cDESTXML+"\", .T.)   
+    ferase(_cDIRXML+"\"+lower(ALLTRIM(aXML[i]))) 
+Next                       
 
-	 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-	 //³ Fornecedor														     ³
-	 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	 If !Empty(_cCNPJ)     
-		DbSelectarea("SA2")
-		DbSetorder(3)
-		Dbgotop()
-		Dbseek(xFilial("SA2")+_cCNPJ)
-		If Found()
-			
-			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-			//³ Verificando grupo													³
-			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-			lFornec:=.T.
-			If !Empty(_cOpcao) .and. alltrim(_cOpcao)<>"TODOS"
-				If ALLTRIM(SA2->A2_GRPCOM)==_cOpcao
-					lFornec:=.T.
-				Else
-					lFornec:=.F.
-				Endif
-				
-				If Empty(SA2->A2_GRPCOM)
-					Msgbox("Fornecedor "+SA2->A2_COD+"/"+ALLTRIM(SA2->A2_NREDUZ)+" está sem o grupo de compras informado!","Atenção...","ALERT")
-				Endif
-			Endif
-			
-			If lFornec
-				Incproc(SA2->A2_NREDUZ)
-				
-				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-				//³ Verifico arquivos XML duplicados									³
-				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-				DbSelectarea("LS4")
-				DbSetorder(1)
-				Dbgotop()
-				dbseek(SA2->A2_COD+SA2->A2_LOJA+cNota)
-				If !Found()
-					Reclock("LS4",.T.)
-					LS4->NOTA		:= cNota
-					LS4->FORNECEDOR := SA2->A2_COD
-					LS4->LOJA		:= SA2->A2_LOJA
-					MsUnlock()
-					
-					Reclock("LS3",.T.)
-					LS3->EMISSAO  := STOD(cEmissao)
-					LS3->NATOPER  := cNatOp                         // Valdemir 23/02/2013
-					LS3->FORNEC   := SA2->A2_COD
-					LS3->LOJA     := SA2->A2_LOJA
-					LS3->VENDEDOR := SUBSTR(SA2->A2_REPRES,1,30)
-					LS3->TELEFONE := alltrim(SA2->A2_DDD)+" "+alltrim(SUBSTR(SA2->A2_TEL,1,20))
-					LS3->NOME	  := SA2->A2_NREDUZ
-					LS3->XML	  := UPPER(aXML[i])
-					LS3->NOTA	  := cNota
-					LS3->CHAVE    := cChave
-					MsUnlock()
-					lAchou:=.T.
-				Endif
-			Endif
-		Else
-			FRename("\xml\"+lower(ALLTRIM(aXML[i])),"\xml\"+lower(ALLTRIM(aXML[i]))+".dup")
-			__CopyFile("\xml\*.dup","\xml\duplicados\")
-			ferase("\xml\"+lower(ALLTRIM(aXML[i]))+".dup")
-		Endif
-	 Endif
-    Else 
-		// Clientes
-     	XML(2)
+// Carregando arquivos do servidor que ainda não foram importados
+aXML:={}
+ADir(_cDESTXML+"\*.XML",aXML)
 
-		DbSelectarea("SA1")
-		DbSetorder(3)
-		Dbgotop()
-		Dbseek(xFilial("SA1")+_cCNPJ)
-		If Found()
-			
-			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-			//³ Verificando grupo													³
-			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-			//
-			Incproc(SA1->A1_NREDUZ)
-			
-			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-			//³ Verifico arquivos XML duplicados									³
-			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-			DbSelectarea("LS4")
-			DbSetorder(1)
-			Dbgotop()
-			dbseek(SA1->A1_COD+SA1->A1_LOJA+cNota)
-			If !Found()
-				Reclock("LS4",.T.)
-				LS4->NOTA		:= cNota
-				LS4->FORNECEDOR := SA1->A1_COD
-				LS4->LOJA		:= SA1->A1_LOJA
-				MsUnlock()
-				
-				Reclock("LS3",.T.)
-				LS3->EMISSAO  := STOD(cEmissao)
-				LS3->NATOPER  := cNatOp                         // Valdemir 23/02/2013
-				LS3->FORNEC   := SA1->A1_COD
-				LS3->LOJA     := SA1->A1_LOJA
-				LS3->VENDEDOR := SUBSTR(SA1->A1_VEND,1,30)
-				LS3->TELEFONE := alltrim(SA1->A1_DDD)+" "+alltrim(SUBSTR(SA1->A1_TEL,1,20))
-				LS3->NOME	  := SA1->A1_NREDUZ
-				LS3->XML	  := UPPER(aXML[i])
-				LS3->NOTA	  := cNota
-				LS3->CHAVE    := cChave
-				MsUnlock()
-				lAchou:=.T.
-			Endif
-		Else
-			FRename("\xml\"+lower(ALLTRIM(aXML[i])),"\xml\"+lower(ALLTRIM(aXML[i]))+".dup")
-			__CopyFile("\xml\*.dup","\xml\duplicados\")
-			ferase("\xml\"+lower(ALLTRIM(aXML[i]))+".dup")
-		Endif
-    Endif
-Next
+// Carrega variavel de memoria
+cCamSel := _cDESTXML
+cCamLoc := _cDIRXML    
+                                             
+// Valida arquivos XML
+ValidaMoveXML('M',_cDIRXML, _cDESTXML)
+                 
+// Salva XML em arquivos temporarios
+SalveReg(npSelecao, aXML, _cDESTXML)
+                       
+CORRIGE()
 
-Dbselectarea("LS4")
-dbCloseArea("LS4")
-fErase( cArqTrab4+ ".DBF" )
-fErase( cArqTrab4+ OrdBagExt() )
-
+OBRWI:obrowse:refresh()
+OBRWI:obrowse:nAt := 1
+OBRWP:obrowse:refresh()
+OBRWP:obrowse:nAt := 1
+ObjectMethod(oTela,"Refresh()")
 
 Return
 
@@ -5333,6 +5085,22 @@ Static Function ValidEmpresas()
 		    if !EXISTDIR(cPath)   
 		    	nResult := MakeDir(cPath)
 		    Endif 
+		    cPath := "C:\Microsiga\EMP_"+_cEmp+"\"+SM0->M0_CODFIL+"\duplicados"
+		    if !EXISTDIR(cPath)   
+		    	nResult := MakeDir(cPath)
+		    Endif 
+		    cPath := "C:\Microsiga\EMP_"+_cEmp+"\"+SM0->M0_CODFIL+"\corrompidos"
+		    if !EXISTDIR(cPath)   
+		    	nResult := MakeDir(cPath)
+		    Endif 
+		    cPath := "C:\Microsiga\EMP_"+_cEmp+"\"+SM0->M0_CODFIL+"\importados"
+		    if !EXISTDIR(cPath)   
+		    	nResult := MakeDir(cPath)
+		    Endif 
+		    cPath := "C:\Microsiga\EMP_"+_cEmp+"\"+SM0->M0_CODFIL+"\recusadas"
+		    if !EXISTDIR(cPath)   
+		    	nResult := MakeDir(cPath)
+		    Endif 
 		    cPath := "C:\Microsiga\EMP_"+_cEmp+"\"+SM0->M0_CODFIL+"\RET_ARMZ"
 		    if !EXISTDIR(cPath)   
 		    	nResult := MakeDir(cPath)
@@ -5363,6 +5131,22 @@ Static Function ValidEmpresas()
 		While !Eof() .And. (_cEmp = SM0->M0_CODIGO)
 	                  
 		    cPath := "\XML\EMP_"+_cEmp+"\"+SM0->M0_CODFIL
+		    if !EXISTDIR(cPath)   
+		    	nResult := MakeDir(cPath)
+		    Endif 
+		    cPath := "\XML\EMP_"+_cEmp+"\"+SM0->M0_CODFIL+"\duplicados"
+		    if !EXISTDIR(cPath)   
+		    	nResult := MakeDir(cPath)
+		    Endif 
+		    cPath := "\XML\EMP_"+_cEmp+"\"+SM0->M0_CODFIL+"\corrompidos"
+		    if !EXISTDIR(cPath)   
+		    	nResult := MakeDir(cPath)
+		    Endif 
+		    cPath := "\XML\EMP_"+_cEmp+"\"+SM0->M0_CODFIL+"\importados"
+		    if !EXISTDIR(cPath)   
+		    	nResult := MakeDir(cPath)
+		    Endif 
+		    cPath := "\XML\EMP_"+_cEmp+"\"+SM0->M0_CODFIL+"\recusadas"
 		    if !EXISTDIR(cPath)   
 		    	nResult := MakeDir(cPath)
 		    Endif 
@@ -5439,26 +5223,33 @@ Return
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-Static Function ValidaMoveXML(pSelecao)
+Static Function ValidaMoveXML(pSelecao,pLocal,pDest)
 	Local   i, iMOV                   
-	Local _cCNPJ, _cCNPJ2, _cCNPJ3
+	Local _cCNPJ, _cCNPJ2, _cCNPJ3  
+	Local cCaminho   := ""
 	private _oXml    := NIL
 	private cError   := ''
-	private cWarning := ''
-      
+	private cWarning := ''   
+	         
+	if pLocal = nil
+		return
+	endif     
+	
 	aXML:={}                  
 	if pSelecao = nil     
-		ADir(cXML+"\*.XML",aXML)
+		ADir(pLocal+"\*.XML",aXML)
+		cCaminho   := pLocal
 		iMOV := 1    // Move do XML para as pastas
 	else
-		ADir(cSERV+"\*.XML",aXML)
+		ADir(pDest+"*.XML",aXML)
+		cCaminho   := pDest
 		iMOV := 2    // Move da as pasta para \XML
 	endif
 
          
 	For i := 1 To Len(aXML)
 		nXmlStatus := XMLError()
-		cFile	   := cXML+"\"+lower(ALLTRIM(aXML[i]))
+		cFile	   := cCaminho+"\"+lower(ALLTRIM(aXML[i]))
 		oXml 	   := XmlParserFile(cFile,"_",@cError, @cWarning )
 		lTipo	   :=3
 		
@@ -5547,10 +5338,14 @@ Static Function ValidaMoveXML(pSelecao)
 			EndIf
 			
 			// Move arquivos para pasta correspondente no servidor
-			LocMovFil(_cCNPJ2, _cCNPJ3, lower(aXML[i]), iMOV)
+		   //	LocMovFil(_cCNPJ2, _cCNPJ3, lower(aXML[i]), iMOV)
 
 		ENDIF	
 	Next
+	
+	// Ler Configuração Sistema
+	LerConfigura()
+	
 Return
 
 
@@ -5574,18 +5369,18 @@ Static Function LocMovFil(_cCNPJ2, _cCNPJ3, pArqXml, pMov)
 	Local cDE, cPara
 
 	if pMov = 2
-	    //cDE  := "\system\XML\EMP_"+SM0->M0_CODIGO+"\"+SM0->M0_CODFIL
-	    //cAte :=  cXML
-	    cDE  := "\XML\EMP_"+SM0->M0_CODIGO+"\"+SM0->M0_CODFIL+"\"+pArqXml
-	    cPara:= "\XML"
+
+	    cDE  := _cLOCAL+"\"+pArqXml
+	    cPara:= cSERV
 
 		// Move para a pasta
-		//CpyT2S(cDE, cAte, .T.)
-		__CopyFile(cDE, cPara)
+		CpyT2S(cDE, cPara, .T.)
+		//__CopyFile(cDE, cPara)
 		//ferase(cDE)
 	
 		RestArea( aArea )
 		Return	
+
 	Endif	
 	
 	dbSelectArea('SM0')
@@ -5593,15 +5388,15 @@ Static Function LocMovFil(_cCNPJ2, _cCNPJ3, pArqXml, pMov)
 	While !Eof()
 	    // Move os Registros, conforme parametros
 		if pMov = 1
-			cDE   := "\XML\"+pArqXml 
-			cPara := "\XML\"+"EMP_"+SM0->M0_CODIGO+"\"+SM0->M0_CODFIL+"\"
+			cDE   := _cLOCAL+"\"+pArqXml 
+			cPara := cSERV+"\"
 		endif
 
 		if (_cCNPJ2 = SM0->M0_CGC) .or. (_cCNPJ3 = SM0->M0_CGC)       
             
 			// Copia Arquivos para pasta lido
-			__CopyFile(cDE, cPara)
-			//CpyT2S(cDE, cAte, .T.)
+			//__CopyFile(cDE, cPara)
+			CpyT2S(cDE, cPARA, .T.)
 			//ferase(cDE)
 			exit
 		endif
@@ -5609,4 +5404,348 @@ Static Function LocMovFil(_cCNPJ2, _cCNPJ3, pArqXml, pMov)
 	EndDo
 	RestArea( aArea )
 Return
+
+
+
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³LERXML    ºAutor  ³Valdemir Jose       º Data ³  22/05/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Ler Configuracao XML                                       º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                        º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerConfigura()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Lendo o arquivo de configuracao										³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cArqTxt := "\xml\config\cfgxml.txt"
+cBuffer   := ""
+
+IF !File("\xml")
+	msgbox("Não existe o diretório XML no ROOTPATH")
+	Return
+Endif
+IF !File("\xml\config")
+	msgbox("Não existe o diretório CONFIG no diretório \XML")
+	Return
+Endif
+IF !File(cServ+"\importados")
+	msgbox("Não existe o diretório IMPORTADOS no diretório \XML")
+	Return
+Endif
+IF !File(cServ+"\duplicados")
+	msgbox("Não existe o diretório DUPLICADOS no diretório \XML")
+	Return
+Endif
+IF !File(cServ+"\recusadas")
+	msgbox("Não existe o diretório RECUSADAS no diretório \XML")
+	Return
+Endif
+IF !File(cServ+"\corrompidos")
+	msgbox("Não existe o diretório CORROMPIDOS no diretório \XML")
+	Return
+Endif
+
+cSerie   :=''
+cEspecie :=''
+cAlmox   :=''
+cUnidades:=''
+cPedCom  :=.F.
+cNDF     :=.F.
+cAlmoPed :=space(02)
+cZeros:=.F.
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Analisando configuracoes da rotina									³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If File(cArqTxt)
+	FT_FUSE(cArqTxt)
+	FT_FGOTOP()
+	ProcRegua(FT_FLASTREC())
+	
+	While !FT_FEOF()
+		cBuffer := FT_FREADLN()
+		
+		If UPPER(SUBSTR(cBuffer,1,9))=="EMAIL"+SM0->M0_CODIGO+SM0->M0_CODFIL
+			xEMAILREC:=lower(ALLTRIM(SUBSTR(cBuffer,11,400)))
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,3))=="POP"
+			xPOP:=lower(ALLTRIM(SUBSTR(cBuffer,5,400)))
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,5))=="CONTA"
+			xCONTA:=lower(ALLTRIM(SUBSTR(cBuffer,7,400)))
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,5))=="SENHA"
+			xSENHA:=lower(ALLTRIM(SUBSTR(cBuffer,7,400)))
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,4))==SM0->M0_CODIGO+SM0->M0_CODFIL
+			cSerie:=UPPER(SUBSTR(cBuffer,6,3))
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,7))=="ESP"+SM0->M0_CODIGO+SM0->M0_CODFIL
+			cEspecie:=UPPER(SUBSTR(cBuffer,9,5))
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,5))=="S"+SM0->M0_CODIGO+SM0->M0_CODFIL
+			cAlmox:=UPPER(SUBSTR(cBuffer,7,2))
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,2))=="UM"
+			cUnidades:=ALLTRIM(UPPER(SUBSTR(cBuffer,4,400)))
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,4))=="LOGO"
+			cLogo:=ALLTRIM(UPPER(SUBSTR(cBuffer,6,200)))+space(200)
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,5))=="P"+SM0->M0_CODIGO+SM0->M0_CODFIL
+			cAlmoPed:=ALLTRIM(UPPER(SUBSTR(cBuffer,7,2)))
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,6))=="PEDIDO"
+			cPedCom:=.T.
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,3))=="NDF"
+			cNDF:=.T.
+		Endif
+		If UPPER(SUBSTR(cBuffer,1,7))=="NFZEROS"
+			cZeros:=.T.
+		Endif
+		FT_FSKIP()
+	EndDo
+	FT_FUSE()
+Else
+	Msgbox("Arquivo de configuracao CFGXML.TXT não encontrado no diretório \XML\CONFIG")
+	Return
+Endif
+
+cSerieNF := cSerie
+
+If Empty(cUnidades)
+	Msgbox("Favor informar as Unidades de medidas fracionadas!")
+	Return
+Endif
+
+Return
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³LERXML    ºAutor  ³Valdemir Jose       º Data ³  22/05/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Salva Registro nas Tabelas TEmporarias                     º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                        º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function SalveReg(npSelecao,aXML, pDest)
+Local i := 0
+                        
+Procregua(len(aXML))                         
+For i:=1 to len(aXML)
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Dados do XML														³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	IF (npSelecao = 1) .OR. (npSelecao = 2) .OR. (npSelecao = 4)
+
+     XML(,aXML[i], pDest)
+
+	 DbSelectarea("LS3")
+	 Dbsetorder(1)
+	 dbgotop()
+	 Dbseek(cChave)         
+         
+     
+	 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	 //³ Fornecedor														     ³
+	 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	 If !Empty(_cCNPJ)     
+		DbSelectarea("SA2")
+		DbSetorder(3)
+		Dbgotop()
+		Dbseek(xFilial("SA2")+_cCNPJ)
+		If Found()
+			
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Verificando grupo													³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			lFornec:=.T.
+			If !Empty(_cOpcao) .and. alltrim(_cOpcao)<>"TODOS"
+				If ALLTRIM(SA2->A2_GRPCOM)==_cOpcao
+					lFornec:=.T.
+				Else
+					lFornec:=.F.
+				Endif
+				
+				If Empty(SA2->A2_GRPCOM)
+					Msgbox("Fornecedor "+SA2->A2_COD+"/"+ALLTRIM(SA2->A2_NREDUZ)+" está sem o grupo de compras informado!","Atenção...","ALERT")
+				Endif
+			Endif
+			
+			If lFornec
+				Incproc(SA2->A2_NREDUZ)
+				
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Verifico arquivos XML duplicados									³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				DbSelectarea("LS4")
+				DbSetorder(1)
+				Dbgotop()
+				dbseek(SA2->A2_COD+SA2->A2_LOJA+cNota)
+				If !Found()
+					Reclock("LS4",.T.)
+					LS4->NOTA		:= cNota
+					LS4->FORNECEDOR := SA2->A2_COD
+					LS4->LOJA		:= SA2->A2_LOJA
+					MsUnlock()
+					
+					Reclock("LS3",.T.)
+					LS3->EMISSAO  := STOD(cEmissao)
+					LS3->NATOPER  := cNatOp                         // Valdemir 23/02/2013
+					LS3->FORNEC   := SA2->A2_COD
+					LS3->LOJA     := SA2->A2_LOJA
+					LS3->VENDEDOR := SUBSTR(SA2->A2_REPRES,1,30)
+					LS3->TELEFONE := alltrim(SA2->A2_DDD)+" "+alltrim(SUBSTR(SA2->A2_TEL,1,20))
+					LS3->NOME	  := SA2->A2_NREDUZ
+					LS3->XML	  := UPPER(aXML[i])
+					LS3->NOTA	  := cNota
+					LS3->CHAVE    := cChave
+					MsUnlock()
+					lAchou:=.T.
+				Endif
+			Endif
+		Else
+			FRename(pDest+"\"+lower(ALLTRIM(aXML[i])),pDest+"\"+lower(ALLTRIM(aXML[i]))+".dup")
+			__CopyFile(pDest+"\*.dup", "\xml\EMP_"+_cEmp+"\"+cFilAnt+"\duplicados\")
+			ferase(pDest+"\*.dup")
+		Endif
+	 Endif
+    Else 
+		// Clientes
+     	XML(2,aXML[i], pDest)
+
+		DbSelectarea("SA1")
+		DbSetorder(3)
+		Dbgotop()
+		Dbseek(xFilial("SA1")+_cCNPJ)
+		If Found()
+			
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Verificando grupo													³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			//
+			Incproc(SA1->A1_NREDUZ)
+			
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Verifico arquivos XML duplicados									³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			DbSelectarea("LS4")
+			DbSetorder(1)
+			Dbgotop()
+			dbseek(SA1->A1_COD+SA1->A1_LOJA+cNota)
+			If !Found()
+				Reclock("LS4",.T.)
+				LS4->NOTA		:= cNota
+				LS4->FORNECEDOR := SA1->A1_COD
+				LS4->LOJA		:= SA1->A1_LOJA
+				MsUnlock()
+				
+				Reclock("LS3",.T.)
+				LS3->EMISSAO  := STOD(cEmissao)
+				LS3->NATOPER  := cNatOp                         // Valdemir 23/02/2013
+				LS3->FORNEC   := SA1->A1_COD
+				LS3->LOJA     := SA1->A1_LOJA
+				LS3->VENDEDOR := SUBSTR(SA1->A1_VEND,1,30)
+				LS3->TELEFONE := alltrim(SA1->A1_DDD)+" "+alltrim(SUBSTR(SA1->A1_TEL,1,20))
+				LS3->NOME	  := SA1->A1_NREDUZ
+				LS3->XML	  := UPPER(aXML[i])
+				LS3->NOTA	  := cNota
+				LS3->CHAVE    := cChave
+				MsUnlock()
+				lAchou:=.T.
+			Endif
+		Else
+			FRename(pDest+"\"+lower(ALLTRIM(aXML[i])), pDest+"\"+lower(ALLTRIM(aXML[i]))+".dup")
+			__CopyFile(pDest+"\*.dup", "\xml\EMP_"+cEmpAnt+"\"+cFilAnt+"\duplicados\")
+			ferase(pDest+"\"+lower(ALLTRIM(aXML[i]))+".dup")
+		Endif
+    Endif
+    PROCESS()
+Next
+
+DbSelectarea("LS1")
+Dbsetorder(1)
+Dbgotop()
+
+  
+Return
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³LERXML    ºAutor  ³ Valdemir Jose      º Data ³  24/05/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Finaliza Tela da Rotina de importação XML                  º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                        º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function SairTela() 
+      
+ IF Select('LS1') > 0      
+	Dbselectarea("LS1")
+	dbCloseArea("LS1")
+	fErase( cArqTrab+ ".DBF" )
+	fErase( cArqTrab+ OrdBagExt() )
+ Endif
+ If Select('LS2') > 0
+	Dbselectarea("LS2")
+	dbCloseArea("LS2")
+	fErase( cArqTrab2+ ".DBF" )
+	fErase( cArqTrab2+ OrdBagExt() )
+ Endif
+ if Select('LS3') > 0
+	Dbselectarea("LS3")
+	dbCloseArea("LS3")
+	fErase( cArqTrab3+ ".DBF" )
+	fErase( cArqTrab3+ OrdBagExt() )
+ Endif
+ if Select('LS4') > 0
+	Dbselectarea("LS4")
+	dbCloseArea("LS4")
+	fErase( cArqTrab4+ ".DBF" )
+	fErase( cArqTrab4+ OrdBagExt() )
+ Endif
+ If Select('LS5') > 0
+	Dbselectarea("LS5")
+	dbCloseArea("LS5")
+	fErase( cArqTrab5+ ".DBF" )
+	fErase( cArqTrab5+ OrdBagExt() )
+ Endif
+ 
+ //oTela:End() 
+ //FreeObj(oTela)
+
+Return
+
+
+
 
