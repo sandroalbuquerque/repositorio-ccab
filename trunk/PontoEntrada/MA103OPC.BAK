@@ -1,0 +1,7 @@
+User Function MA103OPC
+	Local aRet := {}
+	Public _nMoeda
+	Public _nTxMoeda
+	Public lEdita := .T.
+	
+Return aRET
