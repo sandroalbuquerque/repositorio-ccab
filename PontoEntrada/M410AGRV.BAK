@@ -1,0 +1,1426 @@
+#Include "RwMake.ch"
+#Include "TopConn.ch"
+#Include "Ap5Mail.ch"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³M410AGRV  ºAutor  ³Samir Maia          º Data ³  05/09/08   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Workflow do pedido de venda.                                º±±
+±±º          ³                                                            º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ Cliente CCAB                                               º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+User Function M410AGRV()
+
+Local cMsg      := ""
+Local cTitulo
+Local lResult
+Local cEmail
+Local cMail1
+Local cConteudo := ""
+Local nOpcao    := PARAMIXB[1]
+Local nPosProd  := aScan(aHeader,{|x| Upper(AllTrim(x[2])) == "C6_PRODUTO"})
+Local nPosItem  := aScan(aHeader,{|x| Upper(AllTrim(x[2])) == "C6_ITEM"})
+Local lItemExcl := .F.
+Local cNumPrePV := ""
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicio da Personalizacao Por EDGAR SERRANO - Personalizacao para Pedidos Conta e Ordem          ³
+If l410Auto
+	Return .T.
+EndIf
+//³ Fim da Personalizacao Por EDGAR SERRANO - Personalizacao para Pedidos Conta e Ordem             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicio da Personalizacao Por FELIPE MELO - Personalizacao para Pré-Pedidos                      ³
+
+//Tratar alteração
+If AllTrim(Str(nOpcao)) == "2" .And.  Altera .And. !Inclui
+	SZA->(DbSetOrder(2))
+	SZ3->(DbSetOrder(1))
+	lItemExcl := .F.
+	cNumPrePV := ""
+	For x:=1 To Len(aCols)
+		//Analisa somente itens deletados
+		If aCols[x][Len(aHeader)+1]
+			If SZA->(DbSeek(xFilial("SZA")+cFilAnt+M->C5_NUM+aCols[x][nPosItem]))
+				//Trata status
+				If SZ2->(DbSeek(xFilial("SZ2")+SZA->ZA_PRENUM))
+					lItemExcl := .T.
+					cNumPrePV := SZA->ZA_PRENUM
+					RecLock("SZ2",.F.)
+					SZ2->Z2_LIBEROK := " "
+					SZ2->(MsUnLock())
+				EndIf
+				
+				If SZ3->(DbSeek(xFilial("SZ3")+SZA->ZA_PRENUM+SZA->ZA_PREITEM))
+					
+					lItemExcl := .T.
+					cNumPrePV := SZA->ZA_PRENUM
+					//Trata itens pre-pedido
+					Reclock("SZ3",.F.)
+					SZ3->Z3_QTDLIB -= SZA->ZA_QTDLIBE
+					SZ3->Z3_QTDPEN += SZA->ZA_QTDLIBE
+					SZ3->(MsUnlock())
+					
+					//Trata itens movimentados
+					RegToMemory("SZA")
+					aStruSZA := SZA->(DbStruct())
+					RecLock("SZA",.T.)
+					For y:=1 To Len(aStruSZA)
+						&("SZA->"+aStruSZA[y][1]) := &("M->"+aStruSZA[y][1])
+					Next y
+					SZA->ZA_QTDLIBE := -1*SZA->ZA_QTDLIBE
+					SZA->(MsUnlock())
+				EndIf
+			EndIf
+		EndIf
+	Next x
+EndIf
+
+//Tratar exclusão
+If AllTrim(Str(nOpcao)) == "3" .And. !Altera .And. !Inclui
+	SZA->(DbSetOrder(2))
+	SZ3->(DbSetOrder(1))
+	lItemExcl := .F.
+	cNumPrePV := ""
+	For x:=1 To Len(aCols)
+		If SZA->(DbSeek(xFilial("SZA")+cFilAnt+M->C5_NUM+aCols[x][nPosItem]))
+			//Trata status
+			If SZ2->(DbSeek(xFilial("SZ2")+SZA->ZA_PRENUM))
+				lItemExcl := .T.
+				cNumPrePV := SZA->ZA_PRENUM
+				RecLock("SZ2",.F.)
+				SZ2->Z2_LIBEROK := " "
+				SZ2->(MsUnLock())
+			EndIf
+			
+			If SZ3->(DbSeek(xFilial("SZ3")+SZA->ZA_PRENUM+SZA->ZA_PREITEM))
+				If SZA->ZA_PRODUTO==SZ3->Z3_PRODUTO .OR. Posicione("SB1",1,xFilial("SB1")+SZ3->Z3_PRODUTO,"B1_TIPO")=="AT"
+					
+					lItemExcl := .T.
+					cNumPrePV := SZA->ZA_PRENUM
+					//Trata itens pre-pedido
+					Reclock("SZ3",.F.)
+					SZ3->Z3_QTDLIB -= SZA->ZA_QTDLIBE
+					SZ3->Z3_QTDPEN += SZA->ZA_QTDLIBE
+					SZ3->(MsUnlock())
+					
+					//Trata itens movimentados
+					RegToMemory("SZA")
+					aStruSZA := SZA->(DbStruct())
+					RecLock("SZA",.T.)
+					For y:=1 To Len(aStruSZA)
+						&("SZA->"+aStruSZA[y][1]) := &("M->"+aStruSZA[y][1])
+					Next y
+					SZA->ZA_QTDLIBE := -1*SZA->ZA_QTDLIBE
+					SZA->(MsUnlock())
+				Endif
+			EndIf
+		EndIf
+	Next x
+EndIf
+
+//Trata status - Verificar todos os itens
+If SZA->(DbSeek(xFilial("SZA")+cFilAnt+M->C5_NUM))
+	If SZ3->(DbSeek(xFilial("SZ3")+SZA->ZA_PRENUM))
+		lHouveLib := .F.
+		lTemPende := .F.
+		lBloqTemp := .F.
+		While SZ3->(!Eof()) .And.  SZ3->(Z3_FILIAL+Z3_NUM) == xFilial("SZ3")+SZA->ZA_PRENUM
+			If AllTrim(SZ3->Z3_BLQ) $ "R/S"
+				lHouveLib := .T.
+			EndIf
+			If SZ3->Z3_QTDVEN != SZ3->Z3_QTDPEN
+				lHouveLib := .T.
+			EndIf
+			If SZ3->Z3_QTDVEN == SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA == "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C")
+				lTemPende := .T.
+			EndIf
+			If SZ3->Z3_QTDVEN != SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA == "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C") .And. SZ3->Z3_QTDPEN > 0
+				lTemPende := .T.
+			EndIf
+			If SZ3->Z3_QTDVEN == SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA != "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C")
+				lBloqTemp := .T.
+			EndIf
+			If SZ3->Z3_QTDVEN != SZ3->Z3_QTDPEN .And. SZ3->Z3_XLIBERA != "1" .And. !(AllTrim(SZ3->Z3_BLQ) $ "R/S/C") .And. SZ3->Z3_QTDPEN > 0
+				lBloqTemp := .T.
+			EndIf
+			
+			SZ3->(DbSkip())
+		End
+		If SZ2->(DbSeek(xFilial("SZ2")+SZA->ZA_PRENUM))
+			RecLock("SZ2",.F.)
+			If lHouveLib
+				SZ2->Z2_BLQ     := IIf(SZ2->Z2_BLQ=="0","0","1")
+				If lTemPende .Or. lBloqTemp
+					SZ2->Z2_LIBEROK := " "
+				Else
+					SZ2->Z2_LIBEROK := "1"
+				EndIf
+			Else
+				SZ2->Z2_LIBEROK := " "                                                                                                                       
+				SZ2->Z2_BLQ     := IIf(SZ2->Z2_BLQ=="0","0"," ")
+			EndIf
+			SZ2->(MsUnLock())
+		EndIf
+	EndIf
+	If lItemExcl
+		U_EspelhoPV(xFilial("SZ3"),cNumPrePV,'A',,.T.)
+	EndIf
+EndIf
+
+//³ Fim da Personalizacao Por FELIPE MELO - Personalizacao para Pré-Pedidos                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+dbSelectArea("SE4")
+dbSetOrder(1)
+dbGoTop()
+dbSeek(xFilial("SE4")+ M->C5_CONDPAG)
+If inclui
+	If !Empty(SE4->E4_XEMAIL).and.!Empty(SE4->E4_XFORMUL) .and. M->C5_TIPO="N" .AND. Altera == .F.
+		
+		cEmail:=SE4->E4_XEMAIL
+		cmail1:=SE4->E4_XMAIL1
+		cConteudo:=SE4->E4_XFORMUL
+		
+		
+		/*
+		ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+		±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+		± Montando o titulo do email												±
+		±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+		ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+		*/
+		
+		If inclui == .T.
+			cTitulo := " Pedido de venda "+ALLTRIM(M->C5_NUM)+" incluido."
+			cMensage := "incluido"
+			cMensag1 := "Aviso de Pedido com Recebimento Antecipado"
+			cMensag2 := "o qual necessita realizar pagamento antecipado para liberacao do faturamento."
+			
+		EndIf
+		If altera == .T.
+			cTitulo := "Pedido de Venda "+ALLTRIM(M->C5_NUM)+" alterado."
+			cMensage := "alterado"
+			cMensag1 := "Aviso de Pedido com Recebimento Antecipado"
+			cMensag2 := "."
+		EndIf
+		If  altera == .F. .and. inclui == .F.
+			cTitulo := "Pedido de Venda "+ALLTRIM(M->C5_NUM)+" excluido."
+			cMensage := "excluido"
+			cMensag1 := "Aviso de Exclusao de Pedido com Recebimento Antecipado"
+			cMensag2 := "."
+		EndIf
+		
+		
+		//cMsg := cMsgA+CHR(13)+ CHR(10) + CHR(13) + CHR(10) +CHR(13)+ CHR(10) + CHR(13) + CHR(10) +CHR(13)+ CHR(10) + CHR(13) + CHR(10) +CHR(13)+ CHR(10) + CHR(13) + CHR(10) + cMsgB
+		
+		
+		
+		// montar assunto do email
+		// -- Verifica o que esta sendo feito e coloca o respectivo conteuno na variavel a ser usada no comando "SUBJECT" do SENDMAIL
+		
+		// monta destinatarios do e-mail de cadastro de pedidos
+		// -- Verifica condicao de pagamento e coloca os endereços na variavel a ser usada no comando "TO" do sendmail
+		
+		// montar mensagem do e-mail
+		// -- Deve montar a mensagem do e-mail de acordo com a formula cadastrada na condição de pagamento em uma variavel para utilizar no comando "BODY" do sendmail
+		/*
+		ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+		±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+		± Envio do e-mail.															±
+		±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+		ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+		*/    
+		
+		// Adicionado por Valdemir jose 06/03/2013
+		_cEmail := ValidaEmail(Alltrim(cEmail)+';'+AllTrim(cmail1))
+		
+		
+		dbSelectArea("SE4")
+		dbSetOrder(1)
+		dbGoTop()
+		dbSeek(xFilial("SE4")+ M->C5_CONDPAG)
+		
+		If !Empty(SE4->E4_XEMAIL).and.!Empty(SE4->E4_XFORMUL)
+			CONNECT SMTP;
+			SERVER		GetMV("MV_RELSERV")	; 	// Nome do servidor de e-mail
+			ACCOUNT		GetMV("MV_RELACNT")	; 	// Nome da conta a ser usada no e-mail
+			PASSWORD	GetMV("MV_RELPSW") 	; 	// Senha
+			RESULT   lResult             	    // Resultado da tentativa de conexão
+			lResult := MailAuth(GetMV("MV_RELACNT"),GetMV("MV_RELPSW"))
+			
+			If lResult
+				SEND MAIL 					   	 ;
+				FROM 		GetMV("MV_RELACNT")	 ;   // Remetente
+				TO 		    _cEmail           //Alltrim(cEmail)+';'+AllTrim(cmail1); // emails da condicao de pagamento - "Juliano.souza@agilitysolutions.com.br;julianojr_souza@hotmail.com"
+				SUBJECT 	cTitulo 	 ;   // Titulo
+				BODY 	  &(cConteudo); //	definir a mensagem no corpo do programa ;   // Mensagem
+				RESULT		lresult					// Resultado da tentativa de conexao
+			EndIf
+			
+			DISCONNECT SMTP SERVER
+		EndIf
+		
+		If !lResult
+			MsgAlert("Nao foi possivel enviar o email!")
+		Endif
+	Endif
+EndIf
+Return
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³          ºAutor  ³Samir Maia          º Data ³  05/09/08   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Programa para gerar o html com o conteudo do e-mail.        º±±
+±±º          ³                                                            º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ Cliente CCAB                                               º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+
+
+User Function GeraHTM()
+
+Local cmsg:=""
+Local cCliente
+Local cXclient
+Local nMoeda
+Local nValor  :=0
+
+//If inclui
+If  altera == .F.  .and. inclui == .F.
+	
+	dbSelectArea("SC5")
+	dbSetOrder(1)
+	dbSeek(xFilial("SC5")+ SC5->C5_NUM)
+	
+	cCliente:= ALLTRIM(SC5->C5_CLIENTE)
+	cXclient:= ALLTRIM(SC5->C5_XCLIENT)
+	nMoeda:= Str(SC5->C5_MOEDA,1,0)
+	
+	
+	dbSelectArea("SC6")
+	dbSetOrder(1)
+	dbGoTop()
+	dbSeek(xFilial("SC6")+ SC5->C5_NUM)
+	While !EOF() .and. SC5->C5_NUM == SC6->C6_NUM
+		
+		// Obtém o código do produto
+		
+		//For nX:=1 to Len(aCols)
+		//	If !aCols[nX,Len(aCols[nX])]
+		nValor:=nValor+SC6->C6_VALOR
+		//EndIf
+		//Next
+		SC6->(DBSKIP())
+	END
+	cMensage := "excluido"
+	
+	cmsg:="<head>"
+	cmsg+="<meta http-equiv=Content-Type content='text/html; charset=us-ascii'>"
+	cmsg+="<meta name=ProgId content=Word.Document>"
+	cmsg+="<meta name=Generator content='Microsoft Word 12'>"
+	cmsg+="<meta name=Originator content='Microsoft Word 12'>"
+	cmsg+="<link rel=File-List href='CCABAgroSA_arquivos/filelist.xml'>"
+	cmsg+="<!--[if gte mso 9]><xml>"
+	cmsg+=" <o:DocumentProperties>"
+	cmsg+="  <o:Author>Armando P. Waiteman</o:Author>"
+	cmsg+="  <o:Template>Normal</o:Template>"
+	cmsg+="  <o:LastAuthor>Armando P. Waiteman</o:LastAuthor>"
+	cmsg+="  <o:Revision>2</o:Revision>"
+	cmsg+="  <o:TotalTime>5</o:TotalTime>"
+	cmsg+="  <o:Created>2008-09-04T18:02:00Z</o:Created>"
+	cmsg+="  <o:LastSaved>2008-09-04T18:02:00Z</o:LastSaved>"
+	cmsg+="  <o:Pages>1</o:Pages>"
+	cmsg+="  <o:Words>56</o:Words>"
+	cmsg+="  <o:Characters>304</o:Characters>"
+	cmsg+="  <o:Company>Bla</o:Company>"
+	cmsg+="  <o:Lines>2</o:Lines>"
+	cmsg+="  <o:Paragraphs>1</o:Paragraphs>"
+	cmsg+="  <o:CharactersWithSpaces>359</o:CharactersWithSpaces>"
+	cmsg+="  <o:Version>12.00</o:Version>"
+	cmsg+=" </o:DocumentProperties>"
+	cmsg+="</xml><![endif]-->"
+	cmsg+="<link rel=themeData href='CCABAgroSA_arquivos/themedata.thmx'>"
+	cmsg+="<link rel=colorSchemeMapping href='CCABAgroSA_arquivos/colorschememapping.xml'>"
+	cmsg+="<!--[if gte mso 9]><xml>"
+	cmsg+=" <w:WordDocument>        "
+	cmsg+="  <w:SpellingState>Clean</w:SpellingState>"
+	cmsg+="  <w:GrammarState>Clean</w:GrammarState>"
+	cmsg+="  <w:TrackMoves>false</w:TrackMoves>"
+	cmsg+="  <w:TrackFormatting/>"
+	cmsg+="  <w:HyphenationZone>21</w:HyphenationZone>"
+	cmsg+="  <w:PunctuationKerning/>"
+	cmsg+="  <w:ValidateAgainstSchemas/>"
+	cmsg+="  <w:SaveIfXMLInvalid>false</w:SaveIfXMLInvalid>"
+	cmsg+="  <w:IgnoreMixedContent>false</w:IgnoreMixedContent>"
+	cmsg+="  <w:AlwaysShowPlaceholderText>false</w:AlwaysShowPlaceholderText>"
+	cmsg+="  <w:DoNotPromoteQF/>"
+	cmsg+="  <w:LidThemeOther>PT-BR</w:LidThemeOther>"
+	cmsg+="  <w:LidThemeAsian>X-NONE</w:LidThemeAsian>"
+	cmsg+="  <w:LidThemeComplexScript>X-NONE</w:LidThemeComplexScript>"
+	cmsg+="  <w:Compatibility>"
+	cmsg+="   <w:BreakWrappedTables/>"
+	cmsg+="   <w:SnapToGridInCell/>"
+	cmsg+="   <w:WrapTextWithPunct/>"
+	cmsg+="   <w:UseAsianBreakRules/>"
+	cmsg+="   <w:DontGrowAutofit/>"
+	cmsg+="   <w:SplitPgBreakAndParaMark/>"
+	cmsg+="   <w:DontVertAlignCellWithSp/>"
+	cmsg+="   <w:DontBreakConstrainedForcedTables/>"
+	cmsg+="   <w:DontVertAlignInTxbx/>"
+	cmsg+="   <w:Word11KerningPairs/>"
+	cmsg+="   <w:CachedColBalance/>"
+	cmsg+="  </w:Compatibility>"
+	cmsg+="  <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>"
+	cmsg+="  <m:mathPr>"
+	cmsg+="   <m:mathFont m:val='Cambria Math'/>"
+	cmsg+="   <m:brkBin m:val='before'/>"
+	cmsg+="   <m:brkBinSub m:val='&#45;-'/>"
+	cmsg+="   <m:smallFrac m:val='off'/>"
+	cmsg+="   <m:dispDef/>"
+	cmsg+="   <m:lMargin m:val='0'/>"
+	cmsg+="   <m:rMargin m:val='0'/>"
+	cmsg+="   <m:defJc m:val='centerGroup'/>"
+	cmsg+="   <m:wrapIndent m:val='1440'/>"
+	cmsg+="   <m:intLim m:val='subSup'/>"
+	cmsg+="   <m:naryLim m:val='undOvr'/>"
+	cmsg+="  </m:mathPr></w:WordDocument>"
+	cmsg+="</xml><![endif]--><!--[if gte mso 9]><xml>"
+	cmsg+=" <w:LatentStyles DefLockedState='false' DefUnhideWhenUsed='true'"
+	cmsg+="  DefSemiHidden='true' DefQFormat='false' DefPriority='99'"
+	cmsg+="  LatentStyleCount='267'>"
+	cmsg+="  <w:LsdException Locked='false' Priority='0' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Normal'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='heading 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 7'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 8'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 9'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 7'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 8'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 9'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='35' QFormat='true' Name='caption'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='10' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Title'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='1' Name='Default Paragraph Font'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='11' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Subtitle'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='22' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Strong'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='20' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Emphasis'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='59' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Table Grid'/>"
+	cmsg+="  <w:LsdException Locked='false' UnhideWhenUsed='false' Name='Placeholder Text'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='1' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='No Spacing'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' UnhideWhenUsed='false' Name='Revision'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='34' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='List Paragraph'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='29' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Quote'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='30' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Intense Quote'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 6'/>"
+	cmsg+=" <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='19' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Subtle Emphasis'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='21' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Intense Emphasis'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='31' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Subtle Reference'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='32' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Intense Reference'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='33' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Book Title'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='37' Name='Bibliography'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' QFormat='true' Name='TOC Heading'/>"
+	cmsg+=" </w:LatentStyles>"
+	cmsg+="</xml><![endif]-->"
+	cmsg+="<style>"
+	cmsg+="<!--"
+	cmsg+=" /* Font Definitions */"
+	cmsg+=" @font-face"
+	cmsg+="	{font-family:'Cambria Math';"
+	cmsg+="	panose-1:2 4 5 3 5 4 6 3 2 4;"
+	cmsg+="	mso-font-charset:0;"
+	cmsg+="	mso-generic-font-family:roman;"
+	cmsg+="	mso-font-pitch:variable;"
+	cmsg+="	mso-font-signature:-1610611985 1107304683 0 0 159 0;}"
+	cmsg+="@font-face"
+	cmsg+="	{font-family:Calibri;"
+	cmsg+="	panose-1:2 15 5 2 2 2 4 3 2 4;"
+	cmsg+="	mso-font-charset:0;"
+	cmsg+="	mso-generic-font-family:swiss;"
+	cmsg+="	mso-font-pitch:variable;"
+	cmsg+="	mso-font-signature:-1610611985 1073750139 0 0 159 0;}"
+	cmsg+=" /* Style Definitions */"
+	cmsg+=" p.MsoNormal, li.MsoNormal, div.MsoNormal"
+	cmsg+="	{mso-style-unhide:no;"
+	cmsg+="	mso-style-qformat:yes;"
+	cmsg+="	mso-style-parent:'';"
+	cmsg+="	margin-top:0cm;"
+	cmsg+="	margin-right:0cm;"
+	cmsg+="	margin-bottom:10.0pt;"
+	cmsg+="	margin-left:0cm;"
+	cmsg+="	line-height:115%;"
+	cmsg+="	mso-pagination:widow-orphan;"
+	cmsg+="	font-size:11.0pt;"
+	cmsg+="	font-family:'Calibri','sans-serif';"
+	cmsg+="	mso-ascii-font-family:Calibri;"
+	cmsg+="	mso-ascii-theme-font:minor-latin;"
+	cmsg+="	mso-fareast-font-family:Calibri;"
+	cmsg+="	mso-fareast-theme-font:minor-latin;"
+	cmsg+="	mso-hansi-font-family:Calibri;"
+	cmsg+="	mso-hansi-theme-font:minor-latin;"
+	cmsg+="	mso-bidi-font-family:'Times New Roman';"
+	cmsg+="	mso-bidi-theme-font:minor-bidi;"
+	cmsg+="	mso-fareast-language:EN-US;}"
+	cmsg+="span.GramE"
+	cmsg+="	{mso-style-name:'';"
+	cmsg+="	mso-gram-e:yes;}"
+	cmsg+=".MsoChpDefault"
+	cmsg+="	{mso-style-type:export-only;"
+	cmsg+="	mso-default-props:yes;"
+	cmsg+="	font-size:10.0pt;"
+	cmsg+="	mso-ansi-font-size:10.0pt;"
+	cmsg+="	mso-bidi-font-size:10.0pt;"
+	cmsg+="	mso-ascii-font-family:Calibri;"
+	cmsg+="	mso-ascii-theme-font:minor-latin;"
+	cmsg+="	mso-fareast-font-family:Calibri;"
+	cmsg+="	mso-fareast-theme-font:minor-latin;"
+	cmsg+="	mso-hansi-font-family:Calibri;"
+	cmsg+="	mso-hansi-theme-font:minor-latin;"
+	cmsg+="	mso-bidi-font-family:'Times New Roman';"
+	cmsg+="	mso-bidi-theme-font:minor-bidi;"
+	cmsg+="	mso-fareast-language:EN-US;}"
+	cmsg+="@page Section1"
+	cmsg+="	{size:595.3pt 841.9pt;"
+	cmsg+="	margin:72.0pt 72.0pt 72.0pt 72.0pt;"
+	cmsg+="	mso-header-margin:35.4pt;"
+	cmsg+="	mso-footer-margin:35.4pt;"
+	cmsg+="	mso-paper-source:0;}"
+	cmsg+="div.Section1"
+	cmsg+="	{page:Section1;}"
+	cmsg+="-->      "
+	cmsg+="</style>"
+	cmsg+="<!--[if gte mso 10]>"
+	cmsg+="<style>"
+	cmsg+=" /* Style Definitions */"
+	cmsg+=" table.MsoNormalTable"
+	cmsg+="	{mso-style-name:'Tabela normal';"
+	cmsg+="	mso-tstyle-rowband-size:0;"
+	cmsg+="	mso-tstyle-colband-size:0;"
+	cmsg+="	mso-style-noshow:yes;"
+	cmsg+="	mso-style-priority:99;"
+	cmsg+="	mso-style-qformat:yes;"
+	cmsg+="	mso-style-parent:'';"
+	cmsg+="	mso-padding-alt:0cm 5.4pt 0cm 5.4pt;"
+	cmsg+="	mso-para-margin:0cm;"
+	cmsg+="	mso-para-margin-bottom:.0001pt;"
+	cmsg+="	mso-pagination:widow-orphan;"
+	cmsg+="	font-size:10.0pt;"
+	cmsg+="	font-family:'Calibri','sans-serif';"
+	cmsg+="	mso-ascii-font-family:Calibri;"
+	cmsg+="	mso-ascii-theme-font:minor-latin;"
+	cmsg+="	mso-hansi-font-family:Calibri;"
+	cmsg+="	mso-hansi-theme-font:minor-latin;"
+	cmsg+="	mso-fareast-language:EN-US;}"
+	cmsg+="</style>"
+	cmsg+="<![endif]--><!--[if gte mso 9]><xml>"
+	cmsg+=" <o:shapedefaults v:ext='edit' spidmax='4098'/>"
+	cmsg+="</xml><![endif]--><!--[if gte mso 9]><xml>"
+	cmsg+=" <o:shapelayout v:ext='edit'>"
+	cmsg+="  <o:idmap v:ext='edit' data='1'/>"
+	cmsg+=" </o:shapelayout></xml><![endif]-->"
+	cmsg+="</head>"
+	cmsg+=""
+	cmsg+="<body lang=PT-BR style='tab-interval:35.4pt'>"
+	cmsg+=""
+	cmsg+="<div class=Section1>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal align=center style='text-align:center'><b style='mso-bidi-font-weight:"
+	cmsg+="normal'><span style='font-size:20.0pt;mso-bidi-font-size:11.0pt;line-height:"
+	cmsg+="115%'>CCAB Agro SA<o:p></o:p></span></b></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal align=center style='text-align:center'><b style='mso-bidi-font-weight:"
+	cmsg+="normal'><span style='font-size:20.0pt;mso-bidi-font-size:11.0pt;line-height:"
+	cmsg+="115%'>"+cMensag1+"<o:p></o:p></span></b></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><b style='mso-bidi-font-weight:"
+	cmsg+="normal'><span style='font-size:20.0pt;mso-bidi-font-size:11.0pt;line-height:"
+	cmsg+="115%'><o:p>&nbsp;</o:p></span></b></p>"
+	cmsg+=""
+	cmsg+="<style type='text/css'>"
+	cmsg+="<!--"
+	cmsg+=".style1 {"
+	cmsg+="	font-size: 12px;"
+	cmsg+="	font-weight: bold;"
+	cmsg+="}"
+	cmsg+="-->"
+	cmsg+="</style>"
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;                                            "
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'>A equipe de vendas informa que <span                                        "
+	cmsg+="class=GramE>o pedido numero</span> <span class='style1' style='color: #000000'> "+ALLTRIM(SC5->C5_NUM)+" </span></span> <span"
+	cmsg+="style='font-size:12.0pt;mso-bidi-font-size:11.0pt;line-height:115%'>foi "+cMensage+"  "
+	cmsg+="para o cliente <span style='color: #000000'><b style='mso-bidi-font-weight:normal'>"+cCliente+" - "+cXclient+ " </b></span>"
+	cmsg+=""+cMensag2+""
+	//	cmsg+="o qual necessita realizar pagamento antecipado para libera&ccedil;&atilde;o do "
+	//	cmsg+="faturamento."
+	cmsg+="<o:p></o:p></span></p>"
+	cmsg+=""
+
+	If  altera <> .F. .AND. inclui <> .F.
+		cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt; "
+		cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'>O valor a ser recebido &eacute; de: "
+		cmsg+="    <span style='color: #000000'><b style='mso-bidi-font-weight:normal'>"+Alltrim(GetMV("MV_SIMB"+nMoeda))"
+		cmsg+=+Transform(nValor,'@E 999,999,999.99')+"</b>"
+		cmsg+="    <o:p></o:p>"
+		cmsg+="   </span></span></p>"
+	EndIf
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'><o:p></o:p></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'><o:p></o:p></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'>Atenciosamente, <o:p></o:p></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'><o:p>&nbsp;</o:p></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'>Suporte <span class=GramE>&agrave;</span>"
+	cmsg+="Vendas<o:p></o:p></span></p>"
+	cmsg+=""
+	cmsg+="</div>"
+	cmsg+=""
+	cmsg+="</body>"
+	cmsg+=""
+	cmsg+="</html>"
+	
+else
+	
+	dbSelectArea("SC5")
+	dbSetOrder(1)
+	dbGoTop()
+	dbSeek(xFilial("SC5")+ M->C5_NUM)
+	
+	cCliente:= ALLTRIM(M->C5_CLIENTE)
+	cXclient:= ALLTRIM(M->C5_XCLIENT)
+	nMoeda:= Str(M->C5_MOEDA,1,0)
+	
+	
+	dbSelectArea("SC6")
+	dbSetOrder(1)
+	dbGoTop()
+	dbSeek(xFilial("SC6")+ M->C5_NUM)
+	nPosCod := aScan(aHeader,{ |x| Upper(AllTrim(x[2])) == "C6_VALOR" })
+	
+	// Obtém o código do produto
+	
+	For nX:=1 to Len(aCols)
+		If !aCols[nX,Len(aCols[nX])]
+			nValor:=nValor+aCols[nX,nPosCod]
+		EndIf
+	Next
+	
+	cmsg:="<head>"
+	cmsg+="<meta http-equiv=Content-Type content='text/html; charset=us-ascii'>"
+	cmsg+="<meta name=ProgId content=Word.Document>"
+	cmsg+="<meta name=Generator content='Microsoft Word 12'>"
+	cmsg+="<meta name=Originator content='Microsoft Word 12'>"
+	cmsg+="<link rel=File-List href='CCABAgroSA_arquivos/filelist.xml'>"
+	cmsg+="<!--[if gte mso 9]><xml>"
+	cmsg+=" <o:DocumentProperties>"
+	cmsg+="  <o:Author>Armando P. Waiteman</o:Author>"
+	cmsg+="  <o:Template>Normal</o:Template>"
+	cmsg+="  <o:LastAuthor>Armando P. Waiteman</o:LastAuthor>"
+	cmsg+="  <o:Revision>2</o:Revision>"
+	cmsg+="  <o:TotalTime>5</o:TotalTime>"
+	cmsg+="  <o:Created>2008-09-04T18:02:00Z</o:Created>"
+	cmsg+="  <o:LastSaved>2008-09-04T18:02:00Z</o:LastSaved>"
+	cmsg+="  <o:Pages>1</o:Pages>"
+	cmsg+="  <o:Words>56</o:Words>"
+	cmsg+="  <o:Characters>304</o:Characters>"
+	cmsg+="  <o:Company>Bla</o:Company>"
+	cmsg+="  <o:Lines>2</o:Lines>"
+	cmsg+="  <o:Paragraphs>1</o:Paragraphs>"
+	cmsg+="  <o:CharactersWithSpaces>359</o:CharactersWithSpaces>"
+	cmsg+="  <o:Version>12.00</o:Version>"
+	cmsg+=" </o:DocumentProperties>"
+	cmsg+="</xml><![endif]-->"
+	cmsg+="<link rel=themeData href='CCABAgroSA_arquivos/themedata.thmx'>"
+	cmsg+="<link rel=colorSchemeMapping href='CCABAgroSA_arquivos/colorschememapping.xml'>"
+	cmsg+="<!--[if gte mso 9]><xml>"
+	cmsg+=" <w:WordDocument>        "
+	cmsg+="  <w:SpellingState>Clean</w:SpellingState>"
+	cmsg+="  <w:GrammarState>Clean</w:GrammarState>"
+	cmsg+="  <w:TrackMoves>false</w:TrackMoves>"
+	cmsg+="  <w:TrackFormatting/>"
+	cmsg+="  <w:HyphenationZone>21</w:HyphenationZone>"
+	cmsg+="  <w:PunctuationKerning/>"
+	cmsg+="  <w:ValidateAgainstSchemas/>"
+	cmsg+="  <w:SaveIfXMLInvalid>false</w:SaveIfXMLInvalid>"
+	cmsg+="  <w:IgnoreMixedContent>false</w:IgnoreMixedContent>"
+	cmsg+="  <w:AlwaysShowPlaceholderText>false</w:AlwaysShowPlaceholderText>"
+	cmsg+="  <w:DoNotPromoteQF/>"
+	cmsg+="  <w:LidThemeOther>PT-BR</w:LidThemeOther>"
+	cmsg+="  <w:LidThemeAsian>X-NONE</w:LidThemeAsian>"
+	cmsg+="  <w:LidThemeComplexScript>X-NONE</w:LidThemeComplexScript>"
+	cmsg+="  <w:Compatibility>"
+	cmsg+="   <w:BreakWrappedTables/>"
+	cmsg+="   <w:SnapToGridInCell/>"
+	cmsg+="   <w:WrapTextWithPunct/>"
+	cmsg+="   <w:UseAsianBreakRules/>"
+	cmsg+="   <w:DontGrowAutofit/>"
+	cmsg+="   <w:SplitPgBreakAndParaMark/>"
+	cmsg+="   <w:DontVertAlignCellWithSp/>"
+	cmsg+="   <w:DontBreakConstrainedForcedTables/>"
+	cmsg+="   <w:DontVertAlignInTxbx/>"
+	cmsg+="   <w:Word11KerningPairs/>"
+	cmsg+="   <w:CachedColBalance/>"
+	cmsg+="  </w:Compatibility>"
+	cmsg+="  <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>"
+	cmsg+="  <m:mathPr>"
+	cmsg+="   <m:mathFont m:val='Cambria Math'/>"
+	cmsg+="   <m:brkBin m:val='before'/>"
+	cmsg+="   <m:brkBinSub m:val='&#45;-'/>"
+	cmsg+="   <m:smallFrac m:val='off'/>"
+	cmsg+="   <m:dispDef/>"
+	cmsg+="   <m:lMargin m:val='0'/>"
+	cmsg+="   <m:rMargin m:val='0'/>"
+	cmsg+="   <m:defJc m:val='centerGroup'/>"
+	cmsg+="   <m:wrapIndent m:val='1440'/>"
+	cmsg+="   <m:intLim m:val='subSup'/>"
+	cmsg+="   <m:naryLim m:val='undOvr'/>"
+	cmsg+="  </m:mathPr></w:WordDocument>"
+	cmsg+="</xml><![endif]--><!--[if gte mso 9]><xml>"
+	cmsg+=" <w:LatentStyles DefLockedState='false' DefUnhideWhenUsed='true'"
+	cmsg+="  DefSemiHidden='true' DefQFormat='false' DefPriority='99'"
+	cmsg+="  LatentStyleCount='267'>"
+	cmsg+="  <w:LsdException Locked='false' Priority='0' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Normal'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='heading 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 7'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 8'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='9' QFormat='true' Name='heading 9'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 7'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 8'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' Name='toc 9'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='35' QFormat='true' Name='caption'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='10' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Title'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='1' Name='Default Paragraph Font'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='11' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Subtitle'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='22' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Strong'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='20' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Emphasis'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='59' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Table Grid'/>"
+	cmsg+="  <w:LsdException Locked='false' UnhideWhenUsed='false' Name='Placeholder Text'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='1' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='No Spacing'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' UnhideWhenUsed='false' Name='Revision'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='34' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='List Paragraph'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='29' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Quote'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='30' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Intense Quote'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 1'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 2'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 3'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 4'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 5'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='60' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Shading Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='61' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light List Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='62' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Light Grid Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='63' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 1 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='64' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Shading 2 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='65' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 1 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='66' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium List 2 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='67' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 1 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='68' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 2 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='69' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Medium Grid 3 Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='70' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Dark List Accent 6'/>"
+	cmsg+=" <w:LsdException Locked='false' Priority='71' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Shading Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='72' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful List Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='73' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' Name='Colorful Grid Accent 6'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='19' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Subtle Emphasis'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='21' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Intense Emphasis'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='31' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Subtle Reference'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='32' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Intense Reference'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='33' SemiHidden='false'"
+	cmsg+="   UnhideWhenUsed='false' QFormat='true' Name='Book Title'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='37' Name='Bibliography'/>"
+	cmsg+="  <w:LsdException Locked='false' Priority='39' QFormat='true' Name='TOC Heading'/>"
+	cmsg+=" </w:LatentStyles>"
+	cmsg+="</xml><![endif]-->"
+	cmsg+="<style>"
+	cmsg+="<!--"
+	cmsg+=" /* Font Definitions */"
+	cmsg+=" @font-face"
+	cmsg+="	{font-family:'Cambria Math';"
+	cmsg+="	panose-1:2 4 5 3 5 4 6 3 2 4;"
+	cmsg+="	mso-font-charset:0;"
+	cmsg+="	mso-generic-font-family:roman;"
+	cmsg+="	mso-font-pitch:variable;"
+	cmsg+="	mso-font-signature:-1610611985 1107304683 0 0 159 0;}"
+	cmsg+="@font-face"
+	cmsg+="	{font-family:Calibri;"
+	cmsg+="	panose-1:2 15 5 2 2 2 4 3 2 4;"
+	cmsg+="	mso-font-charset:0;"
+	cmsg+="	mso-generic-font-family:swiss;"
+	cmsg+="	mso-font-pitch:variable;"
+	cmsg+="	mso-font-signature:-1610611985 1073750139 0 0 159 0;}"
+	cmsg+=" /* Style Definitions */"
+	cmsg+=" p.MsoNormal, li.MsoNormal, div.MsoNormal"
+	cmsg+="	{mso-style-unhide:no;"
+	cmsg+="	mso-style-qformat:yes;"
+	cmsg+="	mso-style-parent:'';"
+	cmsg+="	margin-top:0cm;"
+	cmsg+="	margin-right:0cm;"
+	cmsg+="	margin-bottom:10.0pt;"
+	cmsg+="	margin-left:0cm;"
+	cmsg+="	line-height:115%;"
+	cmsg+="	mso-pagination:widow-orphan;"
+	cmsg+="	font-size:11.0pt;"
+	cmsg+="	font-family:'Calibri','sans-serif';"
+	cmsg+="	mso-ascii-font-family:Calibri;"
+	cmsg+="	mso-ascii-theme-font:minor-latin;"
+	cmsg+="	mso-fareast-font-family:Calibri;"
+	cmsg+="	mso-fareast-theme-font:minor-latin;"
+	cmsg+="	mso-hansi-font-family:Calibri;"
+	cmsg+="	mso-hansi-theme-font:minor-latin;"
+	cmsg+="	mso-bidi-font-family:'Times New Roman';"
+	cmsg+="	mso-bidi-theme-font:minor-bidi;"
+	cmsg+="	mso-fareast-language:EN-US;}"
+	cmsg+="span.GramE"
+	cmsg+="	{mso-style-name:'';"
+	cmsg+="	mso-gram-e:yes;}"
+	cmsg+=".MsoChpDefault"
+	cmsg+="	{mso-style-type:export-only;"
+	cmsg+="	mso-default-props:yes;"
+	cmsg+="	font-size:10.0pt;"
+	cmsg+="	mso-ansi-font-size:10.0pt;"
+	cmsg+="	mso-bidi-font-size:10.0pt;"
+	cmsg+="	mso-ascii-font-family:Calibri;"
+	cmsg+="	mso-ascii-theme-font:minor-latin;"
+	cmsg+="	mso-fareast-font-family:Calibri;"
+	cmsg+="	mso-fareast-theme-font:minor-latin;"
+	cmsg+="	mso-hansi-font-family:Calibri;"
+	cmsg+="	mso-hansi-theme-font:minor-latin;"
+	cmsg+="	mso-bidi-font-family:'Times New Roman';"
+	cmsg+="	mso-bidi-theme-font:minor-bidi;"
+	cmsg+="	mso-fareast-language:EN-US;}"
+	cmsg+="@page Section1"
+	cmsg+="	{size:595.3pt 841.9pt;"
+	cmsg+="	margin:72.0pt 72.0pt 72.0pt 72.0pt;"
+	cmsg+="	mso-header-margin:35.4pt;"
+	cmsg+="	mso-footer-margin:35.4pt;"
+	cmsg+="	mso-paper-source:0;}"
+	cmsg+="div.Section1"
+	cmsg+="	{page:Section1;}"
+	cmsg+="-->      "
+	cmsg+="</style>"
+	cmsg+="<!--[if gte mso 10]>"
+	cmsg+="<style>"
+	cmsg+=" /* Style Definitions */"
+	cmsg+=" table.MsoNormalTable"
+	cmsg+="	{mso-style-name:'Tabela normal';"
+	cmsg+="	mso-tstyle-rowband-size:0;"
+	cmsg+="	mso-tstyle-colband-size:0;"
+	cmsg+="	mso-style-noshow:yes;"
+	cmsg+="	mso-style-priority:99;"
+	cmsg+="	mso-style-qformat:yes;"
+	cmsg+="	mso-style-parent:'';"
+	cmsg+="	mso-padding-alt:0cm 5.4pt 0cm 5.4pt;"
+	cmsg+="	mso-para-margin:0cm;"
+	cmsg+="	mso-para-margin-bottom:.0001pt;"
+	cmsg+="	mso-pagination:widow-orphan;"
+	cmsg+="	font-size:10.0pt;"
+	cmsg+="	font-family:'Calibri','sans-serif';"
+	cmsg+="	mso-ascii-font-family:Calibri;"
+	cmsg+="	mso-ascii-theme-font:minor-latin;"
+	cmsg+="	mso-hansi-font-family:Calibri;"
+	cmsg+="	mso-hansi-theme-font:minor-latin;"
+	cmsg+="	mso-fareast-language:EN-US;}"
+	cmsg+="</style>"
+	cmsg+="<![endif]--><!--[if gte mso 9]><xml>"
+	cmsg+=" <o:shapedefaults v:ext='edit' spidmax='4098'/>"
+	cmsg+="</xml><![endif]--><!--[if gte mso 9]><xml>"
+	cmsg+=" <o:shapelayout v:ext='edit'>"
+	cmsg+="  <o:idmap v:ext='edit' data='1'/>"
+	cmsg+=" </o:shapelayout></xml><![endif]-->"
+	cmsg+="</head>"
+	cmsg+=""
+	cmsg+="<body lang=PT-BR style='tab-interval:35.4pt'>"
+	cmsg+=""
+	cmsg+="<div class=Section1>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal align=center style='text-align:center'><b style='mso-bidi-font-weight:"
+	cmsg+="normal'><span style='font-size:20.0pt;mso-bidi-font-size:11.0pt;line-height:"
+	cmsg+="115%'>CCAB Agro SA<o:p></o:p></span></b></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal align=center style='text-align:center'><b style='mso-bidi-font-weight:"
+	cmsg+="normal'><span style='font-size:20.0pt;mso-bidi-font-size:11.0pt;line-height:"
+	cmsg+="115%'>"+cMensag1+"<o:p></o:p></span></b></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><b style='mso-bidi-font-weight:"
+	cmsg+="normal'><span style='font-size:20.0pt;mso-bidi-font-size:11.0pt;line-height:"
+	cmsg+="115%'><o:p>&nbsp;</o:p></span></b></p>"
+	cmsg+=""
+	cmsg+="<style type='text/css'>"
+	cmsg+="<!--"
+	cmsg+=".style1 {"
+	cmsg+="	font-size: 12px;"
+	cmsg+="	font-weight: bold;"
+	cmsg+="}"
+	cmsg+="-->"
+	cmsg+="</style>"
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;                                            "
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'>A equipe de vendas informa que <span                                        "
+	cmsg+="class=GramE>o pedido numero</span> <span class='style1' style='color: #000000'> "+ALLTRIM(M->C5_NUM)+" </span></span> <span"
+	cmsg+="style='font-size:12.0pt;mso-bidi-font-size:11.0pt;line-height:115%'>foi "+cMensage+"  "
+	cmsg+="para o cliente <span style='color: #000000'><b style='mso-bidi-font-weight:normal'>"+cCliente+" - "+cXclient+ " </b></span>"
+	cmsg+=""+cMensag2+""
+	//	cmsg+="o qual necessita realizar pagamento antecipado para libera&ccedil;&atilde;o do "
+	//	cmsg+="faturamento."
+	cmsg+="<o:p></o:p></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt; "
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'>O valor a ser recebido &eacute; de: "
+	cmsg+="    <span style='color: #000000'><b style='mso-bidi-font-weight:normal'>"+Alltrim(GetMV("MV_SIMB"+nMoeda))"
+	cmsg+=+Transform(nValor,'@E 999,999,999.99')+"</b>"
+	cmsg+="    <o:p></o:p>"
+	cmsg+="   </span></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'><o:p></o:p></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'><o:p></o:p></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'>Atenciosamente, <o:p></o:p></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'><o:p>&nbsp;</o:p></span></p>"
+	cmsg+=""
+	cmsg+="<p class=MsoNormal style='text-align:justify'><span style='font-size:12.0pt;"
+	cmsg+="mso-bidi-font-size:11.0pt;line-height:115%'>Suporte <span class=GramE>&agrave;</span>"
+	cmsg+="Vendas<o:p></o:p></span></p>"
+	cmsg+=""
+	cmsg+="</div>"
+	cmsg+=""
+	cmsg+="</body>"
+	cmsg+=""
+	cmsg+="</html>"
+EndIf
+//Endif
+
+//If Altera
+//	U_EspelhoPV(SC5->C5_FILIAL, SC5->C5_NUM, 'A')
+//Endif
+
+Return(cmsg)
+
+
+
+    
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³M410AGRV  ºAutor  ³Valdemir Jose       º Data ³  06/03/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Valida os e-mails da Condição de Pagamento com o cadastro  º±±
+±±º          ³ usuarios na tabela X5,irá validar se não está duplicado    º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºRetorno   ³ Lista Emails                                               º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ValidaEmail(pcEmail)
+	Local cRet    := ''
+	Local _xEmail := ALLTRIM(lower(Posicione("SX5",1,xFilial("SX5")+'ZC'+SA1->A1_XGESTOR,"X5_DESCRI")))  // Posicionar X5
+	Local aEmail  := ConvertEmail(lower(pcEmail), _xEmail)
+	Local nX      := 1
+	                         
+	// Monta a lista de e-mails, após validação / Conversão
+	For nX := 1 To Len(aEmail)
+	    if nX > 1
+	     cRet += ';'
+	    endif
+	    cRet += aEmail[nX][1]
+	Next
+	
+Return cRet          
+
+    
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³M410AGRV  ºAutor  ³Valdemir Jose       º Data ³  06/03/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Faz leitura de todos os e-mail, retornando um array de     º±±
+±±º          ³ e-mails                                                    º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºRetorno   ³ Array                                                      º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ConvertEmail(pcEmail, pcxEmail)
+	Local aRET := {} 
+	Local cRET := ''
+	Local nX   := 1              
+	Local lNAdic := .F.
+	
+	// Todos os e-mails em um array
+	FOR nX := 1 TO Len(pcEmail)
+     if Substr(pcEmail,nX,1) !=';'
+      cRET += Substr(pcEmail,nX,1)
+     Else
+      aAdd(aRET,{cRET})
+      cRET := ''
+     endif
+    NEXT
+	
+	// Verifica se existem e-mails duplicado
+	For nX := 1 to Len(aRET)
+	  if (aRET[nX][1] = ALLTRIM(pcxEmail)+'@ccab-agro.com.br')
+	    lNAdic := .T. 
+	  endif
+	Next             
+	
+	if !lNAdic
+      aAdd(aRET,{ALLTRIM(pcxEmail)+'@ccab-agro.com.br'})
+	endif  
+	
+Return aRET

@@ -1,0 +1,215 @@
+Group ProjetoCCAB
+   Version=7.0
+   VSSDB=
+   HasProperties=1
+   Properties
+      BeforeApply=
+      AfterApply=
+      Icon=
+      ID=
+      Version=
+      PalmName=
+      OutPut=
+   End
+   ProjectsCount=5
+   Project Financeiro
+      FoldersCount=4
+      Folder Fontes
+         VSSPath=Fontes
+         FilesCount=1
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\CCFIN001A.PRW
+             Type=T
+         End
+      End
+      Folder Definições
+         VSSPath=Definições
+         FilesCount=0
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta3
+         FilesCount=1
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\CCABFINR01.prw
+             Type=T
+         End
+      End
+      Folder Ponto de Entrada
+         VSSPath=Nova Pasta4
+         FilesCount=0
+      End
+   End
+   Project Generico
+      FoldersCount=1
+      Folder Fontes
+         VSSPath=Nova Pasta1
+         FilesCount=6
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\FUNGERVAL.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\Amcel\AMCELR001.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\Amcel\clsImpBal.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\Amcel\AMCELM001.prw
+             Type=T
+         End
+         File \DESENVOLVIMENTO\DROPBOX\MICROSIGA\FONTE PADRAO PROTHEUS10\ATUALIZADOS\FONTES\VER11_MPH\MATERIAIS\FISCAL\SPED\TOTVSSERVICESPED\SPED_FW02.PRX
+             Type=T
+         End
+         File \PROTHEUS11\PROTHEUS\MY PROJECTS\FATURAMENTO\PONTOS ENTRADA\A410EXC.PRW
+             Type=T
+         End
+      End
+   End
+   Project Faturamento
+      FoldersCount=3
+      Folder Relatorios
+         VSSPath=Nova Pasta1
+         FilesCount=6
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\CCABR79X.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\RFATR03.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\relatorios\rfatr04.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\relatorios\CCABR800.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\relatorios\CFATR001.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\relatorios\RMATR680B.PRW
+             Type=T
+         End
+      End
+      Folder Fontes
+         VSSPath=Nova Pasta2
+         FilesCount=5
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\CCABM410.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\cad_sz1.PRW
+             Type=T
+         End
+         File \DESENVOLVIMENTO\DROPBOX\MICROSIGA\CLIENTES\CCAB\PONTOENTRADA\M410AGRV.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\danfeii.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\nfesefaz_new.prw
+             Type=T
+         End
+      End
+      Folder Ponto Entrada
+         VSSPath=Nova Pasta3
+         FilesCount=6
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\M410AGRV.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\M460MARK.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MT410Alt.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\M410ALOK.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\M460Fim.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MA410MNU.PRW
+             Type=T
+         End
+      End
+   End
+   Project Compras
+      FoldersCount=3
+      Folder Relatorio
+         VSSPath=Nova Pasta1
+         FilesCount=3
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\PEDIDO\TRATAMEMO.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\PEDIDO\Matr110X.prx
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\relatorios\CCOMR001.PRW
+             Type=T
+         End
+      End
+      Folder Fontes
+         VSSPath=Nova Pasta2
+         FilesCount=2
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\RCOMM01.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Exemplos\ComponentesInterface.PRW
+             Type=T
+         End
+      End
+      Folder Ponto Entrada
+         VSSPath=Nova Pasta3
+         FilesCount=9
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\WFW120P.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MT120FIM.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MT120GOK.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MT120TEL.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MTA120G2.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MT120BRW.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MT103FIM.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MT103SEL.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\PNEU002.prw
+             Type=T
+         End
+      End
+   End
+   Project Estoque
+      FoldersCount=3
+      Folder Fontes
+         VSSPath=Nova Pasta1
+         FilesCount=1
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\LERXML.PRW
+             Type=T
+         End
+      End
+      Folder Temp
+         VSSPath=Nova Pasta2
+         FilesCount=1
+         File \DESENVOLVIMENTO\Dropbox\MICROSIGA\FONTE PADRAO PROTHEUS10\FONTES_10\MATA103.PRW
+             Type=T
+         End
+      End
+      Folder Ponto Entrada
+         VSSPath=Nova Pasta3
+         FilesCount=2
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MA020TOK.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\A020DELE.prw
+             Type=T
+         End
+      End
+   End
+End

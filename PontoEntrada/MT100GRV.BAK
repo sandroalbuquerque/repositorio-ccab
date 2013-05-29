@@ -1,0 +1,15 @@
+User Function MT100GRV()
+	Local lRET := .T.
+	
+	if !lEdita
+		lRET := (_nMoeda = nMoedaCor) .And. (_nTxMoeda = nTAXA)  
+		if !lRET
+			Alert('Não pode alterar o valor da moeda/taxa... Sistema irá gravar os valores que foram importados do pedido')
+			nMoedaCor := _nMoeda
+			SF1->F1_TXMOEDA := _nTxMoeda 
+			lRET      := .T.  
+			lEdita    := .f.
+		Endif
+	Endif
+	
+Return lRET	

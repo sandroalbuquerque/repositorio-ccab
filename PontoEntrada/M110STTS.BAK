@@ -1,0 +1,17 @@
+User Function M110STTS()
+	Local lRET := .T.
+	
+	if !lEdita
+		lRET := (_nMoeda = nMoedaCor) .And. (_nTxMoeda = nTAXA)  
+		if !lRET
+			Alert('Não pode alterar o valor da moeda/taxa... Sistema irá gravar os valores que foram importados do pedido')
+			nMoedaCor := _nMoeda
+			RECLOCK('SF1',.F.)
+			SF1->F1_TXMOEDA := _nTxMoeda 
+			MSUNLOCK()
+			lRET      := .T.  
+			lEdita    := .T.
+		Endif
+	Endif
+	
+Return lRET	
