@@ -1922,7 +1922,7 @@ While !Eof() .And. lContinua
 				@li, 36 Psay "EMISSÃO: "+DToC(TRB->EMISSAO)
 				@li, 55 Psay "CLIENTE: "+TRB->(Left(CLIENTE+"-"+LOJA+"/"+Alltrim(NOMECLI), 30))
 				@li, 97 Psay "UF: "+Alltrim(TRB->UF)			
-				cVarExcelCab := IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+Dtoc(TRB->EMISSAO)+";"+Left(CLIENTE+"-"+LOJA+"/"+TRB->NOMECLI, 50)+";"+UF			
+				cVarExcelCab := IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+Chr(160)+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+Dtoc(TRB->EMISSAO)+";"+Left(CLIENTE+"-"+LOJA+"/"+TRB->NOMECLI, 50)+";"+UF			
 			Case nOrdem = 2
 				@li,  0 Psay IIF(GRADE=="S" .And. mv_par16 == 1,Substr(PRODUTO,1,nTamref),PRODUTO)
 				@li, 16 Psay Alltrim(TRB->DESCRICAO)
@@ -1939,7 +1939,7 @@ While !Eof() .And. lContinua
 					@li, 046 Psay "DT EMISSÃO: "+DToC(TRB->EMISSAO)
 					@li, 068 Psay "CLIENTE: "+TRB->(Left(CLIENTE+"-"+LOJA+"/"+Alltrim(NOMECLI), 45))
 					@li, 124 Psay "UF: "+Alltrim(TRB->UF)
-					cVarExcelCab := Dtoc(DATENTR)+";"+IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+Dtoc(EMISSAO)+";"+Left(CLIENTE+"-"+LOJA+"/"+NOMECLI, 50)+";"+UF
+					cVarExcelCab := Dtoc(DATENTR)+";"+IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+Chr(160)+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+Dtoc(EMISSAO)+";"+Left(CLIENTE+"-"+LOJA+"/"+NOMECLI, 50)+";"+UF
 					cNumPed := IIf(Empty(TRB->NUM),TRB->PRENUM,TRB->NUM)
 					cNumCli := CLIENTE
 					li += 2
@@ -2057,7 +2057,7 @@ While !Eof() .And. lContinua
 	  			@li, 047 Psay TRB->(Left(CLIENTE+"-"+LOJA+"/"+Alltrim(NOMECLI),35))
 				@li, 087 Psay Alltrim(TRB->UF)
 				@li, 092 Psay DATENTR				
-				cVarExcelItm := cVarExcelCab+";"+IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+IIf(Empty(TRB->ITEM),TRB->PREITEM,TRB->ITEM)+";"+Dtoc(EMISSAO)+";"+Dtoc(DATENTR)+";"+Left(TRB->CLIENTE+"-"+LOJA+"/"+TRB->NOMECLI,40)+";"+UF
+				cVarExcelItm := cVarExcelCab+";"+IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+Chr(160)+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+IIf(Empty(TRB->ITEM),TRB->PREITEM,TRB->ITEM)+";"+Dtoc(EMISSAO)+";"+Dtoc(DATENTR)+";"+Left(TRB->CLIENTE+"-"+LOJA+"/"+TRB->NOMECLI,40)+";"+UF
 			endif
 		Case nOrdem = 3   		
 			@li, 000 Psay Left(IIf(Empty(TRB->NUM),"PRE-"+TRB->PRENUM," "+TRB->FILIAL+"-"+TRB->NUM),12)
@@ -2067,7 +2067,7 @@ While !Eof() .And. lContinua
 			@li, 040 Psay IIF(GRADE == "S" .And. mv_par16 == 1,Substr(PRODUTO,1,nTamref),PRODUTO)
 			@li, 058 Psay TRB->DESCRICAO
 			@li, 092 Psay DATENTR
-			cVarExcelItm := cVarExcelCab+";"+IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+IIf(Empty(TRB->ITEM),TRB->PREITEM,TRB->ITEM)+";"+Dtoc(EMISSAO)+";"+IIF(GRADE == "S" .And. mv_par16 == 1,Substr(PRODUTO,1,nTamref),PRODUTO)+";"+Left(TRB->DESCRICAO,30)+";"+Dtoc(DATENTR)
+			cVarExcelItm := cVarExcelCab+";"+IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+Chr(160)+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+IIf(Empty(TRB->ITEM),TRB->PREITEM,TRB->ITEM)+";"+Dtoc(EMISSAO)+";"+IIF(GRADE == "S" .And. mv_par16 == 1,Substr(PRODUTO,1,nTamref),PRODUTO)+";"+Left(TRB->DESCRICAO,30)+";"+Dtoc(DATENTR)
 		Case nOrdem = 4
 			@li, 000 Psay IIf(Empty(TRB->ITEM),TRB->PREITEM,TRB->ITEM)
 			@li, 004 Psay IIF(GRADE == "S" .And. mv_par16 == 1,Substr(PRODUTO,1,nTamRef),PRODUTO)
@@ -2082,7 +2082,7 @@ While !Eof() .And. lContinua
 	  			@li, 047 Psay TRB->(Left(CLIENTE+"-"+LOJA+"/"+Alltrim(NOMECLI),35))
 				@li, 087 Psay Alltrim(TRB->UF)
 				@li, 092 Psay DATENTR							
-				cVarExcelItm := cVarExcelCab+";"+ IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+IIf(Empty(TRB->ITEM),TRB->PREITEM,TRB->ITEM)+";"+Dtoc(EMISSAO)+";"+Dtoc(DATENTR)+";"+ Left(TRB->CLIENTE+"-"+LOJA+"/"+TRB->NOMECLI,40)+";"+UF
+				cVarExcelItm := cVarExcelCab+";"+ IIf(Empty(TRB->NUM),"PRE;"+TRB->PRENUM," "+Chr(160)+TRB->FILIAL+";"+TRB->NUM)+";"+TRB->NUMSFA+";"+cTpPed+";"+IIf(Empty(TRB->ITEM),TRB->PREITEM,TRB->ITEM)+";"+Dtoc(EMISSAO)+";"+Dtoc(DATENTR)+";"+ Left(TRB->CLIENTE+"-"+LOJA+"/"+TRB->NOMECLI,40)+";"+UF
 			endif
 		OtherWise		
 			@li, 000 Psay Left(IIf(Empty(TRB->NUM),"PRE-"+TRB->PRENUM," "+TRB->FILIAL+"-"+TRB->NUM),12)

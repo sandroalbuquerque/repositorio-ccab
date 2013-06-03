@@ -155,7 +155,7 @@ Group ProjetoCCAB
       End
       Folder Ponto Entrada
          VSSPath=Nova Pasta3
-         FilesCount=9
+         FilesCount=10
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\WFW120P.prw
              Type=T
          End
@@ -181,6 +181,9 @@ Group ProjetoCCAB
              Type=T
          End
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\PNEU002.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\SF1100I.prw
              Type=T
          End
       End

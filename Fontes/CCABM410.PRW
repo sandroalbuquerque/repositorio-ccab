@@ -5789,7 +5789,9 @@ Static Function ValidSXENum()
 	Local cRET  := ''
 	Local aArea := GetArea()
 	                 
-	dbSelectarea('SZ2')       
+	dbSelectarea('SZ2')
+	dbSetOrder(1)         // Valdemir jose 29/05/2013
+	dbGotop()       
 	dbGobottom() 
 
 	cRet := STRZERO(VAL(SZ2->Z2_NUM)+1,6)
