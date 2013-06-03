@@ -229,9 +229,9 @@ IF SF1->F1_TIPO $ "N"
 	ENDIF
 	RestArea(_aArea1)
 	RECLOCK("SF1",.F.)
-		SF1->F1_XENCC    :=  _xEncc
-		SF1->F1_XDTENCC  :=  _xDtencc
-		SF1->(MSUNLOCK())
+	SF1->F1_XENCC    :=  _xEncc
+	SF1->F1_XDTENCC  :=  _xDtencc
+	SF1->(MSUNLOCK())
 	
 	_aAreaSE2 := GetArea()
 	DbSelectArea("SE2")
@@ -244,9 +244,9 @@ IF SF1->F1_TIPO $ "N"
 			// ********** INSERIDO PARA TRATAMENTO DO ENCONTRO DE CONTAS.....
 			SE2->E2_XENCC               :=      SF1->F1_XENCC
 			SE2->E2_XDTENCC             :=      SF1->F1_XDTENCC
-			IF SF1->F1_XENCC == "S"
-				SE2->E2_PORTADO := "ENC"
-   				SE2->E2_XBCOPAG := "ENC" 
+			IF SF1->F1_XENCC <> "N"
+				SE2->E2_PORTADO := IIF(SF1->F1_XENCC='C',"CAP","ENC")     // IIF ACRESCENTADO POR VALDEMIR 29/05/13
+   				SE2->E2_XBCOPAG := IIF(SF1->F1_XENCC='C',"CAP","ENC")
 				SE2->E2_XAGNPAG := "00001" 
 				SE2->E2_XCTAPAG := "0000000001" 
 			Endif

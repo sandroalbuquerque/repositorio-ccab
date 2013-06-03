@@ -4176,7 +4176,7 @@ For x:=1 To Len(oGdTrt:aCols)
 			{"C5_FILIAL"	,cTratarFil																,Nil},;
 			{"C5_NUM"		,cNumeroDoc																,Nil},;
 			{"C5_MOEDA"		,SZ2->Z2_MOEDA															,Nil},;
-			{"C5_XDMOEDA"	,SZ2->Z2_XDMOEDA														,Nil},;
+			{"C5_XDMOEDA"	,SZ2->Z2_XDMOEDA														,Nil},;   // VALDEMIR JOSE 03/05/2013
 			{"C5_XDESPER"	,SZ2->Z2_XDESPER														,Nil},;
 			{"C5_XTPPED"	,Alltrim(Str(mv_par46))													,Nil},;
 			{"C5_XTPFIN"	,SZ2->Z2_XTPFIN     													,Nil},;						
@@ -4191,6 +4191,7 @@ For x:=1 To Len(oGdTrt:aCols)
 			{"C5_TIPOCLI"	,SZ2->Z2_TIPOCLI														,Nil},;
 			{"C5_EMISSAO"	,dDataBase																,Nil},;
 			{"C5_CONDPAG"	,SZ2->Z2_CONDPAG														,Nil},;
+			{"C5_DESCOND"	,SZ2->Z2_DESCOND														,Nil},;       // VALDEMIR JOSE 03/05/2013
 			{"C5_PARC1"		,SZ2->Z2_PARC1															,Nil},;
 			{"C5_DATA1"		,SZ2->Z2_DATA1															,Nil},;
 			{"C5_PARC2"		,SZ2->Z2_PARC2															,Nil},;
@@ -5788,7 +5789,9 @@ Static Function ValidSXENum()
 	Local cRET  := ''
 	Local aArea := GetArea()
 	                 
-	dbSelectarea('SZ2')       
+	dbSelectarea('SZ2')
+	dbSetOrder(1)
+	dbGotop()       
 	dbGobottom() 
 
 	cRet := STRZERO(VAL(SZ2->Z2_NUM)+1,6)
