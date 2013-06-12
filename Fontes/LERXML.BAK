@@ -82,6 +82,8 @@ Private _cEmissao
 Private nTotalNF
 Private nTotIt
 Private _cOpcao 
+Private _nMoeda
+Private _nTxMoeda
 Private xSel       := .F.
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -242,7 +244,9 @@ aCampos3:= {{"EMISSAO","D",8,0 },;
 {"VENDEDOR","C",30,0 },;
 {"TELEFONE","C",20,0 },;
 {"XML","C",150,0 },;
-{"CHAVE","C",150,0 }}
+{"CHAVE","C",150,0 },;
+{"MOEDA","N",1,0 },;
+{"TXMOEDA","N",6,2 } }
 
 if Select('LS3')=0
 	cArqTrab3  := CriaTrab(aCampos3)
@@ -530,7 +534,7 @@ DbSelectarea("LS1")
 Dbgotop()
 While !Eof()
 	IF LS1->OK=="X"
-		lIdent:=.T.
+		lIdent := .T.
 	Endif
 	Dbskip()
 End
@@ -550,7 +554,7 @@ If cPedCom
 	Dbgotop()
 	While !Eof()
 		IF !Empty(LS1->PEDIDO)
-			lItem:=.T.
+			lItem := .T.
 		Endif
 		Dbskip()
 	End
@@ -767,14 +771,14 @@ If cPedCom
 			Dbseek(LS1->PRODUTO)
 			If !Found()
 				Reclock("PRO",.T.)
-				PRO->PRODUTO:=LS1->PRODUTO
-				PRO->QUANTIDADE:=LS1->QUANTIDADE
-				PRO->DESCRICAO:=LS1->DESCRICAO
-				PRO->PRECO:=LS1->PRECO
+				PRO->PRODUTO    := LS1->PRODUTO
+				PRO->QUANTIDADE := LS1->QUANTIDADE
+				PRO->DESCRICAO  := LS1->DESCRICAO
+				PRO->PRECO      := LS1->PRECO
 				MsUnlock()
 			Else
 				Reclock("PRO",.F.)
-				PRO->QUANTIDADE:=(PRO->QUANTIDADE+LS1->QUANTIDADE)
+				PRO->QUANTIDADE := (PRO->QUANTIDADE+LS1->QUANTIDADE)
 				MsUnlock()
 			Endif
 			DbSelectarea("LS1")
@@ -861,7 +865,7 @@ If cPedCom
 				DbSetorder(4)
 				Dbgotop()
 				Dbseek(xFilial("SC7")+PRO->PRODUTO+LS2->PEDIDO)
-				If Found() .and. (SC7->C7_QUANT-SC7->C7_QUJE-SC7->C7_QTDACLA>0) .AND. (SC7->C7_QUANT-SC7->C7_QUJE-SC7->C7_QTDACLA>=PRO->QUANTIDADE) .AND. SC7->C7_RESIDUO<>"S"
+				If Found() .and. (SC7->C7_QUANT - SC7->C7_QUJE - SC7->C7_QTDACLA>0) .AND. (SC7->C7_QUANT - SC7->C7_QUJE - SC7->C7_QTDACLA >= PRO->QUANTIDADE) .AND. SC7->C7_RESIDUO <> "S"
 					_nItem:=_nItem+1
 				Endif
 				Dbselectarea("PRO")
@@ -981,11 +985,11 @@ While !Eof()
 	While !Eof()
 		IF (TCQ->QUANT>=LS1->QUANTIDADE) .AND. TCQ->QUANT>0 .AND. LS1->QUANTIDADE>0
 			Reclock("LS1",.F.)
-			__xPedido := TCQ->PEDIDO
-			LS1->PEDIDO:=TCQ->PEDIDO
-			LS1->ITEM:=TCQ->ITEM
-			LS1->TES:=TCQ->TES    
-			LS1->ALMOX:=TCQ->ALMOX
+			__xPedido   := TCQ->PEDIDO
+			LS1->PEDIDO := TCQ->PEDIDO
+			LS1->ITEM   := TCQ->ITEM
+			LS1->TES    := TCQ->TES    
+			LS1->ALMOX  := TCQ->ALMOX
 			MsUnlock()
 		Endif
 		DbSelectarea("TCQ")
@@ -1082,7 +1086,7 @@ If cResp
 		Return
 	Endif
 	
-	MsgRun("Gerando pré nota entrada No.:"+cNota,,{||PRENOTA()})
+	MsgRun("Gerando pré nota entrada No.:"+cNota,,{|| PRENOTA() })
 	cNotaAtu:=cNota
 	
 	If cRet
@@ -1101,21 +1105,21 @@ If cResp
 				Dbseek(xFilial("SA5")+LS3->FORNEC+LS3->LOJA+LS1->PRODUTO)
 				If !Found()
 					Reclock("SA5",.T.)
-					SA5->A5_FILIAL:=xFilial("SA5")
-					SA5->A5_FORNECE:=LS3->FORNEC
-					SA5->A5_LOJA:=LS3->LOJA
-					SA5->A5_CODPRF:=LS1->PRODFOR
-					SA5->A5_PRODUTO:=LS1->PRODUTO
-					SA5->A5_NOMPROD:=SUBSTR(POSICIONE("SB1",1,xFilial("SB1")+LS1->PRODUTO,"B1_DESC"),1,30)
+					SA5->A5_FILIAL   := xFilial("SA5")
+					SA5->A5_FORNECE  := LS3->FORNEC
+					SA5->A5_LOJA     := LS3->LOJA
+					SA5->A5_CODPRF   := LS1->PRODFOR
+					SA5->A5_PRODUTO  := LS1->PRODUTO
+					SA5->A5_NOMPROD  := SUBSTR(POSICIONE("SB1",1,xFilial("SB1")+LS1->PRODUTO,"B1_DESC"),1,30)
 					If lItem==.F.
-						SA5->A5_NOMEFOR:=POSICIONE("SA2",1,xFilial("SA2")+LS3->FORNEC+LS2->LOJA,"A2_NREDUZ")
+						SA5->A5_NOMEFOR := POSICIONE("SA2",1,xFilial("SA2")+LS3->FORNEC+LS2->LOJA,"A2_NREDUZ")
 					Else
-						SA5->A5_NOMEFOR:=POSICIONE("SA2",1,xFilial("SA2")+LS3->FORNEC+LS3->LOJA,"A2_NREDUZ")
+						SA5->A5_NOMEFOR := POSICIONE("SA2",1,xFilial("SA2")+LS3->FORNEC+LS3->LOJA,"A2_NREDUZ")
 					Endif
 					MsUnlock()
 				Else
 					Reclock("SA5",.F.)
-					SA5->A5_CODPRF:=LS1->PRODFOR
+					SA5->A5_CODPRF := LS1->PRODFOR
 					MsUnlock()
 				Endif
 			Endif
@@ -1426,9 +1430,9 @@ If Empty(@cError) .and. lTipo<>3
 		 	Dbseek(xFilial("SF1")+SA1->A1_COD+SA1->A1_LOJA+alltrim(cNota)+Space(cSpaco))
 		 	If Found() .and. SF1->F1_TIPO=="N"
 		 		_cCNPJ:=''
-		 		FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i])),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".imp")
+		 		FRename("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(pARQ)),"\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(pARQ))+".imp")
 		 		__CopyFile("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\*.imp","\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\importados\")
-		 		ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(ALLTRIM(aXML[i]))+".imp")
+		 		ferase("\XML\EMP_"+cEmpAnt+"\"+cFilAnt+"\"+lower(SUBSTR(ALLTRIM(pARQ),1,LEN(pARQ)-4))+".imp")
 		 		MsgAlert("A Nota Fiscal de Número "+cNota+" já encontra-se no sistema!")
 		 	Endif
 		 Endif
@@ -1455,62 +1459,6 @@ PRIVATE lMsErroAuto := .F.
 cRet:=.F.
 nOpc:=3
 
-DbSelectarea("LS1")
-dbgotop()
-_dEmissao:=STOD(LS1->EMISSAO)
-
-If cPedCom .and. lItem==.F.
-	cQuere:=" UPDATE "+RetSqlName("SC7")+" SET C7_LOJA='"+LS3->LOJA+"' WHERE C7_FILIAL='"+xFilial("SC7")+"' AND C7_NUM='"+LS2->PEDIDO+"' AND D_E_L_E_T_<>'*' "
-	TCSQLEXEC(cQuere)
-Endif
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//| Grava status no fornecedor que manda o XML					 |
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-DbSelectarea("SA2")
-DbSetorder(1)
-Dbgotop()
-Dbseek(xFilial("SA2")+LS3->FORNEC+LS3->LOJA)
-If Found()
-	Reclock("SA2",.F.)
-	SA2->A2_STATUS:="1"
-	MsUnlock()
-Endif
-
-//rafael 05-07
-While !FS_INCLT()
-	Msgbox("Obrigatorio informar os lotes dos itens.","Atenção...","INFO")
-End
-
-aadd(aCabec,{"F1_TIPO","N"})
-aadd(aCabec,{"F1_SERIE",cSerie})
-aadd(aCabec,{"F1_FORMUL","N"})
-aadd(aCabec,{"F1_DOC",(cNota)})
-aadd(aCabec,{"F1_EMISSAO",_dEmissao})
-aadd(aCabec,{"F1_FORNECE",LS3->FORNEC})
-aadd(aCabec,{"F1_LOJA",LS3->LOJA})
-aadd(aCabec,{"F1_ESPECIE",IIF(lTipo == 4,"CTE",cEspecie)})
-aadd(aCabec,{"F1_CHVNFE",LS3->CHAVE})
-aadd(aCabec,{"F1_HORA",LEFT(TIME(),5)})
-
-
-//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
-//³ Gerando NDF para o fornecedor do valor excedido						³
-//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-If cNDF .and. cPedCom
-	_nExcedido:=VALORNDF()
-	
-	If _nExcedido>0
-		MsgInfo("O valor da Nota Fiscal em comparação ao Pedido de Compra excedeu "+AllTrim(Str(_nExcedido))+" ","Atenção")
-		/*
-		cResp:=msgbox("Deseja gerar a NDF para o fornecedor no valor de R$ "+Transform(_nExcedido,"@E 99,999.99"),"Atenção...","YESNO")
-		If cResp
-		NDF()
-		Msgbox("NDF "+cNota+" gerada com sucesso!","Atenção...","INFO")
-		Endif
-		*/
-	EndIf
-Endif
 
 //////////////////////////////////
 DbSelectarea("LS1")
@@ -1539,8 +1487,71 @@ If !Empty(_cPedido) .and. cPedCom
 	DbSelectarea("SC7")
 	DbSetorder(1)
 	Dbgotop()
-	Dbseek(xFilial("SC7")+_cPedido)
+	if Dbseek(xFilial("SC7")+_cPedido)
+		_nMoeda   := SC7->C7_MOEDA       // adicionado por Valdemir Jose 20130612
+		_nTxMoeda := SC7->C7_TXMOEDA	 // adicionado por Valdemir Jose 20130612
+	endif
 Endif
+
+DbSelectarea("LS1")
+dbgotop()
+_dEmissao:=STOD(LS1->EMISSAO)
+
+If cPedCom .and. lItem==.F.
+	cQuere:=" UPDATE "+RetSqlName("SC7")+" SET C7_LOJA='"+LS3->LOJA+"' WHERE C7_FILIAL='"+xFilial("SC7")+"' AND C7_NUM='"+LS2->PEDIDO+"' AND D_E_L_E_T_<>'*' "
+	TCSQLEXEC(cQuere)
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//| Grava status no fornecedor que manda o XML					 |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+DbSelectarea("SA2")
+DbSetorder(1)
+Dbgotop()
+Dbseek(xFilial("SA2")+LS3->FORNEC+LS3->LOJA)
+If Found()
+	Reclock("SA2",.F.)
+	SA2->A2_STATUS := "1"
+	MsUnlock()
+Endif
+
+//rafael 05-07
+While !FS_INCLT()
+	Msgbox("Obrigatorio informar os lotes dos itens.","Atenção...","INFO")
+End
+
+aadd(aCabec,{"F1_TIPO"    ,"N"})
+aadd(aCabec,{"F1_SERIE"   ,cSerie})
+aadd(aCabec,{"F1_FORMUL"  ,"N"})
+aadd(aCabec,{"F1_DOC"     ,(cNota)})
+aadd(aCabec,{"F1_EMISSAO" ,_dEmissao})
+aadd(aCabec,{"F1_FORNECE" ,LS3->FORNEC})
+aadd(aCabec,{"F1_LOJA"    ,LS3->LOJA})
+aadd(aCabec,{"F1_ESPECIE" ,IIF(lTipo == 4,"CTE",cEspecie)})
+aadd(aCabec,{"F1_CHVNFE"  ,LS3->CHAVE})
+aadd(aCabec,{"F1_HORA"    ,LEFT(TIME(),5)})
+aadd(aCabec,{"F1_MOEDA"   ,_nMoeda})      // ADICIONADO POR VALDEMIR JOSE 12/06/2013
+aadd(aCabec,{"F1_TXMOEDA" ,_nTxMoeda})    // ADICIONADO POR VALDEMIR JOSE 12/06/2013
+
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Gerando NDF para o fornecedor do valor excedido						³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If cNDF .and. cPedCom
+	_nExcedido:=VALORNDF()
+	
+	If _nExcedido>0
+		MsgInfo("O valor da Nota Fiscal em comparação ao Pedido de Compra excedeu "+AllTrim(Str(_nExcedido))+" ","Atenção")
+		/*
+		cResp:=msgbox("Deseja gerar a NDF para o fornecedor no valor de R$ "+Transform(_nExcedido,"@E 99,999.99"),"Atenção...","YESNO")
+		If cResp
+		NDF()
+		Msgbox("NDF "+cNota+" gerada com sucesso!","Atenção...","INFO")
+		Endif
+		*/
+	EndIf
+Endif
+
 
 DbSelectarea("SC7")
 If Len(aCabec)>0 .and. Len(aItens)>0
@@ -1549,8 +1560,8 @@ If Len(aCabec)>0 .and. Len(aItens)>0
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Calculando o total do item na nota									³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
-	cQuere:=" UPDATE "+RetSqlName("SD1")+" SET D1_TOTAL=(D1_QUANT*D1_VUNIT) WHERE D1_FILIAL='"+xFilial("SD1")+"' AND D1_DOC='"+cNota+"' AND D1_FORNECE='"+LS3->FORNEC+"' AND D1_LOJA='"+LS3->LOJA+"' AND D1_SERIE='"+cSerie+"' "
-	TCSQLEXEC(cQuere)
+	//cQuere:=" UPDATE "+RetSqlName("SD1")+" SET D1_TOTAL=(D1_QUANT*D1_VUNIT) WHERE D1_FILIAL='"+xFilial("SD1")+"' AND D1_DOC='"+cNota+"' AND D1_FORNECE='"+LS3->FORNEC+"' AND D1_LOJA='"+LS3->LOJA+"' AND D1_SERIE='"+cSerie+"' "
+	//TCSQLEXEC(cQuere)
 Endif
 
 If lMsErroAuto
@@ -1559,6 +1570,9 @@ Else
 	cRet:=.T.
 EndIf
 Return(cRet)
+                          
+
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //| Alterar Pedido												 |
@@ -2593,7 +2607,7 @@ While !Eof()
 			Loop
 		Endif
 		
-		If (TCQ->QUANT<PRO->QUANTIDADE .AND. TCQ->QUANT>0)
+		If (TCQ->QUANT < PRO->QUANTIDADE .AND. TCQ->QUANT > 0)
 			Reclock("LS4",.T.)
 			LS4->PRODUTO:=PRO->PRODUTO
 			LS4->DESCRICAO:=PRO->DESCRICAO
@@ -2610,7 +2624,7 @@ While !Eof()
 			DbSkip()
 			Loop
 		Endif
-		If (round(PRO->PRECO,2)>round(TCQ->PRECO,2)) .AND. round(TCQ->PRECO,2)>0 .AND. TCQ->QUANT>0
+		If (round(PRO->PRECO,2) > round(TCQ->PRECO,2)) .AND. round(TCQ->PRECO,2) > 0 .AND. TCQ->QUANT > 0
 			Reclock("LS4",.T.)
 			LS4->PRODUTO:=PRO->PRODUTO
 			LS4->DESCRICAO:=PRO->DESCRICAO
@@ -2765,8 +2779,8 @@ If cPedCom
 	While !Eof()
 		cMemo:=cMemo+DTOC(STOD(TCQ->EMISSAO))+"   "+TCQ->PEDIDO+"   "+TCQ->LOJA+"   "+ALLTRIM(STR(TCQ->QUANT,12,2))+"       "+transform(TCQ->PRECO,"@E 9,999.99")+CHR(13)+CHR(10)
 		If _nQuantPed==0
-			_nQuantPed:=TCQ->QUANT
-			_nVlrPed:=TCQ->PRECO
+			_nQuantPed := TCQ->QUANT
+			_nVlrPed   := TCQ->PRECO
 		Endif
 		Dbskip()
 	End
@@ -2797,7 +2811,7 @@ Endif
 //³ Tela de parametros													³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 
-lCorrige := LS1->UMXML <> SB1->B1_UM .And. LS1->UMXML <> SB1->B1_SEGUM
+lCorrige := (LS1->UMXML <> SB1->B1_UM) .And. (LS1->UMXML <> SB1->B1_SEGUM)
 
 lGravou:=.F.   
 
@@ -2841,8 +2855,9 @@ Endif
 Return   
 
 
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 Static Function fVldTot()  
-
 Local nTotXML := LS1->TOTAL
 Local lRet := .T.
 
@@ -2856,11 +2871,11 @@ EndIf
 Return lRet
 
 
+
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Gravando produto...													³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static function GRAVANDO(lOpcao)
-
 Local cUmTela := ""
 lDifer:=.F.      
 
@@ -2896,9 +2911,9 @@ Endif
 //³ Verifico se o codigo de barras existe								³
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 If lOpcao==2
-	_cProduto:=LS4->PRODUTO
+	_cProduto := LS4->PRODUTO
 Else
-	_cProduto:=LS1->PRODUTO
+	_cProduto := LS1->PRODUTO
 Endif
 
 _cCodBarras:=''
@@ -2915,72 +2930,73 @@ Endif
 
 //If lOpcao==2
 DbSelectarea("LS1")
-Reclock("LS1",.F.)
-///	IF (_nPrecoA-_nCusto)>=1 .or. (_nCusto-_nPrecoA)>=1
-///	LS1->OK:="O"
-///Else
-LS1->OK:=""
-///Endif
-
-///	IF (_nPrecoA-_nCusto)>=1 .or. (_nCusto-_nPrecoA)>=1//Alredo para usuario intervir se deseja utilizar o item  - Rafael
-///	   	LS1->OK:="O"
-///		If !(alltrim(LS1->UM) == Alltrim(SB1->B1_UM)) //unidade de medida for diferente - solicitar se deseja usar
-///			If MsgYesNo("A Unidade de medida entre os itens são diferente, deseja utilizar?","Atencao")
-///				LS1->OK:=""
-///			EndIF
-///		EndiF
-///	Else
-///		LS1->OK:=""
-///	Endif
-
-LS1->PRODUTO:=_cProduto  
-If lOpcao == 2
-	LS1->DESCRICAO:=LS4->DESCRICAO
-EndIf
-//LS1->CAIXAS:=_nCaixas
-//LS1->QUANTIDADE :=  _nQuant	
-//LS1->PRECO:=(LS1->TOTAL/_nQuant)
-//LS1->UM := SB1->B1_UM	
-If LS1->ALTERADO == "N"
-	cUmTela := LS1->UMXML
-Else
-	cUmTela := LS1->UM
-EndIf
-If cUmTela == SB1->B1_UM//Verifica se a 1o unidade de medida do xml eh igual a 1o unidade de medida do cadastro de produtos.		
-	nQuant := LS1->QUANTIDADE	
-	LS1->PRECO :=(LS1->TOTAL/nQuant)		     
-	If !Empty(SB1->B1_SEGUM) .And. SB1->B1_CONV > 0 //Os campos da 2o um estao preenchidos, aplica conversao.					    
-	    LS1->UM2 := SB1->B1_SEGUM
-		LS1->QUANT2 := IIF(SB1->B1_TIPCONV == "D",nQuant/SB1->B1_CONV,nQuant*SB1->B1_CONV)
+IF !EOF()
+	Reclock("LS1",.F.)
+	///	IF (_nPrecoA-_nCusto)>=1 .or. (_nCusto-_nPrecoA)>=1
+	///	LS1->OK:="O"
+	///Else
+	LS1->OK := ""
+	///Endif
+	
+	///	IF (_nPrecoA-_nCusto)>=1 .or. (_nCusto-_nPrecoA)>=1//Alredo para usuario intervir se deseja utilizar o item  - Rafael
+	///	   	LS1->OK:="O"
+	///		If !(alltrim(LS1->UM) == Alltrim(SB1->B1_UM)) //unidade de medida for diferente - solicitar se deseja usar
+	///			If MsgYesNo("A Unidade de medida entre os itens são diferente, deseja utilizar?","Atencao")
+	///				LS1->OK:=""
+	///			EndIF
+	///		EndiF
+	///	Else
+	///		LS1->OK:=""
+	///	Endif
+	
+	LS1->PRODUTO:=_cProduto  
+	If lOpcao == 2
+		LS1->DESCRICAO:=LS4->DESCRICAO
 	EndIf
-ElseIf !Empty(cUmTela) .And. SB1->B1_CONV > 0 .And. cUmTela == SB1->B1_SEGUM
-	nQuant := LS1->QUANTIDADE	
-	LS1->UM := SB1->B1_UM
-	//Tratar --> ?? Se a 1o UM do XML for encontrada na 2o do cadastro de produtos, inverte o sinal do tipo de conversao ??
-	LS1->QUANTIDADE := IIF(SB1->B1_TIPCONV == "D",nQuant*SB1->B1_CONV,nQuant/SB1->B1_CONV)
-	LS1->UM2 := SB1->B1_SEGUM
-	LS1->QUANT2 := nQuant		
-	nQuant := LS1->QUANTIDADE
-	LS1->PRECO := (LS1->TOTAL/nQuant)		     			
-Else  
-	LS1->QUANTIDADE := nQuant
-	LS1->PRECO := nVlrUnit//(LS1->TOTAL/nQuant)		     		
-	LS1->UM := SB1->B1_UM
-	If !Empty(SB1->B1_SEGUM) .And. SB1->B1_CONV > 0 //Os campos da 2o um estao preenchidos, aplica conversao.					    
-	    LS1->UM2 := SB1->B1_SEGUM
-		LS1->QUANT2 := IIF(SB1->B1_TIPCONV == "D",nQuant/SB1->B1_CONV,nQuant*SB1->B1_CONV)
+	//LS1->CAIXAS:=_nCaixas
+	//LS1->QUANTIDADE :=  _nQuant	
+	//LS1->PRECO:=(LS1->TOTAL/_nQuant)
+	//LS1->UM := SB1->B1_UM	
+	If LS1->ALTERADO == "N"
+		cUmTela := LS1->UMXML
+	Else
+		cUmTela := LS1->UM
 	EndIf
-EndIf		
-//LS1->PRECOFOR:=_nPreco
-
-//LS1->CUSTO:=_nCusto
-LS1->ALTERADO:="S"
-LS1->QE:=_nQE
-MsUnlock()
-
+	If cUmTela == SB1->B1_UM//Verifica se a 1o unidade de medida do xml eh igual a 1o unidade de medida do cadastro de produtos.		
+		nQuant     := LS1->QUANTIDADE	
+		LS1->PRECO := (LS1->TOTAL/nQuant)		     
+		If !Empty(SB1->B1_SEGUM) .And. SB1->B1_CONV > 0 //Os campos da 2o um estao preenchidos, aplica conversao.					    
+		    LS1->UM2    := SB1->B1_SEGUM
+			LS1->QUANT2 := IIF(SB1->B1_TIPCONV == "D", nQuant/SB1->B1_CONV, nQuant*SB1->B1_CONV)
+		EndIf
+	ElseIf !Empty(cUmTela) .And. (SB1->B1_CONV > 0) .And. (cUmTela == SB1->B1_SEGUM)
+		nQuant  := LS1->QUANTIDADE	
+		LS1->UM := SB1->B1_UM
+		//Tratar --> ?? Se a 1o UM do XML for encontrada na 2o do cadastro de produtos, inverte o sinal do tipo de conversao ??
+		LS1->QUANTIDADE := IIF(SB1->B1_TIPCONV == "D",nQuant*SB1->B1_CONV,nQuant/SB1->B1_CONV)
+		LS1->UM2        := SB1->B1_SEGUM
+		LS1->QUANT2     := nQuant		
+		nQuant          := LS1->QUANTIDADE
+		LS1->PRECO      := (LS1->TOTAL/nQuant)		     			
+	Else  
+		LS1->QUANTIDADE := nQuant
+		LS1->PRECO      := nVlrUnit//(LS1->TOTAL/nQuant)		     		
+		LS1->UM         := SB1->B1_UM
+		If !Empty(SB1->B1_SEGUM) .And. SB1->B1_CONV > 0 //Os campos da 2o um estao preenchidos, aplica conversao.					    
+		    LS1->UM2    := SB1->B1_SEGUM
+			LS1->QUANT2 := IIF(SB1->B1_TIPCONV == "D",nQuant/SB1->B1_CONV,nQuant*SB1->B1_CONV)
+		EndIf
+	EndIf		
+	//LS1->PRECOFOR:=_nPreco
+	
+	//LS1->CUSTO:=_nCusto
+	LS1->ALTERADO :="S"
+	LS1->QE       :=_nQE
+	MsUnlock()
+ENDIF
 DbSelectarea("LS5")
 Reclock("LS5",.T.)
-LS5->PRODUTO:=_cProduto
+LS5->PRODUTO :=_cProduto
 MsUnlock()
 //EndIf
 /*
@@ -3589,13 +3605,13 @@ If cResp
 	Endif
 	
 	aCampos	:= {{"EMPRESA","C",2,0 },;
-	{"FILIAL","C",2,0 },;
-	{"NOME","C",20,0 },;
-	{"ALMOX","C",2,0 },;
-	{"PEDIDO","C",2,0 },;
-	{"SERIE","C",3,0 },;
-	{"ESPECIE","C",5,0 },;
-	{"EMAIL","C",300,0 }}
+				{"FILIAL","C",2,0 },;
+				{"NOME","C",20,0 },;
+				{"ALMOX","C",2,0 },;
+				{"PEDIDO","C",2,0 },;
+				{"SERIE","C",3,0 },;
+				{"ESPECIE","C",5,0 },;
+				{"EMAIL","C",300,0 }}
 	
 	cArqTrab  := CriaTrab(aCampos)
 	dbUseArea( .T.,, cArqTrab, "LS1", if(.F. .OR. .F., !.F., NIL), .F. )
@@ -3973,16 +3989,16 @@ While !Eof()
 	If (TCQ->QUANTIDADE-_nUsados)>0
 		Reclock("LS2",.T.)
 		IF (TCQ->QUANTIDADE-_nUsados)>=_nQuantXml
-			LS2->OK:="X"
+			LS2->OK     := "X"
 		Endif
-		LS2->EMISSAO:=STOD(TCQ->EMISSAO)
-		LS2->PEDIDO:=TCQ->PEDIDO
-		LS2->ITEM:=TCQ->ITEM
+		LS2->EMISSAO    := STOD(TCQ->EMISSAO)
+		LS2->PEDIDO     := TCQ->PEDIDO
+		LS2->ITEM       := TCQ->ITEM
 		//LS2->PRECO:=TCQ->PRECO //#ECV20121127.o
-		LS2->PRECO:=IIF(TCQ->MOEDA <> 1 .And. TCQ->TAXA == 0, fCalcPrc(TCQ->PEDIDO,TCQ->ITEM),TCQ->PRECO) //#ECV20121127.n
-		LS2->QUANTIDADE:=(TCQ->QUANTIDADE-_nUsados) 
+		LS2->PRECO      := IIF(TCQ->MOEDA <> 1 .And. TCQ->TAXA == 0, fCalcPrc(TCQ->PEDIDO,TCQ->ITEM),TCQ->PRECO) //#ECV20121127.n
+		LS2->QUANTIDADE := (TCQ->QUANTIDADE-_nUsados) 
 		//LS2->TES := TCQ->TES
-		LS2->ENTREGA:=STOD(TCQ->ENTREGA)
+		LS2->ENTREGA    := STOD(TCQ->ENTREGA)
 		Msunlock()
 		lAchou:=.T.
 	Endif
@@ -4090,10 +4106,10 @@ If (LS1->QUANTIDADE>LS2->QUANTIDADE)
 Endif
 
 Reclock("LS1",.F.)
-LS1->PEDIDO:=LS2->PEDIDO
-LS1->ITEM:=LS2->ITEM    
+LS1->PEDIDO  :=LS2->PEDIDO
+LS1->ITEM    :=LS2->ITEM    
 //LS1->TES := LS2->TES     // ADICIONADO POR VALDEMIR 
-LS1->ALTERADO:="S"
+LS1->ALTERADO :="S"
 MsUnlock()
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -4408,6 +4424,7 @@ aProLt[oProLt:nAt,11]}}
 ACTIVATE MSDIALOG oLtInfo ON INIT EnchoiceBar(oLtInfo,{|| If(FS_CONFRV(),oLtInfo:End(),.t.)  },{||  (oLtInfo:End(),.f.) }) CENTER
 
 Return .t.
+               
 
 Static Function FS_CONFRV()
 Local _ni:=1
@@ -4420,7 +4437,7 @@ For _ni := 1 to len(aProLt)
 next
 
 //gravar a informacao no array para gerar NF
-For _ni := 1 to len(aProLt)
+For _ni := 1 to len(aProLt)  
 	aTemp:={}
 	//aadd(aProLt,{LS1->PRODUTO,LS1->QUANTIDADE,LS1->PEDIDO,LS1->ITEM,LS1->PRECO,LS1->TOTAL,LS1->DESCONTO,LS1->ALMOX,LS1->ITEM,LS1->LOTECTL })
 	aadd(aTemp,{"D1_COD" ,aProLt[_ni,1],Nil})
@@ -4881,7 +4898,7 @@ aFldCBAtu	:= Array(Len(aTitles)) // foi alterado por causa do SIGAGSP.
 
 
 PRIVATE bRefresh	:= {|nX| NfeFldChg(nX,nY,,aFldCBAtu)}  
-Private n           := OBRWI:oBROWSE:nAT 
+PUBLIC  n           := OBRWI:oBROWSE:nAT 
                  
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Impede de executar a rotina quando a tecla F3 estiver ativa		    ³
@@ -5249,7 +5266,7 @@ Static Function ValidaMoveXML(pSelecao,pLocal,pDest)
          
 	For i := 1 To Len(aXML)
 		nXmlStatus := XMLError()
-		cFile	   := cCaminho+"\"+lower(ALLTRIM(aXML[i]))
+		cFile	   := cServ+"\"+lower(ALLTRIM(aXML[i]))       //cCaminho
 		oXml 	   := XmlParserFile(cFile,"_",@cError, @cWarning )
 		lTipo	   :=3
 		
@@ -5622,6 +5639,8 @@ For i:=1 to len(aXML)
 					LS3->XML	  := UPPER(aXML[i])
 					LS3->NOTA	  := cNota
 					LS3->CHAVE    := cChave
+					LS3->MOEDA    := _nMoeda        // Valdemir Jose 20130612
+					LS3->TXMOEDA  := _nTxMoeda      // Valdemir Jose
 					MsUnlock()
 					lAchou:=.T.
 				Endif
@@ -5672,7 +5691,9 @@ For i:=1 to len(aXML)
 				LS3->NOME	  := SA1->A1_NREDUZ
 				LS3->XML	  := UPPER(aXML[i])
 				LS3->NOTA	  := cNota
-				LS3->CHAVE    := cChave
+				LS3->CHAVE    := cChave   
+				LS3->MOEDA    := _nMoeda        // Valdemir Jose 20130612
+				LS3->TXMOEDA  := _nTxMoeda      // Valdemir Jose
 				MsUnlock()
 				lAchou:=.T.
 			Endif
