@@ -17,8 +17,8 @@
 #DEFINE MAXITEMP2  049                                                // Máximo de produtos para a pagina 2 em diante
 #DEFINE MAXITEMP2F 069                                                // Máximo de produtos para a página 2 em diante quando a página não possui informações complementares
 #DEFINE MAXITEMP3  025                                                // Máximo de produtos para a pagina 2 em diante (caso utilize a opção de impressao em verso) - Tratamento implementado para atender a legislacao que determina que a segunda pagina de ocupar 50%.
-#DEFINE MAXITEMC   040                                               // Máxima de caracteres por linha de produtos/serviços
-#DEFINE MAXMENLIN  123  //090 - Trocado por Valdemir 28/01/13         // Máximo de caracteres por linha de dados adicionais                                               // Máximo de caracteres por linha de dados adicionais
+#DEFINE MAXITEMC   040                                                // Máxima de caracteres por linha de produtos/serviços
+#DEFINE MAXMENLIN  123  //090 - Trocado por Valdemir 28/01/13   // Máximo de caracteres por linha de dados adicionais                                               // Máximo de caracteres por linha de dados adicionais
 #DEFINE MAXMSG     013                                                // Máximo de dados adicionais por página
 #DEFINE MAXVALORC  012    //008                                       // Máximo de caracteres por linha de valores numéricos
 
@@ -164,11 +164,14 @@ Local lImpDir	 :=GetNewPar("MV_IMPDIR",.F.)
 Local nLenarray	 := 0
 Local nCursor	 := 0
 Local lBreak	 := .F.
-Local aGrvSF3    := {}  
+Local aGrvSF3    := {}
+Local lImpSimp   := .F. 
+Local _xNota     := ""
 
 //If Pergunte("NFSIGW",.T.)
 If Pergunte("NFENEW",.T.)
 	MV_PAR01 := AllTrim(MV_PAR01)
+	//lImpSimp := ( !Empty( MV_PAR06 ) .and. MV_PAR06 == 1 )
 	If !lImpDir
 		dbSelectArea("SF3")
 		dbSetOrder(5)
@@ -189,12 +192,12 @@ If Pergunte("NFENEW",.T.)
 					COLUMN F3_DTCANC AS DATE     
 					// ---------------------------------------- A T E N Ç Ã O -------------------------------------- Valdemir Jose
 					// Quando levar para o ambiente de produção, não esquecer de adicionar no SX1
-					// Cliente De:
-					// Loja De:
-					// Cliente Até:
-					// Loja Até:
-					// Emissão De: 
-					// Emissão Até
+					// 06-Cliente De:
+					// 07-Loja De:
+					// 08-Cliente Até:
+					// 09-Loja Até:
+					// 10-Emissão De: 
+					// 11-Emissão Até
 					//----------------------------------------------------------------------------------------------
 					
 					SELECT	F3_FILIAL,F3_ENTRADA,F3_NFELETR,F3_CFO,F3_FORMUL,F3_NFISCAL,F3_SERIE,F3_CLIEFOR,F3_LOJA,F3_ESPECIE,F3_DTCANC
@@ -277,8 +280,11 @@ If Pergunte("NFENEW",.T.)
 					aadd(Atail(aNotas),(cAliasSF3)->F3_LOJA)
 					
 				EndIf
-			EndIf
-			_cNota += "_"+(cAliasSF3)->F3_NFISCAL
+			EndIf 
+			if _xNota <> (cAliasSF3)->F3_NFISCAL 
+				_cNota += "_"+(cAliasSF3)->F3_NFISCAL
+				_xNota := (cAliasSF3)->F3_NFISCAL
+			Endif
 			dbSelectArea(cAliasSF3)
 			dbSkip()
 			If lEnd
@@ -388,7 +394,7 @@ If Pergunte("NFENEW",.T.)
 							oNfe := XmlParser(aXML[nX][2],"_",@cAviso,@cErro)
 							oNfeDPEC := XmlParser(aXML[nX][4],"_",@cAviso,@cErro)
 							If Empty(cAviso) .And. Empty(cErro)
-								ImpDet(@oDanfe,oNFe,cAutoriza,cModalidade,oNfeDPEC,cCodAutDPEC,aXml[nX][6],aXml[nX][7],aNotas[nX])
+								ImpDet(@oDanfe,oNFe,cAutoriza,cModalidade,oNfeDPEC,cCodAutDPEC,aXml[nX][6],aXml[nX][7],aNotas[nX],lImpSimp)	
 								lExistNfe := .T.
 							EndIf
 							oNfe     := nil
@@ -486,7 +492,7 @@ If Pergunte("NFENEW",.T.)
 						ElseIf aNotas[nX][02]=="S" .And. MV_PAR04==2 .And. (oNfe:_NFE:_INFNFE:_IDE:_TPNF:TEXT=="1")
 							dbSelectArea("SF2")
 							dbSetOrder(1)
-							If MsSeek(xFilial("SF2")+aNotas[nX][05]+aNotas[nX][04]) .And. Alltrim(aXML[nX][8])$"1,3,4,6" .Or. ( Alltrim(aXML[nX][8]) $ "2"  .And. !Empty(cAutoriza) )
+							If MsSeek(xFilial("SF2")+PADR(aNotas[nX][05],TAMSX3("F2_DOC")[1])+aNotas[nX][04]) .And. Alltrim(aXML[nX][8])$"1,3,4,6" .Or. ( Alltrim(aXML[nX][8]) $ "2"  .And. !Empty(cAutoriza) )
 								RecLock("SF2")
 								If !SF2->F2_FIMP$"D"
 									SF2->F2_FIMP := "S"
@@ -552,10 +558,10 @@ If Pergunte("NFENEW",.T.)
 						EndIf
 						//-------------------------------
 						If Empty(cAviso) .And. Empty(cErro) .And. MV_PAR04==1 .And. (oNfe:_NFE:_INFNFE:_IDE:_TPNF:TEXT=="0")
-							ImpDet(@oDanfe,oNFe,cAutoriza,cModalidade,oNfeDPEC,cCodAutDPEC,aXml[nX][6],aXml[nX][7],aNotas[nX])
+							ImpDet(@oDanfe,oNFe,cAutoriza,cModalidade,oNfeDPEC,cCodAutDPEC,aXml[nX][6],aXml[nX][7],aNotas[nX],lImpSimp)
 							lExistNfe := .T.
 						ElseIf Empty(cAviso) .And. Empty(cErro) .And. MV_PAR04==2 .And. (oNfe:_NFE:_INFNFE:_IDE:_TPNF:TEXT=="1")
-							ImpDet(@oDanfe,oNFe,cAutoriza,cModalidade,oNfeDPEC,cCodAutDPEC,aXml[nX][6],aXml[nX][7],aNotas[nX])
+							ImpDet(@oDanfe,oNFe,cAutoriza,cModalidade,oNfeDPEC,cCodAutDPEC,aXml[nX][6],aXml[nX][7],aNotas[nX],lImpSimp)
 							lExistNfe := .T.
 						EndIf
 					Else
@@ -608,7 +614,9 @@ Return(.T.)
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
-Static Function ImpDet(oDanfe,oNfe,cCodAutSef,cModalidade,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,aNota)
+Static Function ImpDet(oDanfe,oNfe,cCodAutSef,cModalidade,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,aNota,lImpSimp)
+                                                                              
+DEFAULT lImpSimp   := .F.
 
 PRIVATE oFont10N   := TFontEx():New(oDanfe,"Arial",08,08,.T.,.T.,.F.)// 1
 PRIVATE oFont07N   := TFontEx():New(oDanfe,"Arial",06,06,.T.,.T.,.F.)// 2
@@ -628,7 +636,11 @@ PRIVATE oFont18N   := TFontEx():New(oDanfe,"Arial",17,17,.T.,.T.,.F.)// 12
 PRIVATE OFONT12N   := TFontEx():New(oDanfe,"Arial",11,11,.T.,.T.,.F.)// 12
 PRIVATE oFont5V    := TFontEx():New(oDanfe,"Arial",05,05,.F.,.T.,.F.)// 3
 
-PrtDanfe(@oDanfe,oNfe,cCodAutSef,cModalidade,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,aNota)
+if lImpSimp
+	SimpDanfe(@oDanfe,oNfe,cCodAutSef,cModalidade,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,aNota)
+else
+	PrtDanfe(@oDanfe,oNfe,cCodAutSef,cModalidade,oNfeDPEC,cCodAutDPEC,cDtHrRecCab,dDtReceb,aNota)
+endif
 
 Return(.T.)
 
@@ -724,7 +736,8 @@ Local nLenDet
 Local nLenSit
 Local nLenItens     := 0
 Local nLenMensagens := 0
-Local nLen          := 0
+Local nLen          := 0  
+
 Local cUF		 	:= ""
 Local lConverte     := GetNewPar("MV_CONVERT",.F.)
 Local lImpAnfav     := GetNewPar("MV_IMPANF",.F.)
@@ -791,7 +804,7 @@ Private oFatura   := IIf(Type("oNF:_InfNfe:_Cobr")=="U",Nil,oNF:_InfNfe:_Cobr)
 Private oImposto
 Private nPrivate   := 0
 Private nPrivate2  := 0
-Private nXAux	   := 0
+
 Private aInfNf     := {}
 Private lArt488MG  := .F.
 Private lArt274SP  := .F.
@@ -1184,6 +1197,8 @@ For nZ := 1 To nLenDet
 						nBaseICM := Val(&("oImposto:_Imposto:_ICMS:_ICMS"+aSitTrib[nY]+":_VBC:TEXT"))
 						nValICM  := Val(&("oImposto:_Imposto:_ICMS:_ICMS"+aSitTrib[nY]+":_vICMS:TEXT"))
 						nPICM    := Val(&("oImposto:_Imposto:_ICMS:_ICMS"+aSitTrib[nY]+":_PICMS:TEXT"))
+					ElseIf Type("oImposto:_Imposto:_ICMS:_ICMS"+aSitTrib[nPrivate2]+":_MOTDESICMS") <> "U" .And. Type("oImposto:_PROD:_VDESC:TEXT") <> "U"   //SINIEF 25/12, efeitos a partir de 20.12.12 
+						nValICM  := Val(&("oImposto:_Imposto:_ICMS:_ICMS"+aSitTrib[nY]+":_vICMS:TEXT"))
 					EndIf
 					cSitTrib := &("oImposto:_Imposto:_ICMS:_ICMS"+aSitTrib[nY]+":_ORIG:TEXT")
 					cSitTrib += &("oImposto:_Imposto:_ICMS:_ICMS"+aSitTrib[nY]+":_CST:TEXT")
@@ -1493,19 +1508,22 @@ If MV_PAR04 == 2
 	EndIf    
 ElseIf MV_PAR04 == 1
 	//impressao do valor do desconto calculdo conforme decreto 43.080/02 RICMS-MG
-	//Posiciono no SF3
-	dbSelectArea("SF3")
-	dbSetOrder(4)
-	If MsSeek(xFilial("SF3")+SF1->F1_FORNECE+SF1->F1_LOJA+SF1->F1_DOC+SF1->F1_SERIE)	                                                                                                                                      		
-		If SF3->(FieldPos("F3_DS43080"))<>0 .And. SF3->F3_DS43080 > 0
-			cAux := "Base de calc.reduzida conf.Art.43, Anexo IV, Parte 1, Item 3 do RICMS-MG. Valor da deducao ICMS R$ " 
-			cAux += Alltrim(Transform(SF3->F3_DS43080,"@ze 9,999,999,999,999.99")) + " ref.reducao de base de calculo"  
-			While !Empty(cAux)
-				aadd(aMensagem,Substr(cAux,1,IIf(EspacoAt(cAux, MAXMENLIN) > 1, EspacoAt(cAux, MAXMENLIN) - 1, MAXMENLIN)))
-				cAux := Substr(cAux,IIf(EspacoAt(cAux, MAXMENLIN) > 1, EspacoAt(cAux, MAXMENLIN), MAXMENLIN) + 1)
-			EndDo                                                                                                                                                               
-	    EndIf                                                                                                                                  	
-	EndIf
+	dbSelectArea("SF1")
+	dbSetOrder(1)
+	IF MsSeek(xFilial("SF1")+aNota[5]+aNota[4]+aNota[6]+aNota[7])	
+		dbSelectArea("SF3")
+		dbSetOrder(4)
+		If MsSeek(xFilial("SF3")+SF1->F1_FORNECE+SF1->F1_LOJA+SF1->F1_DOC+SF1->F1_SERIE)	                                                                                                                                      		
+			If SF3->(FieldPos("F3_DS43080"))<>0 .And. SF3->F3_DS43080 > 0
+				cAux := "Base de calc.reduzida conf.Art.43, Anexo IV, Parte 1, Item 3 do RICMS-MG. Valor da deducao ICMS R$ " 
+				cAux += Alltrim(Transform(SF3->F3_DS43080,"@ze 9,999,999,999,999.99")) + " ref.reducao de base de calculo"  
+				While !Empty(cAux)
+					aadd(aMensagem,Substr(cAux,1,IIf(EspacoAt(cAux, MAXMENLIN) > 1, EspacoAt(cAux, MAXMENLIN) - 1, MAXMENLIN)))
+					cAux := Substr(cAux,IIf(EspacoAt(cAux, MAXMENLIN) > 1, EspacoAt(cAux, MAXMENLIN), MAXMENLIN) + 1)
+				EndDo                                                                                                                                                               
+		    EndIf                                                                                                                                  	
+		EndIf
+	Endif
 EndIF
 
 
