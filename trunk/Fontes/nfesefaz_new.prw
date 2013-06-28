@@ -3378,11 +3378,11 @@ Else
 					aAdi := aDI
 				// Se não o parâmetro de integração entre o SIGAEIC e o SIGAFAT estiver desabilitado,
 				//   procura as informações da importação da tabela CD5 (complemento de importação).
-				ElseIf (!lEasy) //.AND. (!lCD5) removido devido a mudança do novo fonte Valdemir 04/06/2013
+				ElseIf (!lEasy) .AND. (!lCD5)
 					DbSelectArea("CD5")
 					DbSetOrder(4)
 					// Procura algum registro na CD5 referente a nota que foi complementada
-					If SD5->(MsSeek(xFilial("CD5")+(cAliasSD1)->D1_DOC+(cAliasSD1)->D1_SERIE+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA+(cAliasSD1)->D1_ITEM) )
+					If CD5->(MsSeek(xFilial("CD5")+(cAliasSD1)->D1_DOC+(cAliasSD1)->D1_SERIE+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA+(cAliasSD1)->D1_ITEM) )
 							aAdd(aDI,{;
 								{"I04","NCM",SB1->B1_POSIPI},;
 								{"I15","vFrete",0},;

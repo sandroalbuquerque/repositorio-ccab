@@ -186,7 +186,43 @@ For _x := 1 to Len(aCols)
 	Endif	
 Next
 */               
+    
 
+//*******************************************************************************************************
+// AJUSTE DEVIDO A PROBLEMAS NO DOLAR REFERENTE A NOTA COM OS TITULOS - Valdemir Jose 28/06/2013
+//*******************************************************************************************************
+Dbselectarea("SD1")
+SD1->(Dbgotop())
+SD1->(Dbsetorder(1))
+lEncontrou := SD1->(Dbseek(xFilial("SF1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA))
+if lEncontrou
+	Dbselectarea("SC7")
+	SC7->(Dbsetorder(1))
+	IF SC7->(Dbseek(xFilial("SD1")+SD1->D1_PEDIDO+SD1->D1_ITEMPC)) 
+	    nMoedaCor     := SC7->C7_MOEDA
+	    nTaxa         := SC7->C7_TXMOEDA
+	
+		// Ajusta Dolar na Nota
+		RECLOCK("SF1",.F.)
+		SF1->F1_MOEDA    :=  SC7->C7_MOEDA
+		SF1->F1_TXMOEDA  :=  SC7->C7_TXMOEDA
+		MsUnlock()             
+		
+		// Ajusta Contas a Pagar
+		DbSelectArea("SE2")
+		DbSetOrder(6)
+		If SE2->(dbSeek(xFilial("SE2")+SF1->(F1_FORNECE+F1_LOJA+F1_SERIE+F1_DOC),.f.))
+			While SE2->(Eof()) == .f. .and. SE2->(E2_FILORIG+E2_FORNECE+E2_LOJA+E2_PREFIXO+E2_NUM) == SF1->(F1_FILIAL+F1_FORNECE+F1_LOJA+F1_SERIE+F1_DOC)
+				RecLock('SE2',.F.)
+				SE2->E2_MOEDA   := SC7->C7_MOEDA
+				SE2->E2_TXMOEDA := SC7->C7_TXMOEDA
+				SE2->E2_VALOR   := (SE2->E2_VLCRUZ / SC7->C7_MOEDA)
+				MsUnlock()
+				dbSkip()
+			EndDo
+		Endif
+	ENDIF
+endif
 
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
@@ -244,7 +280,7 @@ IF SF1->F1_TIPO $ "N"
 			// ********** INSERIDO PARA TRATAMENTO DO ENCONTRO DE CONTAS.....
 			SE2->E2_XENCC               :=      SF1->F1_XENCC
 			SE2->E2_XDTENCC             :=      SF1->F1_XDTENCC
-			IF SF1->F1_XENCC <> "N"
+			IF (SF1->F1_XENCC <> "N") .AND. (!EMPTY(SF1->F1_XENCC))
 				SE2->E2_PORTADO := IIF(SF1->F1_XENCC='C',"CAP","ENC")     // IIF ACRESCENTADO POR VALDEMIR 29/05/13
    				SE2->E2_XBCOPAG := IIF(SF1->F1_XENCC='C',"CAP","ENC")
 				SE2->E2_XAGNPAG := "00001" 

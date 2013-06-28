@@ -112,7 +112,7 @@ aXML    := {}
 cCamSel := ''  //cServ
 
 // Valida XML para ser movido para pasta da filial correta
-Processa({ || ValidaMoveXML(,_cLocal,cSERV)}, 'Validando arquivos da raiz...')
+Processa({ || ValidaMoveXML(,_cLocal,cSERV,0)}, 'Validando arquivos da raiz...')
 
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
@@ -1386,12 +1386,12 @@ If Empty(@cError) .and. lTipo<>3
 	If lTipo == 4 //Caso seja uma NF de CT-e
 		If alltrim(_cCNPJ3)<>alltrim(SM0->M0_CGC)
 			_cCNPJ:=''
-			MsgAlert("A Nota Fiscal de número: "+cNota+" não pertence a filial posicionada!")
+			//MsgAlert("A Nota Fiscal de número: "+cNota+" não pertence a filial posicionada!")
 		EndIf
 	Else
 		If alltrim(_cCNPJ2)<>alltrim(SM0->M0_CGC)
 			_cCNPJ:=''
-			MsgAlert("A Nota Fiscal de número: "+cNota+" não pertence a filial posicionada!")
+			//MsgAlert("A Nota Fiscal de número: "+cNota+" não pertence a filial posicionada!")
 		EndIf
 	EndIf
 	//#ECV20130104.en
@@ -1445,12 +1445,15 @@ Else
 	MsgAlert("Arquivo "+aXML[1]+" Inválido!")
 Endif
 Return
+    
+
+
+
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //| Pre nota entrada											 |
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static Function PRENOTA()
-
 Local aCabec := {}
 Private aItens := {}
 Private aLinha := {}
@@ -1757,10 +1760,10 @@ Return
 //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 Static Function NEWPED()
 
-
 Local aCab2 :={}
 Local aItem2:={}
 PRIVATE lMsErroAuto := .F.
+
 lAchei:=.F.
 nOpc:=3
 
@@ -1768,8 +1771,10 @@ nOpc:=3
 if 1=1
 	return
 EndIF
+
 _nItens:=0
 _cCond:=POSICIONE("SA2",1,xFilial("SA2")+LS3->FORNEC+LS3->LOJA,"A2_COND")
+
 If Empty(_cCond)
 	_cCond:="001"
 Endif
@@ -1812,25 +1817,25 @@ While !Eof()
 	Endif
 	
 	aCab2:={{"C7_NUM",cNumPed,Nil},;
-	{"C7_EMISSAO" ,dDataBase,Nil},;
-	{"C7_FORNECE" ,LS3->FORNEC,Nil},;
-	{"C7_LOJA"    ,LS3->LOJA,Nil},;
-	{"C7_CONTATO" ,Posicione("SA2",1,xFilial("SA2")+LS3->FORNEC+LS3->LOJA,"A2_CONTATO"),Nil},;
-	{"C7_COND"    ,_cCond,Nil},;
-	{"C7_FILENT" ,xFilial("SC7"),Nil}}
+			{"C7_EMISSAO" ,dDataBase,Nil},;
+			{"C7_FORNECE" ,LS3->FORNEC,Nil},;
+			{"C7_LOJA"    ,LS3->LOJA,Nil},;
+			{"C7_CONTATO" ,Posicione("SA2",1,xFilial("SA2")+LS3->FORNEC+LS3->LOJA,"A2_CONTATO"),Nil},;
+			{"C7_COND"    ,_cCond,Nil},;
+			{"C7_FILENT" ,xFilial("SC7"),Nil}}
 	
 	aItem3:={}
 	aItem3:={{"C7_ITEM",Strzero(_nItens+1,4),Nil},;
-	{"C7_PRODUTO",LS1->PRODUTO,Nil},;
-	{"C7_QUANT" ,LS1->QUANTIDADE,Nil},;
-	{"C7_PRECO" ,LS1->PRECO,Nil},;
-	{"C7_TOTAL" ,LS1->TOTAL,Nil},;
-	{"C7_DATPRF" ,dDataBase,Nil},;
-	{"C7_TES"    ,POSICIONE("SB1",1,xFilial("SB1")+LS1->PRODUTO,"B1_TE"),Nil},;
-	{"C7_FLUXO" ,"S",Nil},;
-	{"C7_USER" ,__CUSERID,Nil},;
-	{"C7_OBS"  ,"NF-ELETRONICA"			,Nil},;
-	{"C7_LOCAL",_cAlmoxPed,Nil}}
+			{"C7_PRODUTO",LS1->PRODUTO,Nil},;
+			{"C7_QUANT" ,LS1->QUANTIDADE,Nil},;
+			{"C7_PRECO" ,LS1->PRECO,Nil},;
+			{"C7_TOTAL" ,LS1->TOTAL,Nil},;
+			{"C7_DATPRF" ,dDataBase,Nil},;
+			{"C7_TES"    ,POSICIONE("SB1",1,xFilial("SB1")+LS1->PRODUTO,"B1_TE"),Nil},;
+			{"C7_FLUXO" ,"S",Nil},;
+			{"C7_USER" ,__CUSERID,Nil},;
+			{"C7_OBS"  ,"NF-ELETRONICA"			,Nil},;
+			{"C7_LOCAL",_cAlmoxPed,Nil}}
 	
 	aadd(aItem2,aItem3)
 	_nItens:=_nItens+1
@@ -1925,25 +1930,26 @@ While !Eof()
 		Endif
 		
 		aCab2:={{"C7_NUM",cNumPed,Nil},;
-		{"C7_EMISSAO" ,dDataBase,Nil},;
-		{"C7_FORNECE" ,LS3->FORNEC,Nil},;
-		{"C7_LOJA"    ,LS3->LOJA,Nil},;
-		{"C7_CONTATO" ,Posicione("SA2",1,xFilial("SA2")+LS3->FORNEC+LS3->LOJA,"A2_CONTATO"),Nil},;
-		{"C7_COND"    ,_cCond,Nil},;
-		{"C7_FILENT" ,xFilial("SC7"),Nil}}
+				{"C7_EMISSAO" ,dDataBase,Nil},;
+				{"C7_FORNECE" ,LS3->FORNEC,Nil},;
+				{"C7_LOJA"    ,LS3->LOJA,Nil},;
+				{"C7_CONTATO" ,Posicione("SA2",1,xFilial("SA2")+LS3->FORNEC+LS3->LOJA,"A2_CONTATO"),Nil},;
+				{"C7_COND"    ,_cCond,Nil},;
+				{"C7_FILENT" ,xFilial("SC7"),Nil}}
 		
 		aItem3:={}
 		aItem3:={{"C7_ITEM",Strzero(_nItens+1,4),Nil},;
-		{"C7_PRODUTO",LS1->PRODUTO,Nil},;
-		{"C7_QUANT" ,LS1->QUANTIDADE,Nil},;
-		{"C7_PRECO" ,LS1->PRECO,Nil},;
-		{"C7_TOTAL" ,LS1->TOTAL,Nil},;
-		{"C7_DATPRF" ,dDataBase,Nil},;
-		{"C7_TES"    ,POSICIONE("SB1",1,xFilial("SB1")+LS1->PRODUTO,"B1_TE"),Nil},;
-		{"C7_FLUXO" ,"S",Nil},;
-		{"C7_USER" ,__CUSERID,Nil},;
-		{"C7_OBS"  ,"NF-ELETRONICA"			,Nil},;
-		{"C7_LOCAL",_cAlmoxPed,Nil}}
+				{"C7_PRODUTO",LS1->PRODUTO,Nil},;
+				{"C7_QUANT" ,LS1->QUANTIDADE,Nil},;
+				{"C7_PRECO" ,LS1->PRECO,Nil},;
+				{"C7_TOTAL" ,LS1->TOTAL,Nil},;
+				{"C7_DATPRF" ,dDataBase,Nil},;
+				{"C7_TES"    ,POSICIONE("SB1",1,xFilial("SB1")+LS1->PRODUTO,"B1_TE"),Nil},;
+				{"C7_FLUXO" ,"S",Nil},;
+				{"C7_USER" ,__CUSERID,Nil},;
+				{"C7_OBS"  ,"NF-ELETRONICA"			,Nil},;
+				{"C7_LOCAL",_cAlmoxPed,Nil}}
+		
 		aadd(aItem2,aItem3)
 		
 		Reclock("LS1",.F.)
@@ -4992,7 +4998,12 @@ Return .T.
 STATIC Function ExecSelecao(npSelecao) 
 Local aXML 			:= {}                                           
 Local cDirDoMonitor := SuperGetMV('ES_DEV_ARMZ',.F.,'C:\MICROSOFT')
-Local _cDIRXML, _cDESTXML
+Local _cDIRXML, _cDESTXML  
+
+if npSelecao > 1
+	Alert("Opção não está disponível, favor falar com contatar o departamento de TI")
+	Return
+Endif
 
 aCampos4:= {{"NOTA","C",9,0 },;
 {"FORNECEDOR","C",6,0 },;
@@ -5049,11 +5060,8 @@ cCamSel := _cDESTXML
 cCamLoc := _cDIRXML    
                                              
 // Valida arquivos XML
-ValidaMoveXML('M',_cDIRXML, _cDESTXML)
+ValidaMoveXML('M',_cDIRXML, _cDESTXML, npSelecao)
                  
-// Salva XML em arquivos temporarios
-SalveReg(npSelecao, aXML, _cDESTXML)
-                       
 CORRIGE()
 
 OBRWI:obrowse:refresh()
@@ -5240,7 +5248,7 @@ Return
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-Static Function ValidaMoveXML(pSelecao,pLocal,pDest)
+Static Function ValidaMoveXML(pSelecao,pLocal,pDest, npSEL)
 	Local   i, iMOV                   
 	Local _cCNPJ, _cCNPJ2, _cCNPJ3  
 	Local cCaminho   := ""
@@ -5263,7 +5271,7 @@ Static Function ValidaMoveXML(pSelecao,pLocal,pDest)
 		iMOV := 2    // Move da as pasta para \XML
 	endif
 
-         
+    _cMsg := ""
 	For i := 1 To Len(aXML)
 		nXmlStatus := XMLError()
 		cFile	   := cServ+"\"+lower(ALLTRIM(aXML[i]))       //cCaminho
@@ -5354,12 +5362,28 @@ Static Function ValidaMoveXML(pSelecao,pLocal,pDest)
 				//cChave	:=Substr(oXml:_CTEPROC:_CTE:_INFCTE:_ID:TEXT,4,200)
 			EndIf
 			
-			// Move arquivos para pasta correspondente no servidor
-		   //	LocMovFil(_cCNPJ2, _cCNPJ3, lower(aXML[i]), iMOV)
-
+           // Verifica se o arquivo XML realmente faz parte da filial em questão
+           IF (_cCNPJ = SM0->M0_CGC) .OR. (_cCNPJ2 = SM0->M0_CGC) .or. (_cCNPJ3 = SM0->M0_CGC)       
+		    // Salva XML em arquivos temporarios
+		    IF npSEL > 0
+				SalveReg(npSEL, lower(ALLTRIM(aXML[i])), pDest)     
+			Endif
+	       ELSE
+	       	  _cMsg += "A Nota Fiscal número: "+cNota+" "+Chr(13)+Chr(10)+"Arquivo: "+lower(ALLTRIM(aXML[i]))+Chr(13)+Chr(10)
+	       	  
+	       	  //Localiza e move arquivo para pasta de filiais correta
+	       	  _cMsg += 'Movido para Filial: '+LocMovFil(_cCNPJ,_cCNPJ2, _cCNPJ3, lower(ALLTRIM(aXML[i])) )+Chr(13)+Chr(10)
+	       	  _cMsg += Chr(13)+Chr(10)
+	       	  
+	       ENDIF
 		ENDIF	
-	Next
+	Next      
 	
+	// Informa que encontrou arquivos em pastas errada e moveu para pasta correta
+    IF !Empty(alltrim(_cMsg))                                                              
+		_cMsg += "não pertence a filial posicionada!"+Chr(13)+Chr(10)+"Os arquivos XML, foram movido para pasta correta."
+		MsgAlert(_cMsg)
+	Endif
 	// Ler Configuração Sistema
 	LerConfigura()
 	
@@ -5373,7 +5397,7 @@ Return
 ±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
 ±±ºPrograma  ³LERXML    ºAutor  ³Valdemir Jose       º Data ³  27/02/13   º±±
 ±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDesc.     ³ Localiza e move registro para pasta de filiais             º±±
+±±ºDesc.     ³ Localiza e move arquivo para pasta de filiais correta      º±±
 ±±º          ³                                                            º±±
 ±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
 ±±ºUso       ³ CCAB                                                       º±±
@@ -5381,46 +5405,31 @@ Return
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-Static Function LocMovFil(_cCNPJ2, _cCNPJ3, pArqXml, pMov)
+Static Function LocMovFil(_cCNPJ,_cCNPJ2, _cCNPJ3, pArqXml)
 	Local aArea := GetArea()  
-	Local cDE, cPara
+	Local cPara := ""          
+	Local cRET  := ""
 
-	if pMov = 2
-
-	    cDE  := _cLOCAL+"\"+pArqXml
-	    cPara:= cSERV
-
-		// Move para a pasta
-		CpyT2S(cDE, cPara, .T.)
-		//__CopyFile(cDE, cPara)
-		//ferase(cDE)
-	
-		RestArea( aArea )
-		Return	
-
-	Endif	
-	
 	dbSelectArea('SM0')
 	dbGotop()
 	While !Eof()
-	    // Move os Registros, conforme parametros
-		if pMov = 1
-			cDE   := _cLOCAL+"\"+pArqXml 
-			cPara := cSERV+"\"
-		endif
 
-		if (_cCNPJ2 = SM0->M0_CGC) .or. (_cCNPJ3 = SM0->M0_CGC)       
+		if (_cCNPJ = SM0->M0_CGC) .or. (_cCNPJ2 = SM0->M0_CGC) .or. (_cCNPJ3 = SM0->M0_CGC)       
             
-			// Copia Arquivos para pasta lido
-			//__CopyFile(cDE, cPara)
-			CpyT2S(cDE, cPARA, .T.)
-			//ferase(cDE)
-			exit
+            if Empty(cRET)     
+				cPARA := '\XML\EMP_'+SM0->M0_CODIGO+'\'+SM0->M0_CODFIL+'\'
+				cRET  := SM0->M0_CODFIL
+				__CopyFile(cServ+'\'+pArqXml, cPARA)
+				ferase(cServ+'\'+pArqXml)
+				exit          
+			Endif
 		endif
 		dbSkip()
-	EndDo
+	EndDo                           
+	
 	RestArea( aArea )
-Return
+	
+Return cRET
 
 
 
@@ -5566,18 +5575,18 @@ Return
 ±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
-Static Function SalveReg(npSelecao,aXML, pDest)
+Static Function SalveReg(npSelecao,pArqXML, pDest)      //aXML
 Local i := 0
                         
-Procregua(len(aXML))                         
-For i:=1 to len(aXML)
+//Procregua(len(aXML))                         
+//For i:=1 to len(aXML)
 	
 	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 	//³ Dados do XML														³
 	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
 	IF (npSelecao = 1) .OR. (npSelecao = 2) .OR. (npSelecao = 4)
 
-     XML(,aXML[i], pDest)
+     XML(,pArqXML, pDest)
 
 	 DbSelectarea("LS3")
 	 Dbsetorder(1)
@@ -5636,7 +5645,7 @@ For i:=1 to len(aXML)
 					LS3->VENDEDOR := SUBSTR(SA2->A2_REPRES,1,30)
 					LS3->TELEFONE := alltrim(SA2->A2_DDD)+" "+alltrim(SUBSTR(SA2->A2_TEL,1,20))
 					LS3->NOME	  := SA2->A2_NREDUZ
-					LS3->XML	  := UPPER(aXML[i])
+					LS3->XML	  := UPPER(pArqXML)
 					LS3->NOTA	  := cNota
 					LS3->CHAVE    := cChave
 					LS3->MOEDA    := _nMoeda        // Valdemir Jose 20130612
@@ -5646,7 +5655,7 @@ For i:=1 to len(aXML)
 				Endif
 			Endif
 		Else
-			FRename(pDest+"\"+lower(ALLTRIM(aXML[i])),pDest+"\"+lower(ALLTRIM(aXML[i]))+".dup")
+			FRename(pDest+"\"+lower(ALLTRIM(aXML[i])),pDest+"\"+lower(ALLTRIM(pArqXML))+".dup")
 			__CopyFile(pDest+"\*.dup", "\xml\EMP_"+_cEmp+"\"+cFilAnt+"\duplicados\")
 			ferase(pDest+"\*.dup")
 		Endif
@@ -5698,13 +5707,14 @@ For i:=1 to len(aXML)
 				lAchou:=.T.
 			Endif
 		Else
-			FRename(pDest+"\"+lower(ALLTRIM(aXML[i])), pDest+"\"+lower(ALLTRIM(aXML[i]))+".dup")
+			FRename(pDest+"\"+lower(ALLTRIM(pArqXML)), pDest+"\"+lower(ALLTRIM(pArqXML))+".dup")
 			__CopyFile(pDest+"\*.dup", "\xml\EMP_"+cEmpAnt+"\"+cFilAnt+"\duplicados\")
-			ferase(pDest+"\"+lower(ALLTRIM(aXML[i]))+".dup")
+			ferase(pDest+"\"+lower(ALLTRIM(pArqXML))+".dup")
 		Endif
     Endif
+
     PROCESS()
-Next
+//Next
 
 DbSelectarea("LS1")
 Dbsetorder(1)

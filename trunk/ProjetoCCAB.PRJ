@@ -11,13 +11,16 @@ Group ProjetoCCAB
       PalmName=
       OutPut=
    End
-   ProjectsCount=5
+   ProjectsCount=6
    Project Financeiro
       FoldersCount=4
       Folder Fontes
          VSSPath=Fontes
-         FilesCount=1
+         FilesCount=2
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\CCFIN001A.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\FinP001.prw
              Type=T
          End
       End
@@ -34,7 +37,10 @@ Group ProjetoCCAB
       End
       Folder Ponto de Entrada
          VSSPath=Nova Pasta4
-         FilesCount=0
+         FilesCount=1
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MT100GE2.prw
+             Type=T
+         End
       End
    End
    Project Generico
@@ -88,7 +94,7 @@ Group ProjetoCCAB
       End
       Folder Fontes
          VSSPath=Nova Pasta2
-         FilesCount=5
+         FilesCount=8
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\CCABM410.PRW
              Type=T
          End
@@ -101,13 +107,22 @@ Group ProjetoCCAB
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\danfeii.prw
              Type=T
          End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\CCRFAT16.prw
+             Type=T
+         End
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\nfesefaz_new.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\danfe_p1.prw
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\CCABM413.PRW
              Type=T
          End
       End
       Folder Ponto Entrada
          VSSPath=Nova Pasta3
-         FilesCount=6
+         FilesCount=7
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\M410AGRV.PRW
              Type=T
          End
@@ -124,6 +139,9 @@ Group ProjetoCCAB
              Type=T
          End
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MA410MNU.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\M410LIOK.prw
              Type=T
          End
       End
@@ -155,7 +173,7 @@ Group ProjetoCCAB
       End
       Folder Ponto Entrada
          VSSPath=Nova Pasta3
-         FilesCount=10
+         FilesCount=11
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\WFW120P.prw
              Type=T
          End
@@ -186,6 +204,9 @@ Group ProjetoCCAB
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\SF1100I.prw
              Type=T
          End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\MT100TOK.prw
+             Type=T
+         End
       End
    End
    Project Estoque
@@ -211,6 +232,22 @@ Group ProjetoCCAB
              Type=T
          End
          File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\PontoEntrada\A020DELE.prw
+             Type=T
+         End
+      End
+   End
+   Project SFA
+      FoldersCount=1
+      Folder Processos
+         VSSPath=Nova Pasta1
+         FilesCount=3
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\sfa\ESFA002.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\sfa\CSFA001.PRW
+             Type=T
+         End
+         File \Desenvolvimento\Dropbox\Microsiga\Clientes\CCAB\Fontes\sfa\PSFA001.PRW
              Type=T
          End
       End
