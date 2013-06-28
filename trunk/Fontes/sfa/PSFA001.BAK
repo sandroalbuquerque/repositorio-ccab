@@ -1,0 +1,504 @@
+#include "APWEBSRV.CH"
+#include "PROTHEUS.CH"
+#include "TBICONN.CH"
+#include "TBICODE.CH"
+#include "TOPCONN.CH"
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³  PSFA001   ³ Autor ³Daniel Franciulli      ³Data  ³ 05/05/09 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descricao ³ Web Service para Controle de Pedido de Vendas			   	³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/       
+
+WSSTRUCT Cabec_PV							// Estrutura do Cabecalho
+	WSDATA NUMSFA   as  String 				// Z2_NUMSFA  - Ped. SFA     	- C,8
+	WSDATA MOEDA    as  Float 				// Z2_MOEDA   - Moeda        	- N,2
+	WSDATA XCLIFAT  as  String				// Z2_CLIENTE - Cliente      	- C,6
+	WSDATA XLOJAFAT as  String				// Z2_LOJACLI - Loja         	- C,2
+	WSDATA XCLIENT  as  String				// Z2_CLIENT  - Cli. Entrega 	- C,6
+	WSDATA XLOJAENT as  String				// Z2_LOJAENT - Loja Entrega 	- C,2
+	WSDATA XTPPED   as  String				// Z2_XTPPED  - Tp Ped Espec 	- C,1
+	WSDATA EMISSAO  as  String				// Z2_EMISSAO - DT Emissao   	- D,8
+	WSDATA CONDPAG  as  String  			// Z2_CONDPAG - Cond.Pagto   	- C,3
+//	WSDATA TIPO		as	String				// Z2_TIPO	  - Tipo do Pedido	- C,1
+	WSDATA XDESPER as  Float 	Optional	// Z2_XDESPER - Desconto Pont.	- N,5,2
+	WSDATA PARC1    as  Float 	Optional	// Z2_PARC1   - Parcela 1    	- N,12,2
+	WSDATA DATA1    as  String	Optional	// Z2_DATA1   - Vencimento 1 	- D,8
+	WSDATA PARC2    as  Float 	Optional	// Z2_PARC2   - Parcela 2    	- N,12,2
+	WSDATA DATA2    as  String	Optional	// Z2_DATA2   - Vencimento 2 	- D,8
+	WSDATA PARC3    as  Float 	Optional	// Z2_PARC3   - Parcela 3    	- N,12,2
+	WSDATA DATA3    as  String	Optional	// Z2_DATA3   - Vencimento 3 	- D,8
+	WSDATA PARC4    as  Float 	Optional	// Z2_PARC4   - Parcela 4    	- N,12,2
+	WSDATA DATA4    as  String	Optional	// Z2_DATA4   - Vencimento 4 	- D,8
+	WSDATA PARC5    as  Float 	Optional	// Z2_PARC4   - Parcela 5    	- N,12,2
+	WSDATA DATA5    as  String	Optional	// Z2_DATA4   - Vencimento 5 	- D,8
+	WSDATA PARC6    as  Float 	Optional	// Z2_PARC4   - Parcela 6    	- N,12,2
+	WSDATA DATA6    as  String	Optional	// Z2_DATA4   - Vencimento 6 	- D,8
+	WSDATA TABELA   as  String				// Z2_TABELA  - Tabela       	- C,3
+	WSDATA VEND1    as  String	Optional	// Z2_VEND1   - Vendedor 1   	- C,6
+	WSDATA VEND2    as  String	Optional	// Z2_VEND2   - Vendedor 2   	- C,6
+	WSDATA VEND3    as  String	Optional	// Z2_VEND3   - Vendedor 3   	- C,6
+	WSDATA VEND4    as  String	Optional	// Z2_VEND4   - Vendedor 4   	- C,6	
+	WSDATA VEND5    as  String	Optional	// Z2_VEND5   - Vendedor 5   	- C,6
+	WSDATA VOLUME1  as  Float 				// Z2_VOLUME1 - Volume 1     	- N,5
+	WSDATA ESPECI1  as  String				// Z2_ESPECI1 - Especie 1    	- C,10
+	WSDATA XOBSERV  as  String				// Z2_XOBSERV - Obs.Pedido   	- C,60
+	WSDATA XHISTCO  as  String				// Z2_XHISTCO - Historico    	- M,10
+ENDWSSTRUCT
+
+WSSTRUCT Item_PV							// Estrutura dos Itens
+	WSDATA NUMSFA   as  String 				// Z3_NUMSFA  - Ped. SFA     	- C,8
+	WSDATA ITEMSFA  as  Float 				// Z3_ITEMSFA - Item Ped SFA 	- C,3
+	WSDATA PRODUTO  as  String  			// Z3_PRODUTO - Produto      	- C,15
+	WSDATA QTDVEN   as  Float   			// Z3_QTDVEN  - Quantidade   	- N,14,2
+	WSDATA PRCVEN   as  Float 				// Z3_PRCVEN  - Prc Unitario 	- N,15,6
+	WSDATA ENTREG   as  String				// Z3_ENTREG  - Entrega      	- D,8
+ENDWSSTRUCT
+
+WSSTRUCT Pedido_Venda
+	WSDATA CabecPV		as Cabec_PV
+	WSDATA aItemPV		as Array Of Item_PV
+ENDWSSTRUCT
+
+WSSERVICE PEDIDO
+	WSDATA Ret			as String
+	WSDATA Pedido		as Pedido_Venda
+	WSMETHOD INCLUSAO
+ENDWSSERVICE
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³ Metodo   ³ INCLUSAO  ³ Autor ³ Business Intelligence  ³ Data ³ Nov/2006 ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+WSMETHOD INCLUSAO WSRECEIVE PEDIDO WSSEND Ret WSSERVICE PEDIDO
+
+Private _lErro		:= .F.				// Ocorrencia de erros
+Private _acabec		:= {}				// Campos para gravacao do cabecalho
+Private _lRet		:= .T.				// Retorno
+Private _cDescErro  := ""				// Descricao do erro
+Private _ErroCPO	:= ""				// Log de validacao dos campos obrigatorios
+
+// Cabecalho do pedido
+Private cNumPV		:= ""
+Private cNumSFA   	:= "" // Z2_NUMSFA  - Num. Ped.SFA - C,8
+Private nMoeda    	:= 0  // Z2_MOEDA   - Moeda        - N,2
+Private cCliFat  	:= "" // Z2_CLIENTE - Cliente      - C,6
+Private cLojaFat 	:= "" // Z2_LOJACLI - Loja         - C,2
+Private cCliEnt 	:= "" // Z2_CLIENT  - Cli. Entrega - C,6
+Private cLojaEnt 	:= "" // Z2_LOJAENT - Loja Entrega - C,2
+Private cTpPed   	:= "" // Z2_XTPPED  - Tp Ped Espec - C,1
+Private cEmissao  	:= "" // Z2_EMISSAO - DT Emissao   - D,8
+Private cCondpag  	:= "" // Z2_CONDPAG - Cond.Pagto   - C,3
+Private nParc1    	:= 0  // Z2_PARC1   - Parcela 1    - N,12,2
+Private nParc2    	:= 0  // Z2_PARC2   - Parcela 2    - N,12,2
+Private nParc3    	:= 0  // Z2_PARC3   - Parcela 3    - N,12,2
+Private nParc4    	:= 0  // Z2_PARC4   - Parcela 4    - N,12,2
+Private nParc5    	:= 0  // Z2_PARC5   - Parcela 5    - N,12,2
+Private nParc6    	:= 0  // Z2_PARC6   - Parcela 6    - N,12,2
+Private cData1    	:= "" // Z2_DATA1   - Vencimento 1 - D,8
+Private cData2    	:= "" // Z2_DATA2   - Vencimento 2 - D,8
+Private cData3    	:= "" // Z2_DATA3   - Vencimento 3 - D,8
+Private cData4    	:= "" // Z2_DATA4   - Vencimento 4 - D,8
+Private cData5    	:= "" // Z2_DATA5   - Vencimento 5 - D,8
+Private cData6    	:= "" // Z2_DATA6   - Vencimento 6 - D,8
+Private cTabela   	:= "" // Z2_TABELA  - Tabela       - C,3
+Private cVend1    	:= "" // Z2_VEND1   - Vendedor 1   - C,6
+Private cVend2    	:= "" // Z2_VEND2   - Vendedor 2   - C,6
+Private cVend3    	:= "" // Z2_VEND3   - Vendedor 3   - C,6
+Private cVend4    	:= "" // Z2_VEND4   - Vendedor 4   - C,6
+Private cVend5    	:= "" // Z2_VEND5   - Vendedor 5   - C,6
+Private nVolume1  	:= 0  // Z2_VOLUME1 - Volume 1     - N,5
+Private cSfaEsp  	:= "" // Z2_ESPECI1 - Especie 1    - C,10
+Private cXobserv  	:= "" // Z2_XOBSERV - Obs.Pedido   - C,60
+Private cXhistco  	:= "" // Z2_XHISTCO - Historico    - M,10
+Private cRevisPre  	:= AllTrim(SuperGetMV("MV_PREPVRV",.F.,"0")) //0=Nenhum ## 1=Todos ## 2=Originados do Portal ## 3=Originados do Microsiga
+Private nxDesper	:= 0
+
+// Valida todas as informacoes
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:NUMSFA)  == "U", "* Campo obrigatório Ped. SFA     não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:MOEDA)   == "U", "* Campo obrigatório Moeda        não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:XCLIFAT) == "U", "* Campo obrigatório Cliente      não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:XLOJAFAT)== "U", "* Campo obrigatório Loja         não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:XCLIENT) == "U", "* Campo obrigatório Cli. Entrega não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:XLOJAENT)== "U", "* Campo obrigatório Loja Entrega não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:EMISSAO) == "U", "* Campo obrigatório DT Emissao   não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:CONDPAG) == "U", "* Campo obrigatório Cond.Pagto   não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:VOLUME1) == "U", "* Campo obrigatório Volume 1     não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:CABECPV:XOBSERV) == "U", "* Campo obrigatório Obs.Pedido   não informado ", "")
+_ErroCPO += Iif(Valtype(::PEDIDO:AITEMPV)         == "U", "* Array dos Itens                não informado ", "")
+
+If Valtype(::PEDIDO:AITEMPV)=="A"
+	If Len(::PEDIDO:AITEMPV)>0
+		For _j:= 1 to Len(::PEDIDO:AITEMPV)
+			_ErroCPO += Iif(ValType(::PEDIDO:AITEMPV[_j]:NUMSFA)  == "U","Campo obrigatorio Ped. SFA     não informado no item "+Alltrim(Str(_j)),"")
+			_ErroCPO += Iif(ValType(::PEDIDO:AITEMPV[_j]:ITEMSFA) == "U","Campo obrigatorio Item Ped SFA não informado no item "+Alltrim(Str(_j)),"")
+			_ErroCPO += Iif(ValType(::PEDIDO:AITEMPV[_j]:PRODUTO) == "U","Campo obrigatorio Produto      não informado no item "+Alltrim(Str(_j)),"")
+			_ErroCPO += Iif(ValType(::PEDIDO:AITEMPV[_j]:QTDVEN)  == "U","Campo obrigatorio Quantidade   não informado no item "+Alltrim(Str(_j)),"")
+			_ErroCPO += Iif(ValType(::PEDIDO:AITEMPV[_j]:PRCVEN)  == "U","Campo obrigatorio Prc Unitario não informado no item "+Alltrim(Str(_j)),"")
+			_ErroCPO += Iif(ValType(::PEDIDO:AITEMPV[_j]:ENTREG)  == "U","Campo obrigatorio Entrega      não informado no item "+Alltrim(Str(_j)),"")
+		Next
+	Endif
+Endif
+
+_lErro 		:= !Empty(_ErroCPO)	// Criticas preenchidas = erro
+_cDescErro	+= _ErroCPO			// Descricao dos erros
+
+//AtuSX6()
+
+If !_lErro
+	
+	// Marca o inicio da transacao
+	Conout("-------------------->Inicio - Pedido/Inclusao" + ::PEDIDO:CABECPV:NUMSFA)
+	
+	Conout(Time())
+	
+	// Prepara as variaveis de ambiente
+	Prepare Environment EMPRESA "01" Filial "01" FUNNAME "SIGAFAT" TABLES "SA1","SB1","SB2","SB9","SC5","SC6","SC9","SF4","SZ2","SZ3"
+	
+	
+	cNumPV	  := ""
+	cNumSFA   := Padr(::PEDIDO:CABECPV:NUMSFA,8)															// Z2_NUMSFA  - Num. Ped.SFA 	- C,8
+	nMoeda    := ::PEDIDO:CABECPV:MOEDA    																	// Z2_MOEDA   - Moeda        	- N,2
+	cCliFat   := Padr(::PEDIDO:CABECPV:XCLIFAT,6)  														// Z2_CLIENTE - Cliente      	- C,6
+	cLojaFat  := Padr(::PEDIDO:CABECPV:XLOJAFAT,2) 														// Z2_LOJACLI - Loja         	- C,2
+	cCliEnt   := Padr(::PEDIDO:CABECPV:XCLIENT,6)  														// Z2_CLIENT  - Cli. Entrega 	- C,6
+	cLojaEnt  := Padr(::PEDIDO:CABECPV:XLOJAENT,2) 														// Z2_LOJAENT - Loja Entrega 	- C,2
+	cEmissao  := Padr(::PEDIDO:CABECPV:EMISSAO,8)  														// Z2_EMISSAO - DT Emissao   	- D,8
+	cCondpag  := Padr(::PEDIDO:CABECPV:CONDPAG,3)  														// Z2_CONDPAG - Cond.Pagto   	- C,3
+	cTipo	  := "N" //Padr(::PEDIDO:CABECPV:TIPO,1)																// Z2_TIPO	  - Tipo do Pedido	- C,1
+	nParc1    := Iif(Valtype(::PEDIDO:CABECPV:PARC1)=="U",0,::PEDIDO:CABECPV:PARC1)    					// Z2_PARC1   - Parcela 1    	- N,12,2
+	nParc2    := Iif(Valtype(::PEDIDO:CABECPV:PARC2)=="U",0,::PEDIDO:CABECPV:PARC2)    					// Z2_PARC2   - Parcela 2    	- N,12,2
+	nParc3    := Iif(Valtype(::PEDIDO:CABECPV:PARC3)=="U",0,::PEDIDO:CABECPV:PARC3)    		   			// Z2_PARC3   - Parcela 3    	- N,12,2
+	nParc4    := Iif(Valtype(::PEDIDO:CABECPV:PARC4)=="U",0,::PEDIDO:CABECPV:PARC4)   		   			// Z2_PARC4   - Parcela 4    	- N,12,2
+	nParc5    := Iif(Valtype(::PEDIDO:CABECPV:PARC5)=="U",0,::PEDIDO:CABECPV:PARC5)    		   			// Z2_PARC3   - Parcela 5    	- N,12,2
+	nParc6    := Iif(Valtype(::PEDIDO:CABECPV:PARC6)=="U",0,::PEDIDO:CABECPV:PARC6)    		   			// Z2_PARC4   - Parcela 6    	- N,12,2
+	cData1    := Padr(::PEDIDO:CABECPV:DATA1,8)    														// Z2_DATA1   - Vencimento 1 	- D,8
+	cData2    := Padr(::PEDIDO:CABECPV:DATA2,8)    														// Z2_DATA2   - Vencimento 2 	- D,8
+	cData3    := Padr(::PEDIDO:CABECPV:DATA3,8)   															// Z2_DATA3   - Vencimento 3 	- D,8
+	cData4    := Padr(::PEDIDO:CABECPV:DATA4,8)    														// Z2_DATA4   - Vencimento 4 	- D,8
+	cData5    := Padr(::PEDIDO:CABECPV:DATA5,8)   															// Z2_DATA3   - Vencimento 5 	- D,8
+	cData6    := Padr(::PEDIDO:CABECPV:DATA6,8)    														// Z2_DATA4   - Vencimento 6 	- D,8
+	cVend1    := Iif(Valtype(::PEDIDO:CABECPV:VEND1)=="U",Space(6),Padr(::PEDIDO:CABECPV:VEND1,6))    	// Z2_VEND1   - Vendedor 1   	- C,6
+	cVend2    := Iif(Valtype(::PEDIDO:CABECPV:VEND2)=="U",Space(6),Padr(::PEDIDO:CABECPV:VEND2,6))    	// Z2_VEND2   - Vendedor 2   	- C,6
+	cVend3    := Iif(Valtype(::PEDIDO:CABECPV:VEND3)=="U",Space(6),Padr(::PEDIDO:CABECPV:VEND3,6))    	// Z2_VEND3   - Vendedor 3   	- C,6
+	cVend4    := Iif(Valtype(::PEDIDO:CABECPV:VEND4)=="U",Space(6),Padr(::PEDIDO:CABECPV:VEND4,6))    	// Z2_VEND2   - Vendedor 2   	- C,6
+	cVend5    := Iif(Valtype(::PEDIDO:CABECPV:VEND5)=="U",Space(6),Padr(::PEDIDO:CABECPV:VEND5,6))    	// Z2_VEND3   - Vendedor 3   	- C,6
+	nVolume1  := ::PEDIDO:CABECPV:VOLUME1  																	// Z2_VOLUME1 - Volume 1     	- N,5
+	nxDesper  := Iif(Valtype(::PEDIDO:CABECPV:XDESPER)=="U",0,::PEDIDO:CABECPV:XDESPER)					// Z2_XDESPER - Desc. Pont.    	- N,5
+	cTpPed    := Iif(Valtype(::PEDIDO:CABECPV:XTPPED)=="U",0,::PEDIDO:CABECPV:XTPPED)						// Z2_XTPPED  - Tp Ped Espec 	- C,1
+	cTpFre    := GetMV("MV_XSFATPF")				   														// Z2_TPFRETE - Tp Frete	 	- C,1
+	cTabela   := GetMv("MV_XSFATAB")				   														// Z2_TABELA  - Tabela       	- C,3
+	cSfaEsp   := GetMV("MV_XSFAESP")  																		// Z2_ESPECI1 - Especie 1    	- C,10
+	cXobserv  := GetMV("MV_XSFAOBS") 																		// Z2_XOBSERV - Obs.Pedido   	- C,60
+	cXhistco  := GetMV("MV_XSFAHIS")		  																// Z2_XHISTCO - Historico    	- M,10
+	
+	If Len(::PEDIDO:CABECPV:EMISSAO) == 8
+		::PEDIDO:CABECPV:EMISSAO	:= Substr(::PEDIDO:CABECPV:EMISSAO, 7, 2)
+	Endif
+	
+	Conout("-------------------->Desc. Pont.  - " + Iif(Valtype(::PEDIDO:CABECPV:XDESPER)=="U","NÃO RECEBIDO",Alltrim(Str(::PEDIDO:CABECPV:XDESPER))))
+	
+	// Verifica se o pedido ja foi importado
+	
+	DbSelectArea("SZ2")
+	DbSetOrder(5) // Z2_FILIAL+Z2_NUMSFA Pedido SFA
+	DbGotop()
+	DbSeek(xFilial("SZ2") + cNumSFA)
+	If Found()
+		_lErro		:= .T.
+		_cDescErro	+= "Pedido importado anteriormente - " + cNumSFA
+		CONOUT(_cDescErro)
+	Endif
+	
+	//Verifica os Clientes Informados
+	DbSelectArea("SA1")
+	DbSetOrder(1)
+	DbGotop()
+	DbSeek(xFilial("SA1") + cCliFat+cLojaFat)
+	If !Found()
+		_lErro		:= .T.
+		_cDescErro	+= "Cliente p/ faturamento nao cadastrado - " + cCliFat+cLojaFat
+		CONOUT(_cDescErro)
+	Endif
+	
+	DbSeek(xFilial("SA1") + cCliEnt+cLojaEnt)
+	If !Found()
+		_lErro		:= .T.
+		_cDescErro	+= "Cliente de entrega nao cadastrado - " + cCliEnt+cLojaEnt
+	Endif
+	DbSetOrder(1)
+	
+	//Verifica os 5 Vendedores Informados
+	DbSelectArea("SA3")
+	DbSetOrder(1)
+	// Vendedor 1
+	If Valtype(cVend1)=="C" .and. !Empty(cVend1)
+		DbSeek(xFilial("SA3") + cVend1)
+		If !Found()
+			_lErro		:= .T.
+			_cDescErro	+= "Vendedor 1 nao cadastrado - " + cVend1
+			Conout(_cDescErro)
+		Endif
+	Else
+		cVend1 := Posicione("SA1",1,xFilial("SA1")+cCliFat+cLojaFat,"A1_VEND")
+	Endif
+	// Vendedor 2
+	If Valtype(cVend2)=="C" .and. !Empty(cVend2)
+		DbSeek(xFilial("SA3") + cVend2)
+		If !Found()
+			_lErro		:= .T.
+			_cDescErro	+= "Vendedor 2 nao cadastrado - " + cVend2
+			Conout(_cDescErro)
+		Endif
+	Else
+		cVend2 := Posicione("SA1",1,xFilial("SA1")+cCliFat+cLojaFat,"A1_XVEND2")
+	Endif
+	// Vendedor 3
+	If Valtype(cVend3)=="C" .and. !Empty(cVend3)
+		DbSeek(xFilial("SA3") + cVend3)
+		If !Found()
+			_lErro		:= .T.
+			_cDescErro	+= "Vendedor 3 nao cadastrado - " + cVend3
+			Conout(_cDescErro)
+		Endif
+	Else
+		cVend3 := Posicione("SA1",1,xFilial("SA1")+cCliFat+cLojaFat,"A1_XVEND3")
+	Endif
+	// Vendedor 4
+	If Valtype(cVend4)=="C" .and. !Empty(cVend4)
+		DbSeek(xFilial("SA4") + cVend4)
+		If !Found()
+			_lErro		:= .T.
+			_cDescErro	+= "Vendedor 4 nao cadastrado - " + cVend4
+			Conout(_cDescErro)
+		Endif
+	Else
+		cVend4 := Posicione("SA1",1,xFilial("SA1")+cCliFat+cLojaFat,"A1_XVEND4")
+	Endif
+	// Vendedor 5
+	If Valtype(cVend5)=="C" .and. !Empty(cVend5)
+		DbSeek(xFilial("SA5") + cVend5)
+		If !Found()
+			_lErro		:= .T.
+			_cDescErro	+= "Vendedor 5 nao cadastrado - " + cVend5
+			Conout(_cDescErro)
+		Endif
+	Endif
+	
+	// Verifica a condicao de pagamento informada
+	DbSelectArea("SE4")
+	DbSetOrder(1)
+	DbSeek(xFilial("SE4") + cCondPag)
+	If !Found()
+		_lErro		:= .T.
+		_cDescErro	+= "Condicao de Pagamento nao cadastrada - " + cCondPag
+	Else
+		If SE4->E4_TIPO="9"
+			If Alltrim(SE4->E4_COND)=="%"
+				Conout("-------------------->Condicao     - " + cCondPag)
+				Conout("-------------------->NPARC1       - " + Alltrim(Str(nParc1)))
+				Conout(::PEDIDO:CABECPV:PARC1)
+				If nParc1+nParc2+nParc3+nParc4+nParc5+nParc6 == 0
+					nParc1 := 100
+				ElseIf nParc1+nParc2+nParc3+nParc4+nParc5+nParc6 <> 100
+					_lErro		:= .T.
+					_cDescErro	+= "Percentuais das parcelas não totalizam 100%"
+				Endif
+			ElseIf Alltrim(SE4->E4_COND)=="0"
+				If Len(::PEDIDO:AITEMPV)>0
+					For _j := 1 to Len(::PEDIDO:AITEMPV)
+						_nTotPed += ::PEDIDO:AITEMPV[_j]:QTDVEN * ::PEDIDO:AITEMPV[_j]:PRCVEN
+					Next
+				Endif
+				If nParc1+nParc2+nParc3+nParc4+nParc5+nParc6 <> _nTotPed
+					_lErro		:= .T.
+					_cDescErro	+= "O Valor total das parcelas é diferente do total dos itens"
+				Endif
+			Endif
+		Endif
+	Endif
+	
+	// Verifica os Produtos informados
+	/*
+	For _i := 1 to Len(::PEDIDO:AITEMPV)
+	DbSelectArea("SB1")
+	DbSeek(xFilial("SB1") + Padr(::PEDIDO:AITEMPV[_i]:PRODUTO, 15))
+	If !Found()
+	_lErro		:= .T.
+	_cDescErro	+= "Produto nao cadastrado - " + Padr(::PEDIDO:AITEMPV[_i]:PRODUTO, 15) + Chr(13) + Chr(10)
+	EndIf
+	Next
+	*/
+	If _lErro // Grava o erro no log do protheus
+		SetSoapFault("", _cDescErro)
+		CONOUT(_cDescErro)
+		::Ret	:= ""
+		_lRet 	:= .F.
+	Else // Grava o pre-pedido no protheus
+		aAdd(_aCabec,{"SZ2->Z2_NUMSFA"	, cNumSFA  })  														// Num. Ped.SFA - C,8
+		aAdd(_aCabec,{"SZ2->Z2_MOEDA"	, nMoeda   })  														// Moeda        - N,2
+		aAdd(_aCabec,{"SZ2->Z2_CLIENTE"	, cCliFat  })  														// Cliente      - C,6
+		aAdd(_aCabec,{"SZ2->Z2_LOJACLI"	, cLojaFat })  														// Loja         - C,2
+		aAdd(_aCabec,{"SZ2->Z2_CLIENT"	, cCliEnt  })  														// Cli. Entrega - C,6
+		aAdd(_aCabec,{"SZ2->Z2_LOJAENT"	, cLojaEnt })  														// Loja Entrega - C,2
+		aAdd(_aCabec,{"SZ2->Z2_TIPO"	, cTipo })  														// Tipo Pedido  - C,1
+		aAdd(_aCabec,{"SZ2->Z2_TABELA"	, cTabela  })  														// Tabela       - C,3
+		aAdd(_aCabec,{"SZ2->Z2_TIPOCLI"	, Posicione("SA1",1,xFilial("SA1")+cCliFat+cLojaFat,"A1_TIPO")})	// Tipo Cliente - C,1
+		aAdd(_aCabec,{"SZ2->Z2_XCLIENT"	, Posicione("SA1",1,xFilial("SA1")+cCliFat+cLojaFat,"A1_NOME")})	// Razao Social - C,40
+		aAdd(_aCabec,{"SZ2->Z2_XESTCLI"	, Posicione("SA1",1,xFilial("SA1")+cCliFat+cLojaFat,"A1_EST")}) 	// UF Cliente F - C,2
+		aAdd(_aCabec,{"SZ2->Z2_XTPPED"	, cTpPed   })  														// Tp Ped Espec - C,1
+		aAdd(_aCabec,{"SZ2->Z2_EMISSAO"	, StoD(cEmissao)})													// DT Emissao   - D,8
+		aAdd(_aCabec,{"SZ2->Z2_CONDPAG"	, cCondpag })  														// Cond.Pagto   - C,3
+		aAdd(_aCabec,{"SZ2->Z2_PARC1"	, nParc1})  														// Parcela 1    - N,12,2
+		aAdd(_aCabec,{"SZ2->Z2_PARC2"	, nParc2})  														// Parcela 2    - N,12,2
+		aAdd(_aCabec,{"SZ2->Z2_PARC3"	, nParc3})  														// Parcela 3    - N,12,2
+		aAdd(_aCabec,{"SZ2->Z2_PARC4"	, nParc4})  														// Parcela 4    - N,12,2
+		aAdd(_aCabec,{"SZ2->Z2_PARC5"	, nParc5})  														// Parcela 5    - N,12,2
+		aAdd(_aCabec,{"SZ2->Z2_PARC6"	, nParc6})  														// Parcela 6    - N,12,2
+		aAdd(_aCabec,{"SZ2->Z2_DATA1"	, Stod(cData1)})  													// Vencimento 1 - D,8
+		aAdd(_aCabec,{"SZ2->Z2_DATA2"	, StoD(cData2)}) 													// Vencimento 2 - D,8
+		aAdd(_aCabec,{"SZ2->Z2_DATA3"	, StoD(cData3)}) 													// Vencimento 3 - D,8
+		aAdd(_aCabec,{"SZ2->Z2_DATA4"	, StoD(cData4)}) 													// Vencimento 4 - D,8
+		aAdd(_aCabec,{"SZ2->Z2_DATA5"	, StoD(cData5)}) 													// Vencimento 5 - D,8
+		aAdd(_aCabec,{"SZ2->Z2_DATA6"	, StoD(cData6)}) 													// Vencimento 6 - D,8
+		aAdd(_aCabec,{"SZ2->Z2_VEND1"	, cVend1   })  														// Vendedor 1   - C,6
+		aAdd(_aCabec,{"SZ2->Z2_VEND2"	, cVend2   })  														// Vendedor 2   - C,6
+		aAdd(_aCabec,{"SZ2->Z2_VEND3"	, cVend3   })  														// Vendedor 3   - C,6
+		aAdd(_aCabec,{"SZ2->Z2_VEND4"	, cVend4   })  														// Vendedor 4   - C,6
+		aAdd(_aCabec,{"SZ2->Z2_VEND5"	, cVend5   })  														// Vendedor 5   - C,6
+		aAdd(_aCabec,{"SZ2->Z2_XDESPER"	, nVolume1})  														// Parcela 1    - N,12,2
+		//aAdd(_aCabec,{"SZ2->Z2_XDESPER"	, nxDesper})  														// Parcela 1    - N,12,2 - Adicionado por Valdemir 18/06/2013
+		aAdd(_aCabec,{"SZ2->Z2_COMIS1"	, Posicione("SA3",1,xFilial("SA3")+cVend1,"A3_COMIS")})			// Comissao 1   - N,5
+		aAdd(_aCabec,{"SZ2->Z2_COMIS2"	, Posicione("SA3",1,xFilial("SA3")+cVend2,"A3_COMIS")})			// Comissao 2   - N,5
+		aAdd(_aCabec,{"SZ2->Z2_COMIS3"	, Posicione("SA3",1,xFilial("SA3")+cVend3,"A3_COMIS")})			// Comissao 3   - N,5
+		aAdd(_aCabec,{"SZ2->Z2_COMIS4"	, Posicione("SA3",1,xFilial("SA3")+cVend4,"A3_COMIS")})			// Comissao 4   - N,5
+		aAdd(_aCabec,{"SZ2->Z2_COMIS5"	, Posicione("SA3",1,xFilial("SA3")+cVend5,"A3_COMIS")})			// Comissao 5   - N,5
+		aAdd(_aCabec,{"SZ2->Z2_VOLUME1"	, 0 })  														// Volume 1     - N,5 - Removido por Valdemir 18/06/2013
+		//aAdd(_aCabec,{"SZ2->Z2_VOLUME1"	, nVolume1 })  														// Volume 1     - N,5
+		aAdd(_aCabec,{"SZ2->Z2_ESPECI1"	, "VOLUMES" }) 														// Especie 1    - C,10
+		aAdd(_aCabec,{"SZ2->Z2_XOBSERV"	, cXobserv })  														// Obs.Pedido   - C,60
+		aAdd(_aCabec,{"SZ2->Z2_XHISTCO"	, cXhistco })  														// Historico    - M,10
+		aAdd(_aCabec,{"SZ2->Z2_TPFRETE"	, cTpFre   })                                                      	// Tipo de frete- C,1
+		aAdd(_aCabec,{"SZ2->Z2_XESPECI"	, cSfaEsp })														// Especie		- C,3
+		aAdd(_aCabec,{"SZ2->Z2_DESCTAB"	, Posicione('DA0',1,xFilial('DA0')+cTabela, 'DA0_DESCRI') })		// Descrição da Tabela de Preço - Valdemir Jose 18/06/2013
+		aAdd(_aCabec,{"SZ2->Z2_DESCOND"	, Posicione('SE4',1,xFilial('SE4')+cCondpag, 'E4_DESCRI') })		// Descrição da Condição Pagto. - Valdemir Jose 18/06/2013
+		aAdd(_aCabec,{"SZ2->Z2_XDMOEDA"	, Posicione('CTO',1,xFilial('CTO')+StrZero(nMoeda,2),'CTO_DESC') })	// Descrição da Moeda - Valdemir Jose 18/06/2013
+
+		If Len(_aCabec)>0
+			cNumPV	:= ValidSXENum()		//GetSxeNum( "SZ2", "Z2_NUM" )  REMOVIDO TEMPORARIAMENTE POR VALDEMIR JOSE 12/6/2013
+			//ConfirmSx8()
+			RecLock("SZ2",.T.)
+			SZ2->Z2_FILIAL 	:= xFilial("SZ2")
+			SZ2->Z2_NUM 	:= cNumPV
+			SZ2->Z2_BLQ 	:= Iif(GetMV("MV_PREPVRV")=="0","1","0")
+			
+			For _x:=1 to Len(_aCabec)
+				&(_aCabec[_x][1]) := _aCabec[_x][2]
+			Next
+			
+			SZ2->(MsUnlock())
+			_cDescErro	+= "Cabeçalho gravado corretamente. "
+		Endif
+		
+		If Len(::PEDIDO:AITEMPV)>0
+			For _j := 1 to Len(::PEDIDO:AITEMPV)
+				RecLock("SZ3",.T.)
+				SZ3->Z3_FILIAL	:= xFilial("SZ3")
+				SZ3->Z3_NUM		:= cNumPV																							// Numero do pedido
+				SZ3->Z3_CLI		:= cCliFat																							// Cliente para faturamento
+				SZ3->Z3_LOJA	:= cLojaFat																							// Loja para faturamento
+				SZ3->Z3_ITEM	:= StrZero(_j,2)																					// Item do pedido
+				SZ3->Z3_NUMSFA 	:= Padr(::PEDIDO:AITEMPV[_j]:NUMSFA,8) 															// Ped. SFA
+				SZ3->Z3_ITEMSFA	:= StrZero(::PEDIDO:AITEMPV[_j]:ITEMSFA,3)															// Item Ped SFA
+				SZ3->Z3_PRODUTO	:= ::PEDIDO:AITEMPV[_j]:PRODUTO 																	// Produto
+				SZ3->Z3_DESCRI	:= Posicione("SB1",1,xFilial("SB1")+SZ3->Z3_PRODUTO,"B1_DESC")										// Descricao
+				SZ3->Z3_UM		:= Posicione("SB1",1,xFilial("SB1")+SZ3->Z3_PRODUTO,"B1_UM") 										// Unidade de Medida
+				SZ3->Z3_QTDVEN 	:= ::PEDIDO:AITEMPV[_j]:QTDVEN   																	// Quantidade Vendida
+				SZ3->Z3_QTDPEN 	:= ::PEDIDO:AITEMPV[_j]:QTDVEN   																	// Quantidade Pendente
+				SZ3->Z3_PRCVEN 	:= ::PEDIDO:AITEMPV[_j]:PRCVEN   			   														// Prc Unitario
+				SZ3->Z3_PRUNIT	:= Posicione("DA1",1,xFilial("DA1")+cTabela+Padr(::PEDIDO:AITEMPV[_j]:PRODUTO, 15),"DA1_PRCVEN") 	//DA1_FILIAL+DA1_CODTAB+DA1_CODPRO+DA1_INDLOT+DA1_ITEM// ::PEDIDO:AITEMPV[_j]:PRCVEN   			   					// Prc Lista
+				SZ3->Z3_VALOR	:= SZ3->(Z3_QTDVEN*Z3_PRCVEN)				   														// Valor Total
+				SZ3->Z3_ENTREG 	:= Stod(::PEDIDO:AITEMPV[_j]:ENTREG) 	  															// Entrega
+				SZ3->Z3_XTABELA	:= cTabela																							// Tabela de precos
+				SZ3->Z3_XLIBERA	:= "1"																								// Libera
+				SZ3->Z3_XTROCAP := "S" 		
+				SZ3->Z3_XDESPER := nVolume1 																						// Adicionado por Valdemir 18/06/2013
+				SZ3->Z3_XDESFIN := ::PEDIDO:AITEMPV[_j]:PRCVEN * nVolume1                                                           // Valdemir Jose 25/06/2013
+				Conout("-->TROCA EMBALAGEM ESTA IGUAL A SIM")
+				Conout("-->DESFIN = "+ALLTRIM(STR(SZ3->Z3_XDESFIN)))
+				SZ3->(MsUnlock())
+			Next
+			_cDescErro	+= Alltrim(Str(Len(::PEDIDO:AITEMPV))) + " itens gravados corretamente. "
+		Endif
+		
+		::Ret	:= ""
+		::Ret	:= cNumPV
+		
+	Endif
+	
+	Conout("-------------------->Fim - Pedido/Inclusao")
+	Conout(Time())
+	Conout("Retorno:"+cNumPV)
+Else
+	SetSoapFault("", _cDescErro)
+	CONOUT(_cDescErro)
+	_lRet 	:= .F.
+	_lErro 	:= .t.
+	::Ret	:= ""
+Endif
+
+// Gravacao do log da transacao
+cNumSFA := Padr(::PEDIDO:CABECPV:NUMSFA,8)
+cOrigem := "WSSERVICE PEDIDO"
+cEmpFil := cEmpAnt
+dData		:= Date()
+cHora		:= Time()
+cStatus	:= Iif(_lErro,"E","O")
+cLog		:= _cDescErro
+
+U_GravaLog(cNumSFA, cOrigem, cEmpFil, dData, cHora, cStatus, cLog)
+
+Return(_lRet)
+
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ValidSXENum ºAutor  ³Valdemir Jose     º Data ³  12/06/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³  Rotina para ajustar a numeracao sequencial do pre-pedido  º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                        º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ValidSXENum()
+	Local cRET  := ''
+	Local aArea := GetArea()
+	                 
+	dbSelectarea('SZ2')
+	dbSetOrder(1)         
+	dbGotop()       
+	dbGobottom() 
+
+	cRet := STRZERO(VAL(SZ2->Z2_NUM)+1,6)
+	
+	RestArea( aArea )
+	
+Return cRET
