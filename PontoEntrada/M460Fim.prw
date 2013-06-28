@@ -461,7 +461,15 @@ If SC5->(DbSeek( xFilial("SC5") + SD2->D2_CLIENTE + SD2->D2_LOJA + SD2->D2_PEDID
 			    IF SC5->C5_XTPPED == "1"
    		   		    _cTransp := Posicione("SC6",1 ,xFilial("SC6") + SD2->D2_PEDIDO  + SD2->D2_ITEMPV + SD2->D2_COD, "C6_TRANSP")
                 Endif                                                                                                           
-                
+           		                             
+           		// Adicionado por Valdemir Jose 27/06/2013
+           		if (GETMV("MV_DE_VOFE") = SD2->D2_TES)
+           			_cTes := GETMV("MV_PA_VOFE")
+           		Endif
+           		if (GETMV("MV_DE_VEF") = SD2->D2_TES)
+           			_cTes := GETMV("MV_PA_VEF")
+           		Endif
+           		     
 				_aRet := {}
 				_nCount++
 				aAdd( _aRet, {"C6_FILIAL"	, xFilial("SC6")											 		, NIL})

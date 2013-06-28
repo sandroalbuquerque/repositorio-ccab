@@ -2857,6 +2857,7 @@ For x:=1 To Len(xCols)
 	cDscPrd := Posicione("SB1",1,xFilial("SB1")+cCodPrd,"B1_DESC"   )
 	cTpoPrd := Posicione("SB1",1,xFilial("SB1")+cCodPrd,"B1_TIPO"   )
 	cIndPrd := Posicione("SB1",1,xFilial("SB1")+cCodPrd,"B1_INDUSTR")
+	cPdOrig := Posicione("SB1",1,xFilial("SB1")+cCodPrd,"B1_ORIGEM")
 	cIndPrd := IIf(Empty(cIndPrd),"N",cIndPrd)
 	
 	//Localiza cabeçalho do pre-pedido
@@ -2883,12 +2884,12 @@ For x:=1 To Len(xCols)
 	//EndIf
 	
 	SA1->(DbSetOrder(1))
-	If SA1->(!DbSeek(xFilial("SA1")+SZ2->(Padr(Z2_CLIENTE,TamSx3("A1_COD")[1])+Z2_LOJACLI)))
+	If SA1->(!DbSeek(xFilial("SA1")+SZ2->(Padr(Z2_CLIENTE,TamSx3("A1_COD")[1])+Z2_LOJACLI)))    // LOCALIZA CLIENTE FATURAMENTO - COMENTÁRIO FEITO VALDEMIR
 		lAchou := .F.
 	EndIf
 	
 	aProdutos := {}
-	aAdd(aProdutos,{cCodPrd,cDscPrd,cIndPrd,cPrePed,cItmPrd,nVlrUnt,dEntreg})
+	aAdd(aProdutos,{cCodPrd,cDscPrd,cIndPrd,cPrePed,cItmPrd,nVlrUnt,dEntreg,cPdOrig})     // cPdOrig = Adicionado Valdemir Jose 26/06/13
 	
 	//Localiza item do pre-pedido
 	SZ4->(DbSetOrder(1))
@@ -3000,7 +3001,7 @@ For x:=1 To Len(xCols)
 					SZ4->Z4_LOCAL  ,; 			// Arm. Origem
 					SM0->M0_ESTENT ,; 			// Estado Origem
 					SA1->A1_EST    ,; 			// Estado Entrega
-					fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3]),;
+					fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3],aProdutos[1][8]),;
 					SZ4->Z4_TRANSP ,; 			// Transportadora
 					nQtdPen        ,; 			// QtdPen
 					nQtdClc        ,; 			// QtdClc
@@ -3028,7 +3029,7 @@ For x:=1 To Len(xCols)
 				SZ4->Z4_LOCAL  ,; //Arm. Origem
 				SM0->M0_ESTENT ,; //Estado Origem
 				SA1->A1_EST    ,; //Estado Entrega
-				fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3]),;
+				fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3],aProdutos[1][8]),;
 				SZ4->Z4_TRANSP ,; //Transportadora
 				nQtdPen        ,; //QtdPen
 				nQtdClc        ,; //QtdClc
@@ -3059,7 +3060,7 @@ For x:=1 To Len(xCols)
 				SZ4->Z4_LOCAL  ,; //Arm. Origem
 				SM0->M0_ESTENT ,; //Estado Origem
 				SA1->A1_EST    ,; //Estado Entrega
-				fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3]),;
+				fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3],aProdutos[1][8]),;
 				SZ4->Z4_TRANSP ,; //Transportadora
 				nQtdPen        ,; //QtdPen
 				nQtdClc        ,; //QtdClc
@@ -3136,7 +3137,7 @@ For x:=1 To Len(xCols)
 			SZ4->Z4_LOCAL  ,; //Arm. Origem
 			SM0->M0_ESTENT ,; //Estado Origem
 			SA1->A1_EST    ,; //Estado Entrega
-			fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3]),;
+			fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,SA1->A1_EST,aProdutos[1][3],aProdutos[1][8]),;
 			SZ4->Z4_TRANSP ,; //Transportadora
 			nQtdPen        ,; //QtdPen
 			nQtdClc        ,; //QtdClc
@@ -3486,8 +3487,10 @@ If lRet .And. oGdTrt:oBrowse:ColPos == nPosPriorZ4
 		nPVLibT := fCalcPVLib(SZ4->Z4_FILORI,oGdTrt:aCols[nLinhaEdita][nPosProduto],SZ4->Z4_LOCAL)
 		nSaldoD -= nPVLibT
 		
+		cPdOrig := Posicione("SB1",1,xFilial("SB1")+oGdTrt:aCols[nLinhaEdita][nPosProduto],"B1_ORIGEM")   // Valdemir Jose 26/06/2013
+		
 		//Função que defini a TES para situação abaixo
-		cTESVld := fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,oGdTrt:aCols[nLinhaEdita][nPosUfDest],oGdTrt:aCols[nLinhaEdita][nPosProdInd])
+		cTESVld := fRegraTES(SZ4->Z4_FILORI,SZ4->Z4_LOCAL,SM0->M0_ESTENT,oGdTrt:aCols[nLinhaEdita][nPosUfDest],oGdTrt:aCols[nLinhaEdita][nPosProdInd], cPdOrig)
 		
 		//Valida TES
 		If lRet .And. (Empty(cTESVld) .Or. cTESVld == "XXX")
@@ -3869,9 +3872,14 @@ Return
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 */
 
-Static Function fRegraTES(cFilOrig,cLocalArmz,cEstOrig,cEstDest,cPrdIndust)
+Static Function fRegraTES(cFilOrig,cLocalArmz,cEstOrig,cEstDest,cPrdIndust, cOrigem)
 
 Local cRetTes := Space(03)
+
+// Valdemir Jose 26/06/2013  
+Local cPosImp := Alltrim(Getmv("MV_ICMCCAB"))
+Local nAliq   := VAL(SubStr(cPosImp,AT(cEstDest,cPosImp)+2,2))
+
 
 //Z8_FILIAL+Z8_FILORI+Z8_ARMORI+Z8_FIL_UF+Z8_ARM_UF
 If !Empty(cFilOrig) .And. !Empty(cLocalArmz)
@@ -3880,6 +3888,8 @@ If !Empty(cFilOrig) .And. !Empty(cLocalArmz)
 		Do Case
 			//Armazem Proprio
 			Case SZ8->Z8_FIL_UF == SZ8->Z8_ARM_UF
+				
+				// Dentro do Estado
 				If SZ8->Z8_ARM_UF == cEstDest
 					//Dentro do Estado
 					If mv_par46 == 1
@@ -3889,26 +3899,42 @@ If !Empty(cFilOrig) .And. !Empty(cLocalArmz)
 						//Tes de Conta e Ordem Dentro do Estado
 						cRetTes := SZ8->Z8_TESCODE
 					ElseIf cPrdIndust == "S"
-						//Tes de Prod. Industr. Dentro do Estado
+						//Tes de Prod. Industr. Dentro do Estado 
 						cRetTes := SZ8->Z8_TESIDE
 					ElseIf cPrdIndust != "S"
 						//Tes de Prod. Comerc. Dentro do Estado
 						cRetTes := SZ8->Z8_TESCDE
 					EndIf
-				Else
-					//Fora do Estado
+				Else     //Fora do Estado
+				    lOrig12 := ((cOrigem $ '123') .and. (nAliq=12) .and. (cEstOrig <> cEstDest))   // Valdemir Jose 26/06/2013
 					If mv_par46 == 1
 						//Tes de Entrega Futura Fora do Estado
-						cRetTes := SZ8->Z8_TESEFE
+						if lOrig12                   
+							cRetTes := SZ8->Z8_TESEFE2
+						else     
+							cRetTes := SZ8->Z8_TESEFE
+						endif
 					ElseIf mv_par46 == 2
 						//Tes de Conta e Ordem Fora do Estado
-						cRetTes := SZ8->Z8_TESCOFE
+						if lOrig12                    
+							cRetTes := SZ8->Z8_TESCOFE2
+						else
+							cRetTes := SZ8->Z8_TESCOFE
+						endif
 					ElseIf cPrdIndust == "S"
-						//Tes de Prod. Industr. Fora do Estado
-						cRetTes := SZ8->Z8_TESIFE
+						//Tes de Prod. Industr. Fora do Estado 
+						if lOrig12     
+							cRetTes := SZ8->Z8_TESIFE2
+						else
+							cRetTes := SZ8->Z8_TESIFE
+						endif
 					ElseIf cPrdIndust != "S"
 						//Tes de Prod. Comerc. Fora do Estado
-						cRetTes := SZ8->Z8_TESCFE
+						if lOrig12                   
+							cRetTes := SZ8->Z8_TESCOF2
+						else
+							cRetTes := SZ8->Z8_TESCFE
+						endif
 					EndIf
 				EndIf
 				
@@ -3929,8 +3955,8 @@ If !Empty(cFilOrig) .And. !Empty(cLocalArmz)
 						//Tes de Prod. Comerc. Dentro do Estado
 						cRetTes := SZ8->Z8_TESCDE
 					EndIf
-				Else
-					//Fora do Estado
+				Else        //Fora do Estado
+					
 					If mv_par46 == 1
 						//Tes de Entrega Futura Fora do Estado
 						cRetTes := SZ8->Z8_TESEFE
@@ -5790,7 +5816,7 @@ Static Function ValidSXENum()
 	Local aArea := GetArea()
 	                 
 	dbSelectarea('SZ2')
-	dbSetOrder(1)
+	dbSetOrder(1)         // Valdemir jose 29/05/2013
 	dbGotop()       
 	dbGobottom() 
 

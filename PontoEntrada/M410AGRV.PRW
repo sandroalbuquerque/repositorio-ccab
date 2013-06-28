@@ -29,6 +29,7 @@ Local cConteudo := ""
 Local nOpcao    := PARAMIXB[1]
 Local nPosProd  := aScan(aHeader,{|x| Upper(AllTrim(x[2])) == "C6_PRODUTO"})
 Local nPosItem  := aScan(aHeader,{|x| Upper(AllTrim(x[2])) == "C6_ITEM"})
+Local nPosSTrib := aScan(aHeader,{|x| Upper(AllTrim(x[2])) == "C6_CLASFIS"})    // Valdemir Jose 19/06/2013
 Local lItemExcl := .F.
 Local cNumPrePV := ""
 
@@ -42,6 +43,15 @@ EndIf
 
 //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 //³ Inicio da Personalizacao Por FELIPE MELO - Personalizacao para Pré-Pedidos                      ³
+
+
+// Validação da Informação da Situação Tributária
+For x:=1 To Len(aCols)             
+	if Len(alltrim(aCols[x][nPosSTrib])) < 3
+	   Alert('Situação Tributária com informação errada. Por favor, informe o produto e a TES novamente.')
+	   Return .F.
+	Endif
+Next
 
 //Tratar alteração
 If AllTrim(Str(nOpcao)) == "2" .And.  Altera .And. !Inclui
@@ -277,6 +287,7 @@ If inclui
 		Endif
 	Endif
 EndIf
+
 Return
 /*
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
