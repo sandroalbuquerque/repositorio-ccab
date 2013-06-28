@@ -1,0 +1,13 @@
+User Function MT103COR
+	Local aArea := GetArea()
+	Public nTaxa := 0
+	                 
+    dbSelectArea('SM2')
+    dbSetOrder(1)
+    if dbSeek(DDATABASE)	                        
+       nTAXA := SM2->M2_MOEDA2
+    Endif
+	
+	RestArea( aArea )
+	
+Return

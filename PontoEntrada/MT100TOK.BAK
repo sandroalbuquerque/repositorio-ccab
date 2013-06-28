@@ -1,0 +1,67 @@
+#include "Protheus.ch"
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³MT100TOK  ºAutor  ³Valdemir Jose       º Data ³  24/06/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Ponto Entrada na Confirmação da Classificação/Documento Ent.±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                        º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function MT100TOK()
+Local lRET     := .T.  
+Local aArea    := GetArea() 
+Local nPosPed  := Ascan(aHeader, {|n| Alltrim(n[2]) = "D1_PEDIDO"}) 
+Local nX       := 0
+Local _cPedido := ''
+public _lMoeda := .F.
+public _cNum   := Space(TamSX3("C7_NUM")[1]) 
+
+/*
+
+if Len(aCols) > 0                  
+	For nX := 1 To Len(aCols)
+	  if !Empty(aCols[nX][nPosPed])
+	  	dbSelectArea('SC7') 
+	  	dbSetOrder(1)
+	  	if dbSeek(xFilial('SC7')+aCols[nX][nPosPed])
+			if (!_lMoeda) .and. (!Empty(nMoedaCor)) .and. (nMoedaCor <> SC7->C7_MOEDA)
+			   _cNum         := SC7->C7_NUM
+			   nMoedaCor     := SC7->C7_MOEDA
+			   nTaxa         := SC7->C7_TXMOEDA
+			   _lMoeda       := .T.  
+  				   
+			Elseif (nMoedaCor <> SC7->C7_MOEDA)
+				Alert('Há pedido(s) com moedas diferentes, por favor verifique...')
+				lRET := .F.
+			Endif   
+
+		Endif
+	  endif
+	Next
+Endif           
+
+*/ 
+
+RestArea( aArea )
+
+Return lRET             
+
+			
+//nTaxa     := RecMoeda(dDEmissao,nMoedaCor)
+//nTaxa     := SC7->C7_TXMOEDA           
+
+
+/*If oMoeda<>Nil
+	oMoeda:Refresh()
+EndIf 
+If oTaxa<>Nil
+	oTaxa:Refresh()
+EndIf  	

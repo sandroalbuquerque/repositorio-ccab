@@ -1,0 +1,1091 @@
+#Include "protheus.ch"
+#Include "topconn.ch"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍº±±
+±±ºPrograma  º CCABM413 ºAutor  ºFelipe Aurélio de Melo º Data º 24/04/09 º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºDesc.     º                                                            º±±
+±±º          º                                                            º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºUso       º ES-CCAB-0164V01 - Centralização Controle Pedido de Vendas  º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+User function CcabM413()
+
+Private cStrCad   := "SZ8"
+Private cTitCad   := "Controle de TES por Movimentação de Saída"
+Private cCadastro := cTitCad+" ["+cStrCad+"]"
+Private aRotina   := MenuDef()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria estrutura da rotina                                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+fAtuSX2()
+fAtuSX3()
+fAtuSIX()
+fAtuSX7()
+//fAtuSXA() --> Não criar mais folder
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Chama rotina browse com os menus                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+DbSelectArea(cStrCad)
+DbSetOrder(1)
+mBrowse(6,1,22,75,cStrCad)
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³MenuDef   ³ Autor ³ Felipe Aurelio de Melo³ Data ³09/10/08  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Utilizacao de menu Funcional                               ³±±     
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ Array com opcoes da rotina.                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Parametros do array a Rotina:                               ³±±
+±±³          ³1. Nome a aparecer no cabecalho                             ³±±
+±±³          ³2. Nome da Rotina associada                                 ³±±
+±±³          ³3. Reservado                                                ³±±
+±±³          ³4. Tipo de Transa‡„o a ser efetuada:                        ³±±
+±±³          ³		1 - Pesquisa e Posiciona em um Banco de Dados         ³±±
+±±³          ³    2 - Simplesmente Mostra os Campos                       ³±±
+±±³          ³    3 - Inclui registros no Bancos de Dados                 ³±±
+±±³          ³    4 - Altera o registro corrente                          ³±±
+±±³          ³    5 - Remove o registro corrente do Banco de Dados        ³±±
+±±³          ³5. Nivel de acesso                                          ³±±
+±±³          ³6. Habilita Menu Funcional                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MenuDef()
+
+Local aRotina := {;
+                   { OemToAnsi("Pesquisar" ),"AxPesqui"   , 0 , 1},;  //
+                   { OemToAnsi("Visualizar"),"U_Ccab413Cad", 0 , 2},;  //
+                   { OemToAnsi("Incluir"   ),"U_Ccab413Cad", 0 , 3},;  //
+                   { OemToAnsi("Alterar"   ),"U_Ccab413Cad", 0 , 4},;  //
+                   { OemToAnsi("Excluir"   ),"U_Ccab413Cad", 0 , 5} }  //
+
+Return(aRotina)
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Program   ³Ccab413Cad³ Autor ³ Felipe Aurelio de Melo³ Data ³ 09.10.08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Exibe na tela enchoice e a getdados                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ Ccab413Cad(cAlias,nReg,nOpc)                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ Nenhum                                                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ CcabM413                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = Alias do Arquivo                                   ³±±
+±±³          ³ ExpN1 = Numero do Registro                                 ³±±
+±±³          ³ ExpN2 = Numero da opcao selecionada                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function Ccab413Cad(cAlias,nReg,nOpc)
+
+// Declaração das variaveis
+Private oDlg,oEnch,oPanel,oScroll
+Private oGet01,oGet02,oGet03,oGet04
+Private lNegrito, lTotal, lSeparador, lTraco
+Private lVldNegrito,lVldTotal,lVldSeparador,lVldTraco
+Private oGDItens
+Private nCtrlGet  := 1
+Private aGets     := {} 
+Private aTela     := {}
+Private aButtons  := {}
+Private nOpcao	  := 0
+Private bOk       := { || IIf(IIf(nOpc=3 .Or. nOpc=4,Ccab413Cbc() .And. U_Ccab413TOk() .And. Obrigatorio(aGets,aTela) .And. oGDItens:TudoOk(),.T.) , (nOpcao:=1,oDlg:End()) , nOpcao := 0) }
+Private bCancel   := { || nOpcao:=0 , oDlg:End() }
+Private nSuperior := 0
+Private nEsquerda := 0
+Private nInferior := 0
+Private nDireita  := 0
+Private aSizeAut  := {}
+Private aObjects  := {}
+Private aInfo     := {}
+Private aPosGet   := {}
+Private aPosObj   := {}
+Private aCT1Blq	:= {}
+
+nReg   := IIf(nOpc==3,Nil,SZ8->(Recno()))
+cAlias := "SZ8"
+
+// Maximizacao da tela em relação a area de trabalho
+aSizeAut := MsAdvSize()
+aAdd(aObjects,{100,020,.T.,.F.})
+aAdd(aObjects,{100,100,.T.,.T.})
+
+aInfo     := {aSizeAut[1],aSizeAut[2],aSizeAut[3],aSizeAut[4],3,3}
+aPosObj   := MsObjSize(aInfo,aObjects)
+
+// Verifica o tipo de chamada e trata a situação
+cExbCpos := "Z8_FILORI/Z8_FIL_UF"
+
+Do Case
+	Case nOpc == 2	//Visualização
+		nOpEnch:= 2
+		aExbCpo:= fInitVarX3(cAlias,.F.,cExbCpos)
+		
+	Case nOpc == 3	//Inclusão
+		nOpEnch:= 3
+		aExbCpo:= fInitVarX3(cAlias,.T.,cExbCpos)
+		
+	Case nOpc == 4	//Alteração
+		nOpEnch:= 3
+		aExbCpo:= fInitVarX3(cAlias,.F.,cExbCpos)
+		
+	Case nOpc == 5	//Exclusão
+		nOpEnch:= 5
+		aExbCpo:= fInitVarX3(cAlias,.F.,cExbCpos)
+		
+	Otherwise //Outras situações
+		nOpEnch:= 2
+		aExbCpo:= fInitVarX3(cAlias,.F.,cExbCpos)
+EndCase
+
+// Montagem da tela que serah apresentada para usuario (lay-out)
+Define MsDialog oDlg Title cCadastro From aSizeAut[7],0 To aSizeAut[6],aSizeAut[5] Of oMainWnd Pixel
+
+/*Cabeçalho		*/	oEnch := Msmget():New(cAlias,nReg,nOpEnch,,,,aExbCpo,aPosObj[1],aExbCpo,,,,,oDlg,,.T.)
+/*Itens			*/ fGDItens(nOpc,oDlg,nReg)
+
+Activate MsDialog oDlg On Init EnchoiceBar(oDlg,bOk,bCancel,,aButtons)
+
+Do Case
+   //Se for inclusao e foi confirmado
+   Case nOpc == 3 .And. nOpcao == 1
+        fSalvaTudo(nOpc,cAlias,aExbCpo,nReg)
+
+   //Se for alteracao e foi confirmado
+   Case nOpc == 4 .And. nOpcao == 1
+        fSalvaTudo(nOpc,cAlias,aExbCpo,nReg)
+
+   //Se for exclusao e foi confirmado
+   Case nOpc == 5 .And. nOpcao == 1
+        fExcluiTudo()
+EndCase
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ fGDItens     ³ Autor ³ Felipe A. Melo    ³ Data ³ 09/10/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Monta MsNewGetDados                                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ fGDItens()                                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CTBA160                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function fGDItens(nOpc,oDefTela,nReg)
+
+// Posicao do elemento do vetor aRotina que a MsNewGetDados usara como referencia  
+Local cGetOpc        := GD_INSERT+GD_DELETE+GD_UPDATE    // GD_INSERT+GD_DELETE+GD_UPDATE                                                                            
+Local cLinhaOk       := "U_Ccab413LOk"                   // Funcao executada para validar o contexto da linha atual do aCols                  
+Local cTudoOk        := "U_Ccab413TOk"                   // Funcao executada para validar o contexto geral da MsNewGetDados (todo aCols)      
+Local cIniCpos       := ""                               // Nome dos campos do tipo caracter que utilizarao incremento automatico.                                                              
+Local nFreeze        := Nil                              // Campos estaticos na GetDados.                                                               
+Local nMax           := 999                              // Numero maximo de linhas permitidas. Valor padrao 99                           
+Local cCampoOk       := Nil                              // Funcao executada na validacao do campo                                           
+Local cSuperApagar   := Nil                              // Funcao executada quando pressionada as teclas <Ctrl>+<Delete>                    
+Local cApagaOk       := Nil                              // Funcao executada para validar a exclusao de uma linha do aCols                   
+Local aHead          := {}                               // Array do aHeader
+Local aCols          := {}                               // Array do aCols
+
+// Valor das variaveis que as rotinas faCols e faHead irá utilizar como referencia
+Local x       := 1                                       //Variavel usada no For/Next
+Local cGetAls := "SZ8"                                   //Alias usado na função para montar o aHeader e o Acols
+Local nGetOpc := nOpc                                    //Opção da operação que está sendo executada
+Local cGetOrd := 1                                       //Ordem do Indice utilizado na função que carrega o aCols
+Local nGetQtd := 1                                       //Quantidade de linhas iniciadas no aCols quando inclusão
+Local cGetCnd := "xFilial('SZ8')+M->Z8_FILORI"
+Local cGetCpo := "SZ8->Z8_FILIAL+SZ8->Z8_FILORI"
+Local cExbCpo := "Z8_ARMORI/Z8_ARM_UF/Z8_TESIDE/"+;      //Forçar mostrar no MsNewGetDados apenas os campos definidos nesta variavel
+                 "Z8_TESIFE/Z8_TESCDE/Z8_TESCFE/"+;      //Forçar mostrar no MsNewGetDados apenas os campos definidos nesta variavel
+                 "Z8_TESEDE/Z8_TESEFE/"+;                //Forçar mostrar no MsNewGetDados apenas os campos definidos nesta variavel
+                 "Z8_TESCODE/Z8_TESCOFE/"+;  			 //Forçar mostrar no MsNewGetDados apenas os campos definidos nesta variavel
+                 "Z8_TESIFE2/Z8_TESCFE2/"+;
+		         "Z8_TESEFE2/Z8_TESCOF2"
+Local aTrtCpo := {}                                      //Array contendo campos com valores que serão usadas no aCols quando inclusão
+
+//Montando um array conforme parametros acima para ser usada na função que montas o aCols
+For x:=1 To nGetQtd
+    aAdd(aTrtCpo,{"Z8_ARMORI",Space(2),.F.})
+Next x
+
+//Execução das rotinas
+aHead := faHead(cGetAls,cExbCpo)
+aCols := faCols(aHead,cGetAls,nGetQtd,nGetOpc,cGetOrd,cGetCnd,cGetCpo,cExbCpo,aTrtCpo)
+oGDItens:=MsNewGetDados():New(aPosObj[2,1],aPosObj[2,2],aPosObj[2,3],aPosObj[2,4],cGetOpc,cLinhaOk,cTudoOk,cIniCpos,,nFreeze,nMax,cCampoOk,cSuperApagar,cApagaOk,oDefTela,aHead,aCols)                                   
+
+//Reposiciona a seta no registro inicial
+If nOpc != 3 ; DbGoTo(nReg) ; EndIf
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ fInitVarX3   ³ Autor ³ Felipe A. Melo    ³ Data ³ 11/09/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Carrega as variaveis em memoria                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ fInitVarX3()                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CTBA160                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function fInitVarX3(cAlias,lInitVarX3,cExibeCpos)
+
+Local aExibLst := {}
+
+SX3->(DbSetOrder(1))
+SX3->(DbSeek(cAlias))
+While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == cAlias
+	If X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL
+		If Empty(cExibeCpos) .Or. AllTrim(SX3->X3_CAMPO) $ cExibeCpos
+			If lInitVarX3
+				_SetOwnerPrvt(Trim(SX3->X3_CAMPO),CriaVar(Trim(SX3->X3_CAMPO),.T.))
+			Else
+				If SX3->X3_CONTEXT != "V"
+					_SetOwnerPrvt(Trim(SX3->X3_CAMPO),(cAlias)->&(SX3->X3_CAMPO))
+				Else
+					_SetOwnerPrvt(Trim(SX3->X3_CAMPO),(cAlias)->&(SX3->X3_RELACAO))
+				EndIf
+			EndIf
+			AADD(aExibLst,SX3->X3_CAMPO)
+		EndIf
+	EndIf
+	SX3->(DbSkip())
+End
+
+Return(aExibLst)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ faHead       ³ Autor ³ Felipe A. Melo    ³ Data ³ 11/09/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Carrega aHeader usado no MsNewGetDados                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ faHead()                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CTBA160                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function faHead(cAlias,cExibeCpos)
+
+Local aHead := {}
+
+// Montagem do aHeader
+SX3->(dbSetOrder(1))
+SX3->(dbSeek(cAlias))
+While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == cAlias
+	If (X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL)
+		If Empty(cExibeCpos) .Or. AllTrim(SX3->X3_CAMPO) $ cExibeCpos
+			aAdd(aHead, { AllTrim(X3Titulo()),;
+                        SX3->X3_CAMPO,;
+                        SX3->X3_PICTURE,;
+                        SX3->X3_TAMANHO,;
+                        SX3->X3_DECIMAL,;
+                        SX3->X3_VALID,;
+                        SX3->X3_USADO,;
+                        SX3->X3_TIPO,;
+                        SX3->X3_F3,;
+                        SX3->X3_CONTEXT,;
+                        SX3->X3_CBOX,;
+                        SX3->X3_RELACAO,;
+                        SX3->X3_WHEN,;
+                        SX3->X3_VISUAL,;
+                        SX3->X3_VLDUSER,;
+                        SX3->X3_PICTVAR,;
+                        SX3->X3_OBRIGAT})
+		EndIf
+	EndIf
+	SX3->(DbSkip())
+End
+
+Return(aHead)
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o	 ³Ccab413Cbc³ Autor ³ Pilar S. Albaladejo   ³ Data ³ 09/10/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Valida Classe e condicao normal da conta co cabecalho      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ Ccab413Cbc()                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ .T./.F.                                                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ Valida‡„o do SX3 do Campo CTS_Conta                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function Ccab413Cbc()
+
+Local lRet := .T.
+
+If lRet .And. Empty(M->Z8_FILORI)
+	Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_FILORI")),3,1)
+	lRet := .f.
+EndIf
+
+If lRet .And. Empty(M->Z8_FIL_UF)
+	Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_FIL_UF")),3,1)
+	lRet := .f.
+EndIf
+
+Return lRet
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ faCols       ³ Autor ³ Felipe A. Melo    ³ Data ³ 09/10/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Carrega aCols usado no MsNewGetDados                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ faCols()                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CTBA160                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function faCols(aHead,cGetAls,nGetQtd,nGetOpc,cGetOrd,cGetCnd,cGetCpo,cExbCpo,aTrtCpo)
+
+Local lFoiTratado := .F.
+Local aCol        := {}
+Local y           := 1
+Local k           := 1
+
+//Reinicializa status dos campos trataveis
+For y:=1 To Len(aTrtCpo)
+	aTrtCpo[y,Len(aTrtCpo[y])]:=.F.
+Next y
+
+If nGetOpc == 3
+	// Montagem do aCols em Branco
+	For y := 1 To nGetQtd
+		AADD(aCol,Array(Len(aHead)+1))
+		nLin	:= Len(aCol)
+		//Sempre reposicionar a set para o alias correto
+		SX3->(DbSetOrder(1))
+		SX3->(DbSeek(cGetAls))
+		While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == cGetAls
+			If X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL
+				//Faz tratamento para montagem do acols somente com campos especificos ou com todos habilitados via sigacfg
+				If Empty(cExbCpo) .Or. AllTrim(SX3->X3_CAMPO) $ cExbCpo
+					//Faz tratamento de campos especificas caso seja necessario
+					lFoiTratado := .F.
+					For k := 1 To Len(aTrtCpo)
+						If aTrtCpo[k,1] $ SX3->X3_CAMPO .And. !aTrtCpo[k,3]
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := aTrtCpo[k,2]
+							aTrtCpo[k,3] := .T.
+							lFoiTratado := .T.
+							k := Len(aTrtCpo)
+						EndIf
+					Next k
+					//Caso não seja um tratamento especifico seguirá o padrão
+					If !lFoiTratado
+						If Empty(SX3->X3_RELACAO)
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := CriaVar(SX3->X3_CAMPO)
+						Else
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := &(SX3->X3_RELACAO)
+						EndIf
+					EndIf
+				EndIf
+			EndIf
+			SX3->(DbSkip())
+		End
+		aCol[nLin,Len(aHead)+1] := .F.
+	Next y
+Else
+	// Montagem do aCols com registros caso tenha
+	DbSelectArea(cGetAls)
+	DbSetOrder(cGetOrd)
+	If DbSeek(&(cGetCnd))
+		While !EOF() .And. &(cGetCnd) == &(cGetCpo)
+			
+			aAdd(aCol,Array(Len(aHead)+1))
+			nLin	:= Len(aCol)
+			
+			SX3->(DbSetOrder(1))
+			SX3->(DbSeek(cGetAls))
+			While SX3->(!Eof()) .And. SX3->X3_ARQUIVO == cGetAls
+				If X3USO(SX3->X3_USADO) .And. cNivel >= SX3->X3_NIVEL
+					//Faz tratamento para montagem do acols somente com campos especificos ou com todos habilitados via sigacfg
+					If Empty(cExbCpo) .Or. AllTrim(SX3->X3_CAMPO) $ cExbCpo
+						If SX3->X3_CONTEXT = "V"
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := &(SX3->X3_RELACAO)
+						Else
+							aCol[nLin,aScan(aHead,{|x|Alltrim(x[2])==AllTrim(SX3->X3_CAMPO)})] := &(SX3->X3_CAMPO)
+						End
+					EndIf
+				EndIf
+				SX3->(DbSkip())
+			End
+			
+			aCol[nLin,Len(aHead)+1] := .F.
+			DbSkip()
+		End
+	EndIf
+EndIf
+
+Return(aCol)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ fSalvaTudo   ³ Autor ³ Felipe A. Melo    ³ Data ³ 09/10/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Funcao responsavel pela gravacao das inclusoes e alteracoes³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ fSalvaTudo()                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CTBA025                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function fSalvaTudo(nOpc,cAlias,aExbCpo)
+
+// Declara variaveis
+Local x        := 1
+Local nOrdSeek := 1
+Local aGrvCps  := {}
+Local cCpoItem := "Z8_ARMORI"
+Local cCndSeek := "xFilial('SZ8')+M->Z8_FILORI"
+
+//Trata campos do enchoice
+For x:=1 To Len(aExbCpo)
+    aAdd(aGrvCps,{aExbCpo[x] ,"M->"+aExbCpo[x]	})
+Next x
+
+//Trata campos extras
+aAdd(aGrvCps,{"Z8_FILIAL"   ,"xFilial('SZ8')"   })
+
+//Executa rotina pra tratar gravação das variaveis acima e do MsNewGetDados
+fGravaGD(oGDItens,cAlias,aGrvCps,nOpc,nOrdSeek,cCndSeek,cCpoItem)
+
+//Reposiciona no primeiro registro no grupo em questão
+SZ8->(DbSetOrder(1))
+SZ8->(DbGoTop())
+SZ8->(DbSeek(xFilial('SZ8')+M->Z8_FILORI))
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ fGravaGD     ³ Autor ³ Felipe A. Melo    ³ Data ³ 09/10/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Funcao responsavel pela gravacao das inclusoes e alteracoes³±±
+±±³          ³ apontadas no MsNewGetDados / tratamento por objeto         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ fGravaGD()                                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CTBA025                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function fGravaGD(oObjct,cAlias,aCposAdd,nTpOper,nOrdSeek,cCndSeek,cCpoItm)
+
+Local x := 1
+Local y := 1
+Local k := 1
+
+DbSelectArea(cAlias)
+
+For x:=1 To Len(oObjct:aCols)
+	If !oObjct:aCols[x,Len(oObjct:aHeader)+1]
+		
+		DbSelectArea(cAlias)
+		DbSetOrder(nOrdSeek)
+		
+		If nTpOper == 3
+			RecLock(cAlias,.T.)
+		ElseIf DbSeek(&(cCndSeek)+oObjct:aCols[x][aScan(oObjct:aHeader,{|x|Alltrim(x[2])==cCpoItm})])
+			RecLock(cAlias,.F.)
+		Else
+			RecLock(cAlias,.T.)
+		EndIf
+		
+		For y:=1 To Len(oObjct:aHeader)
+			&(oObjct:aHeader[y,2]) := oObjct:aCols[x][aScan(oObjct:aHeader,{|x|Alltrim(x[2])==AllTrim(oObjct:aHeader[y,2])})]
+		Next y
+		
+		For k:=1 To Len(aCposAdd)
+			&(aCposAdd[k,1]) := &(aCposAdd[k,2])
+		Next k
+		
+		MsUnLock()
+	Else
+		DbSelectArea(cAlias)
+		DbSetOrder(nOrdSeek)
+		If nTpOper != 3
+			If DbSeek(&(cCndSeek)+oObjct:aCols[x][aScan(oObjct:aHeader,{|x|Alltrim(x[2])==cCpoItm})])
+				RecLock(cAlias,.F.)
+				dbDelete()
+				MsUnLock()
+			EndIf
+		EndIf
+	EndIf
+Next x
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ fExcluiTudo  ³ Autor ³ Felipe A. Melo    ³ Data ³ 09/10/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Funcao responsavel pela exclusão de todos os itens         ³±±
+±±³          ³ apresentados na tela                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ fGravaGD()                                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CTBA025                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function fExcluiTudo()
+
+Local cCpoItem := "Z8_ARMORI"
+Local cCndSeek := "xFilial('SZ8')+M->Z8_FILORI"
+
+//Executa procedimento de exclusão de registros
+SZ8->(DbSetOrder(1))
+If SZ8->(DbSeek(xFilial('SZ8')+M->Z8_FILORI))
+	While SZ8->(!Eof()) .And. xFilial('SZ8')+M->Z8_FILORI == SZ8->Z8_FILIAL+SZ8->Z8_FILORI
+		RecLock("SZ8",.F.)
+		dbDelete()
+		MsUnLock()
+		SZ8->(DbSkip())
+	End
+EndIf
+	
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ Ccab413TOk   ³ Autor ³ Felipe A. Melo    ³ Data ³ 09/10/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Valida todos os campos do MsNewGetDados de todas as linhas ³±±
+±±³          ³ para obrigar preenchimento dos campos obrigatorio.         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ Ccab413TOk()                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CTBA160                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+User Function Ccab413TOk()
+
+Local aSaveArea:= GetArea()
+Local aCols    := oGDItens:aCols
+Local lRet     := .T.
+Local nCont    := 0
+
+For nCont := 1 To Len(aCols)
+   oGDItens:oBrowse:nAt:=nCont
+   oGDItens:oBrowse:Refresh()
+   oGDItens:oBrowse:SetFocus()
+	If !U_Ccab413LOK()
+		lRet := .F.
+		Exit
+	EndIf
+Next nCont
+
+RestArea(aSaveArea)
+Return(lRet)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ Ccab413LOk   ³ Autor ³ Felipe A. Melo    ³ Data ³ 09/10/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Valida linhas do MsNewGetDados para obrigar preenchimento  ³±±
+±±³          ³ dos campos obrigatorio.                                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ Ccab413LOk()                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CTBA160                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+User Function Ccab413LOk()
+
+Local aSaveArea   := GetArea()
+Local aHeader     := oGDItens:aHeader
+Local aCols       := oGDItens:aCols
+Local n           := oGDItens:oBrowse:nAt
+Local x           :=  0
+Local lRet        := .T.
+
+Local nPosArmz   := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_ARMORI"})
+Local nPosUfArmz := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_ARM_UF"})
+Local nPosTesIde := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESIDE"})
+Local nPosTesIfe := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESIFE"})
+Local nPosTesCde := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESCDE"})
+Local nPosTesCfe := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESCFE"})
+Local nPosTsCode := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESCODE"})
+Local nPosTsCofe := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESCOFE"})
+Local nPosTsIFE2 := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESIFE2"})
+Local nPosTsCFE2 := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESCFE2"})
+Local nPosTsEFE2 := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESEFE2"})
+Local nPosTsCof2 := Ascan(aHeader,{|x|Alltrim(x[2]) == "Z8_TESCOF2"})
+
+If lRet
+	If Empty(aCols[n][nPosArmz])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_ARMORI")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+		
+If lRet
+	If Empty(aCols[n][nPosUfArmz])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_ARM_UF")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	If Empty(aCols[n][nPosTesIde])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESIDE")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	If Empty(aCols[n][nPosTesIfe])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESIFE")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+		
+If lRet
+	If Empty(aCols[n][nPosTesCde])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESCDE")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	If Empty(aCols[n][nPosTesCfe])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESCFE")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	If Empty(aCols[n][nPosTsCode])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESCODE")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	If Empty(aCols[n][nPosTsCofe])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESCOFE")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	If Empty(aCols[n][nPosTsIFE2])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESIFE2")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	If Empty(aCols[n][nPosTsCFE2])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESCFE2")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	If Empty(aCols[n][nPosTsEFE2])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESEFE2")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+If lRet
+	If Empty(aCols[n][nPosTsCof2])
+		Help(" ",1,"OBRIGAT2",,AllTrim(RetTitle("Z8_TESCOF2")),3,1)
+		lRet := .F.
+	EndIf
+EndIf
+
+
+If lRet
+	cVarInt := aCols[n][nPosArmz]
+	For x:= 1 To Len(oGDItens:aCols)
+		If cVarInt == oGDItens:aCols[x][nPosArmz] .And. x != n
+			lRet := .F.
+			ShowHelpDlg("LIN_DUPLI",	{"A linha "+Str(n,1)+" está igual a linha "+Str(x,1)+"."},5,;
+										{"Favor corrigir duplicidade de Armazém."},5)
+			x := Len(oGDItens:aCols)
+		EndIf
+	Next x
+EndIf
+
+oGDItens:oBrowse:nAt:=n
+oGDItens:oBrowse:Refresh()
+oGDItens:oBrowse:SetFocus()
+
+RestArea(aSaveArea)
+
+Return(lRet)
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍº±±
+±±ºPrograma  º M413TOk  ºAutor  ºFelipe Aurélio de Melo º Data º 24/04/09 º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºDesc.     º                                                            º±±
+±±º          º                                                            º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºUso       º CCABM413                                                   º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+User Function M413TOk()
+
+Local lRet := IIf(INCLUI,ExistChav("SZ8",M->(Z8_FILIAL+Z8_FILORI+Z8_ARMORI+Z8_FIL_UF+Z8_ARM_UF),1),.T.)
+
+Return(lRet)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍº±±
+±±ºPrograma  º M413TOk  ºAutor  ºFelipe Aurélio de Melo º Data º 24/04/09 º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºDesc.     º                                                            º±±
+±±º          º                                                            º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºUso       º CCABM413                                                   º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function fAtuSX2()
+
+Local cPath  := ""
+Local cNome  := ""
+Local aEstrut:= {}
+Local aSX2   := {}
+Local i      := 0
+Local j      := 0
+
+aEstrut:= {"X2_CHAVE","X2_PATH"   ,"X2_ARQUIVO","X2_NOME"                                  ,"X2_NOMESPA"                               ,"X2_NOMEENG"                               ,"X2_DELET","X2_MODO","X2_TTS","X2_ROTINA","X2_PYME","X2_UNICO"}
+Aadd(aSX2,{"SZ8"     ,"\DADOSADV\","SZ8010"    ,"Controle de TES por Movimentação de Saída","Controle de TES por Movimentação de Saída","Controle de TES por Movimentação de Saída",0         ,"C"      ,""      ,""         ,"N"      ,"Z8_FILIAL+Z8_FILORI+Z8_FIL_UF+Z8_ARMORI+Z8_ARM_UF"})
+
+dbSelectArea("SX2")
+dbSetOrder(1)
+dbSeek("SA1")
+cPath := SX2->X2_PATH
+cNome := Substr(SX2->X2_ARQUIVO,4,5)
+
+For i:= 1 To Len(aSX2)
+	If !Empty(aSX2[i][1])
+		If !dbSeek(aSX2[i,1])
+			RecLock("SX2",.T.)
+			For j:=1 To Len(aSX2[i])
+				If FieldPos(aEstrut[j]) > 0
+					FieldPut(FieldPos(aEstrut[j]),aSX2[i,j])
+				EndIf
+			Next j
+			SX2->X2_PATH    := cPath
+			SX2->X2_ARQUIVO := aSX2[i,1]+cNome
+			dbCommit()
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍº±±
+±±ºPrograma  º M413TOk  ºAutor  ºFelipe Aurélio de Melo º Data º 24/04/09 º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºDesc.     º                                                            º±±
+±±º          º                                                            º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºUso       º CCABM413                                                   º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function fAtuSX3()
+
+Local aSX3   := {}
+Local aEstrut:= {}
+Local i      := 0
+Local j      := 0
+
+aEstrut := { "X3_ARQUIVO","X3_ORDEM"  ,"X3_CAMPO"  ,"X3_TIPO"   ,"X3_TAMANHO","X3_DECIMAL","X3_TITULO" ,"X3_TITSPA" ,"X3_TITENG" ,;
+             "X3_DESCRIC","X3_DESCSPA","X3_DESCENG","X3_PICTURE","X3_VALID"  ,"X3_USADO"  ,"X3_RELACAO","X3_F3"     ,"X3_NIVEL"  ,;
+             "X3_RESERV" ,"X3_CHECK"  ,"X3_TRIGGER","X3_PROPRI" ,"X3_BROWSE" ,"X3_VISUAL" ,"X3_CONTEXT","X3_OBRIGAT","X3_VLDUSER",;
+             "X3_CBOX"   ,"X3_CBOXSPA","X3_CBOXENG","X3_PICTVAR","X3_WHEN"   ,"X3_INIBRW" ,"X3_GRPSXG" ,"X3_FOLDER" ,"X3_PYME"	  }
+
+Aadd(aSX3,{	"SZ8", "01", "Z8_FILIAL" ,"C", 02, 0, "Filial      " , "Filial"       , "Filial"       , "Filial"                    , "Filial"                    , "Filial"                    , "@!"  , "" , "€€€€€€€€€€€€€€€",   "" ,    "   ", 1 , "€€", "", "", "",  "", "", "", " ", ""	, "", "", "", "", ""      , "", ""   , ""/*" "*/, "N"})
+Aadd(aSX3,{	"SZ8", "02", "Z8_FILORI" ,"C", 02, 0, "Filial Orig " , "Filial Orig " , "Filial Orig " , "Filial Origem "            , "Filial Origem "            , "Filial Origem "            , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "DLB", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", "INCLUI", "", ""   , ""/*"1"*/, "N"})
+Aadd(aSX3,{	"SZ8", "03", "Z8_FIL_UF" ,"C", 02, 0, "UF Filial   " , "UF Filial   " , "UF Filial   " , "UF Filial   "              , "UF Filial   "              , "UF Filial   "              , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "12 ", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", "INCLUI", "", ""   , ""/*"1"*/, "N"})
+Aadd(aSX3,{	"SZ8", "04", "Z8_ARMORI" ,"C", 02, 0, "Armazém Orig" , "Armazém Orig" , "Armazém Orig" , "Armazém Origem"            , "Armazém Origem"            , "Armazém Origem"            , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SZB", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"1"*/, "N"})
+Aadd(aSX3,{	"SZ8", "05", "Z8_ARM_UF" ,"C", 02, 0, "UF Armazém  " , "UF Armazém  " , "UF Armazém  " , "UF Armazém  "              , "UF Armazém  "              , "UF Armazém  "              , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "12 ", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"1"*/, "N"})
+Aadd(aSX3,{	"SZ8", "06", "Z8_TESIDE" ,"C", 03, 0, "Prd.Ind.D.E." , "Prd.Ind.D.E." , "Prd.Ind.D.E." , "Prod.Indust.Dentro Estado" , "Prod.Indust.Dentro Estado" , "Prod.Indust.Dentro Estado" , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+Aadd(aSX3,{	"SZ8", "07", "Z8_TESIFE" ,"C", 03, 0, "Prd.Ind.F.E." , "Prd.Ind.F.E." , "Prd.Ind.F.E." , "Prod.Indust.Fora Estado"   , "Prod.Indust.Fora Estado"   , "Prod.Indust.Fora Estado"   , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+Aadd(aSX3,{	"SZ8", "08", "Z8_TESIFE2","C", 03, 0, "Ind.FE.Orig"  , "Ind.FE.Orig"  , "Ind.FE.Orig"  , "Indust.Fora Estado Orig"   , "Indust.Fora Estado Orig"   , "Indust.Fora Estado Orig"   , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+
+Aadd(aSX3,{	"SZ8", "09", "Z8_TESCDE" ,"C", 03, 0, "Prd.Com.D.E." , "Prd.Com.D.E." , "Prd.Com.D.E." , "Prod.Comerc.Dentro Estado" , "Prod.Comerc.Dentro Estado" , "Prod.Comerc.Dentro Estado" , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+Aadd(aSX3,{	"SZ8", "10", "Z8_TESCFE" ,"C", 03, 0, "Prd.Com.F.E." , "Prd.Com.F.E." , "Prd.Com.F.E." , "Prod.Comerc.Fora Estado"   , "Prod.Comerc.Fora Estado"   , "Prod.Comerc.Fora Estado"   , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+Aadd(aSX3,{	"SZ8", "11", "Z8_TESCFE2","C", 03, 0, "Com.FE.Orig"  , "Com.FE.Orig"  , "Com.FE.Orig"  , "Comerc.Fora Estado Orig"   , "Comerc.Fora Estado Orig"   , "Comerc.Fora Estado Orig"   , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+
+Aadd(aSX3,{	"SZ8", "12", "Z8_TESEDE" ,"C", 03, 0, "Ent.Fut.D.E." , "Ent.Fut.D.E." , "Ent.Fut.D.E." , "Entr.Futura Dentro Estado" , "Entr.Futura Dentro Estado" , "Entr.Futura Dentro Estado" , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+Aadd(aSX3,{	"SZ8", "13", "Z8_TESEFE" ,"C", 03, 0, "Ent.Fut.F.E." , "Ent.Fut.F.E." , "Ent.Fut.F.E." , "Entr.Futura Fora Estado"   , "Entr.Futura Fora Estado"   , "Entr.Futura Fora Estado"   , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+Aadd(aSX3,{ "SZ8", "14", "Z8_TESEFE2","C", 03, 0, "E.Fut.FE.Ori" , "E.Fut.FE.Ori" , "E.Fut.FE.Ori" , "Futura Fora Estado Orig"   , "Futura Fora Estado Orig"   , "Futura Fora Estado Orig"   , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+                                          
+Aadd(aSX3,{	"SZ8", "15", "Z8_TESCODE","C", 03, 0, "C.Ordem.DE."  , "C.Ordem.D.E." , "C.Ordem.D.E." , "Conta Ordem Dentro Estado" , "Conta Ordem Dentro Estado" , "Conta Ordem Dentro Estado" , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+Aadd(aSX3,{	"SZ8", "16", "Z8_TESCOFE","C", 03, 0, "C.Ordem.FE."  , "C.Ordem.F.E." , "C.Ordem.F.E." , "Conta Ordem Fora Estado"   , "Entr.Futura Fora Estado"   , "Conta Ordem Fora Estado"   , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+Aadd(aSX3,{ "SZ8", "17", "Z8_TESCOF2","C", 03, 0, "C.Ord.FE.Ori" , "C.Ord.FE.Ori" , "C.Ord.FE.Ori" , "Ordem Fora Estado Orig"    , "Ordem Fora Estado Orig"    , "Ordem Fora Estado Orig"    , "@!"  , "" , "€€€€€€€€€€€€€€ ",   "" ,    "SF4", 1 , "ƒ€", "", "", "", "S", "", "", "€", ""	, "", "", "", "", ""      , "", ""   , ""/*"2"*/, "N"})
+
+dbSelectArea("SX3")
+dbSetOrder(2)
+
+For i:= 1 To Len(aSX3)
+	If !Empty(aSX3[i][1])
+		If !dbSeek(aSX3[i,3])
+			RecLock("SX3",.T.)
+			For j:=1 To Len(aSX3[i])		
+				If FieldPos(aEstrut[j])>0
+					FieldPut(FieldPos(aEstrut[j]),aSX3[i,j])
+				EndIf
+			Next j
+			dbCommit()        
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍº±±
+±±ºPrograma  º M413TOk  ºAutor  ºFelipe Aurélio de Melo º Data º 24/04/09 º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºDesc.     º                                                            º±±
+±±º          º                                                            º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºUso       º CCABM413                                                   º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function fAtuSIX()
+
+Local aSIX   := {}
+Local aEstrut:= {}
+Local i      := 0
+Local j      := 0
+
+aEstrut := {"INDICE","ORDEM","CHAVE","DESCRICAO","DESCSPA","DESCENG","PROPRI","F3","NICKNAME"}
+
+// Indices do SZ8
+Aadd(aSIX,{	"SZ8","1","Z8_FILIAL+Z8_FILORI+Z8_ARMORI+Z8_FIL_UF+Z8_ARM_UF",;
+			"Filial Orig + Armazém Orig + Filial UF + Armazém UF",;
+			"Filial Orig + Armazém Orig + Filial UF + Armazém UF",;
+			"Filial Orig + Armazém Orig + Filial UF + Armazém UF",;
+			"S","",""})
+
+dbSelectArea("SIX")
+dbSetOrder(1)
+
+For i:= 1 To Len(aSIX)
+	If !Empty(aSIX[i,1])
+		If !dbSeek(aSIX[i,1]+aSIX[i,2])
+			RecLock("SIX",.T.)
+			For j:=1 To Len(aSIX[i])
+				If FieldPos(aEstrut[j])>0
+					FieldPut(FieldPos(aEstrut[j]),aSIX[i,j])
+				EndIf
+			Next j
+			dbCommit()
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍº±±
+±±ºPrograma  º M413TOk  ºAutor  ºFelipe Aurélio de Melo º Data º 24/04/09 º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºDesc.     º                                                            º±±
+±±º          º                                                            º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºUso       º CCABM413                                                   º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function fAtuSXA()
+
+Local aSXA   := {}
+Local aEstrut:= {}
+Local i      := 0
+Local j      := 0
+
+aEstrut := {"XA_ALIAS","XA_ORDEM","XA_DESCRIC","XA_DESCSPA","XA_DESCENG","XA_PROPRI"}
+
+// Folders do SZ8
+Aadd(aSXA,{	"SZ8","1","Campos Chave"    ,"Campos Chave"    ,"Campos Chave"    ,"U"})
+Aadd(aSXA,{	"SZ8","2","TES Por Situação","TES Por Situação","TES Por Situação","U"})
+
+dbSelectArea("SXA")
+dbSetOrder(1)
+
+For i:= 1 To Len(aSXA)
+	If !Empty(aSXA[i,1])
+		If !dbSeek(aSXA[i,1]+aSXA[i,2])
+			RecLock("SXA",.T.)
+			For j:=1 To Len(aSXA[i])
+				If FieldPos(aEstrut[j])>0
+					FieldPut(FieldPos(aEstrut[j]),aSXA[i,j])
+				EndIf
+			Next j
+			dbCommit()
+			MsUnLock()
+		EndIf
+	EndIf
+Next i
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍº±±
+±±ºPrograma  ºfAtuSX7ºAutorºFelipe Aurélio de Melo º Data º 12/04/09 º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºDesc.     º                                                            º±±
+±±º          º                                                            º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±ºUso       º CCABM410                                                   º±±
+±±ºÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍº±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function fAtuSX7()
+
+Local aSX7   := {}
+Local aEstrut:= {}
+Local i      := 0
+Local j      := 0
+
+aEstrut := {"X7_CAMPO","X7_SEQUENC","X7_REGRA","X7_CDOMIN","X7_TIPO","X7_SEEK","X7_ALIAS","X7_ORDEM","X7_CHAVE","X7_CONDIC","X7_PROPRI"}
+
+// Gatilhos do SZ8
+Aadd(aSX7,{"Z8_FILORI" ,"001","SM0->M0_ESTENT"                                              ,"Z8_FIL_UF" ,"P","S","SM0",1,"cEmpAnt+M->Z8_FILORI"                      ,""                            ,"U"})
+Aadd(aSX7,{"Z8_ARMORI" ,"001","SZB->ZB_ARM_UF"                                              ,"Z8_ARM_UF" ,"P","S","SZB",1,"xFilial('SZB')+M->Z8_FILORI+M->Z8_ARMORI"  ,""                            ,"U"})
+
+dbSelectArea("SX7")
+dbSetOrder(1)
+
+For i:= 1 To Len(aSX7)
+	If !Empty(aSX7[i,1])
+		If SX7->(!dbSeek(Padr(aSX7[i,1],Len(SX7->X7_CAMPO))+aSX7[i,2]))
+			RecLock("SX7",.T.)
+			For j:=1 To Len(aSX7[i])
+				If FieldPos(aEstrut[j])>0
+					FieldPut(FieldPos(aEstrut[j]),aSX7[i,j])
+				EndIf
+			Next j
+			dbCommit()
+			MsUnLock("SX7")
+		EndIf
+		SX3->(DbSetOrder(2))
+		If SX3->(DbSeek(aSX7[i,1]))
+			RecLock("SX3",.F.)
+			SX3->X3_TRIGGER := "S"
+			MsUnLock("SX3")
+		EndIf
+	EndIf
+Next i
+
+Return
