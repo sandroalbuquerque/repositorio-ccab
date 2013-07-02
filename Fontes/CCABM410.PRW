@@ -4271,7 +4271,7 @@ For x:=1 To Len(oGdTrt:aCols)
 		aadd(aLinha,{"C6_QTDLIB"	,_xQtdTotLib															,Nil})
 		aadd(aLinha,{"C6_LOCAL"		,fPesqAcols({"ZA_LOCAL"  } ,x)											,Nil})
 		aadd(aLinha,{"C6_TRANSP"	,fPesqAcols({"ZA_TRANSP" } ,x)											,Nil})
-		aadd(aLinha,{"C6_XLIBERA"	,"1"																	,Nil})
+		aadd(aLinha,{"C6_XLIBERA"	,""																	,Nil})     // "1"
 		aadd(aLinha,{"C6_ENTREG"	,_xEntreg																,Nil})		
 		aadd(aLinha,{"C6_CHASSI"    , ''                                                                    ,Nil})
 		aadd(aLinha,{"C6_XTABELA"	,SZ3->Z3_XTABELA														,Nil})

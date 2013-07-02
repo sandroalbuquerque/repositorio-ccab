@@ -460,8 +460,18 @@ If SC5->(DbSeek( xFilial("SC5") + SD2->D2_CLIENTE + SD2->D2_LOJA + SD2->D2_PEDID
                 Endif                                                                                           
 			    IF SC5->C5_XTPPED == "1"
    		   		    _cTransp := Posicione("SC6",1 ,xFilial("SC6") + SD2->D2_PEDIDO  + SD2->D2_ITEMPV + SD2->D2_COD, "C6_TRANSP")
-                Endif                                                                                                           
-           		                             
+                Endif 
+                
+                // Valdemir Jose 02/07/2013                                                                                                          
+				If SC5->C5_XTPPED == "2" // Conta e Ordem
+				
+					_cTes := SubStr( GetMV("MV_XTESC"), At(Posicione("SA1", 1, xFilial("SA1") + SC5->C5_CLIENT + SC5->C5_LOJAENT, "A1_EST"), GetMV("MV_XTESC")) + 2, 3)
+				
+				ElseIf SC5->C5_XTPPED == "1" // Entrega Futura
+				
+					_cTes 	  := SubStr( GetMV("MV_XTESF"), At(Posicione("SA1", 1, xFilial("SA1") + SC5->C5_CLIENTE + SC5->C5_LOJACLI, "A1_EST"), GetMV("MV_XTESF")) + 2, 3)
+				
+				Endif           		                             
            		// Adicionado por Valdemir Jose 27/06/2013
            		if (GETMV("MV_DE_VOFE") = SD2->D2_TES)
            			_cTes := GETMV("MV_PA_VOFE")
@@ -495,6 +505,7 @@ If SC5->(DbSeek( xFilial("SC5") + SD2->D2_CLIENTE + SD2->D2_LOJA + SD2->D2_PEDID
 				
 				If SC5->C5_XTPPED == "2"     // Conta e Ordem
 					aAdd( _aRet,{"C6_XENTREG"	, dDataBase		             				, NIL})
+					aAdd( _aRet,{"C6_XLIBERA"	, "1"				 						, NIL})    // VALDEMIR JOSE 02/07/2013
 				ElseIf SC5->C5_XTPPED == "1" // Entrega Futura
 					aAdd( _aRet,{"C6_XENTREG"	, _dEntreg		             				, NIL})
 				EndIf
