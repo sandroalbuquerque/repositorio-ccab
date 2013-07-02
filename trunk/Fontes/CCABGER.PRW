@@ -645,45 +645,6 @@ Return aRET
 ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
 ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
-ฑฑบPrograma  ณGetComparacao บAutor  ณValdemir Jos้   บ Data ณ  23/02/10   บฑฑ
-ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
-ฑฑบDesc.     ณ                                                            บฑฑ
-ฑฑบ          ณ                                                            บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบParametro ณ pTabela - Sigla da Tabela a ser Carregada                  บฑฑ
-ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
-ฑฑบRetorno   ณ aRet - (Titulo do campo, Nome do Campo)                    บฑฑ
-ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
-*/
-User Function GetComparacao(pTabela)
-	Local aRet    := {}
-	Local aCampos := U_GetStrutura(pTabela)
-	Local nCampo  := 0
-	Local aArea   := GetArea()
-
-	dbSelectArea(pTabela)
-	
-	For nCampo := 1 To Len(aCampos)		  // Quantidade de Colunas
-		if Right(Alltrim(aCampos[nCampo,2]),6) <> 'FILIAL'						 			 
-			// Verifica se o campo nใo estแ vazio
-			if (!EMPTY((pTabela)->&(Alltrim(aCampos[nCampo,2]))) ) .AND.;
-			   (M->&(Alltrim(aCampos[nCampo,2])) <> (pTabela)->&(Alltrim(aCampos[nCampo,2])) )   // Verifica se os campos de memoria ้ diferente dos campos fisicos
-			   aAdd(aRet, {aCampos[nCampo,1],aCampos[nCampo,2]} )                                // Se for diferente, alimenta array 
-			Endif                                                    
-		Endif
-	Next                      
-	
-	RestArea( aArea )
-
-Return aRet
-
-
-/*
-ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
-ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
 ฑฑบPrograma  ณTrataBuffer  บAutor  ณValdemir Jos้    บ Data ณ  30/04/08   บฑฑ
 ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
 ฑฑบDesc.     ณ Rotina que farแ a quebra das informa็๕es-"|"               บฑฑ
@@ -787,14 +748,20 @@ Static Function grvMasterLog(pRotina, pAcao, pDetalh, pTabela)
 	Local aArea   := GetArea()
 	Local _Codigo := ''  
 	Local cAlias  := ""
+	Local cTab    := ""
 	
 	if (pTabela = 'SA1')  .or. (pTabela = 'SA2') 
-	 _Codigo := iif(pTabela = 'SA1', SA1->A1_COD, SA2->A2_COD)
-	 _Codigo += '-'+iif(pTabela = 'SA1', SA1->A1_LOJA, SA2->A2_LOJA)
-	 cAlias := "PAA"
+	  IF (ALTERA .OR. INCLUI)
+		 _Codigo := iif(pTabela = 'SA1', M->A1_COD, M->A2_COD)
+		 _Codigo += '-'+iif(pTabela = 'SA1', M->A1_LOJA, M->A2_LOJA)
+	  Else
+		 _Codigo := iif(pTabela = 'SA1', SA1->A1_COD, SA2->A2_COD)
+		 _Codigo += '-'+iif(pTabela = 'SA1', SA1->A1_LOJA, SA2->A2_LOJA)
+	  Endif
+	 cAlias := "SZJ"  
 	elseif pTabela = 'SB1' 
 	 _Codigo := SB1->B1_COD  
-	 cAlias := "PAA"
+	 cAlias := "SZJ"
 	elseif pTabela = 'SC7'      // Acrescentado 24/11/10 - Valdemir Jos้
 	 _Codigo := SC7->C7_NUM
 	 if Empty(SC7->C7_NUM)
@@ -806,14 +773,14 @@ Static Function grvMasterLog(pRotina, pAcao, pDetalh, pTabela)
 	dbSelectArea(cAlias)
 	                 
 	RecLock(cAlias,.T.)
-	&(cAlias+"_FILIAL")  := if(pTabela='SB1',SB1->B1_FILIAL,XFILIAL(pTabela))
-	&(cAlias+"_USUARIO") := cUserName                                                                         
-	&(cAlias+"_DATA")    := DDATABASE
-	&(cAlias+"_HORA")    := TIME()
-	&(cAlias+"_ROTINA")  := pRotina
-	&(cAlias+"_CODIGO")  := _Codigo
-	&(cAlias+"_ACAO")    := pAcao
-	&(cAlias+"_DETALH")  := pDetalh
+	&(Substr(cAlias,2,3)+"_FILIAL")  := if(pTabela='SB1',SB1->B1_FILIAL,XFILIAL("SZJ"))
+	&(Substr(cAlias,2,3)+"_USUARIO") := cUserName                                                                         
+	&(Substr(cAlias,2,3)+"_DATA")    := DDATABASE
+	&(Substr(cAlias,2,3)+"_HORA")    := TIME()
+	&(Substr(cAlias,2,3)+"_ROTINA")  := pRotina
+	&(Substr(cAlias,2,3)+"_CODIGO")  := _Codigo
+	&(Substr(cAlias,2,3)+"_ACAO")    := pAcao
+	&(Substr(cAlias,2,3)+"_DETALH")  := pDetalh
 	MsUnlock()	
 	
 	RestArea( aArea )
@@ -846,7 +813,7 @@ User Function GetComparacao(pTabela)
 	Local aArea   := GetArea()
 
 	dbSelectArea(pTabela)
-	RegToMemory(pTabela,.F.,.F.)
+	//RegToMemory(pTabela,.F.,.F.)
 	For nCampo := 1 To Len(aCampos)		  // Quantidade de Colunas
 		if Right(Alltrim(aCampos[nCampo,2]),6) <> 'FILIAL'						 			 
 			// Verifica se o campo nใo estแ vazio
@@ -860,3 +827,71 @@ User Function GetComparacao(pTabela)
 	RestArea( aArea )
 
 Return aRet
+
+
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณMontaCabec บAutor  ณValdemir Jos้      บ Data ณ  19-08-08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Monta Cabe็alho, baseado no array informado                บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ Dixtal                                                     บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+PARAMETRO
+=========
+aCabec = Array com os titulos, respeitando o tamanho de cada titulo, conforme o conteudo do campo (Caracteres)
+cSepar = ษ o caracter que farแ a separa็ใo entre os campos
+*/
+User Function Monta_Cabec(aCabec, cSepar)
+	Local cRET   := ""
+	Local cTmp   := ""
+	Local nX     := 0
+	Local nCol   := 0 
+
+
+	// Prepara array com posi็๕es das colunas.
+	For nX := 1 To Len(aCabec)
+		if nX > 1
+			cTmp += ', '
+		endif
+		cTmp += '0'
+	Next
+	
+	cTmp := '{'+cTmp+'}'
+	aCol_ := &(cTmp)
+    	
+	//                  
+	For nX := 1 To Len(aCabec)
+	
+		if nX == 1
+	        aCol_[nX] := 0
+	    Else
+	      aCol_[nX]   := aCol_[nX-1]+len(aCabec[nX-1])
+	    endif
+	    cRET     += aCabec[nX]	   
+	    /*   Removido por Valdemir Jos้  02/09/2010
+        if nX == 1
+	        aCol_[nX] := 0
+	    Else
+	      aCol_[nX]   := aCol_[nX-1]+len(aCabec[nX-1])
+	    endif     
+    	cRET     += aCabec[nX]+" "
+	    
+	    if cSepar = " "
+	    	if aCabec[nX] != "|"
+	    		cRET     += aCabec[nX]
+	    	Endif
+	    Else	
+	    	cRET     += aCabec[nX]+" "
+		Endif	    
+		*/
+	next         
+	
+Return cRET                       

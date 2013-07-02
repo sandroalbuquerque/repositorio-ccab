@@ -1,0 +1,62 @@
+#include "rwmake.ch"      
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao      ³ MA030TOK ³ Autor ³ Paulo Elias           ³ Data ³ 02/09/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descricao   ³ Ponto de Entrada disparado na confirmacao do cadastro de   ³±±
+±±³            ³ fornecedores na inclusao para gravar a classe de valor no  ³±±
+±±³            ³ SA1 A1_XCLVL e na tabela CTH CTH_CLVL.                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso        ³ MP8                                                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Programador ³ Alteracao feita pelo Motivo ( Descricao abaixo)            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³            ³ Especifico CCAB                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+User Function MA030TOK()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Declaracao de variaveis                                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+/*
+Local _aArea    := GetArea()
+Local _aAreaSA1 := SA1->(GetArea())
+Local _aAreaCTH := CTH->(GetArea())
+Local _cXCLVL   := "C"+M->A1_COD+M->A1_LOJA
+Local _lRet     := .T.
+                       
+M->A1_XCLVL     := _cXCLVL
+
+If Inclui 
+	DbSelectArea("CTH")
+	DbSetOrder(1)
+	If !DbSeek(xFilial("CTH")+M->A1_XCLVL)
+		RecLock("CTH",.T.)
+		CTH_FILIAL  := xFilial("CTH")
+		CTH_CLVL    := _cXCLVL
+		CTH_CLASSE  := "2"
+        CTH_NORMAL  := "2"
+		CTH_DESC01  := M->A1_NOME
+		CTH_BLOQ    := "2"
+		CTH_DTEXIS  := CTOD("01/01/1980")
+		CTH_CLVLLP  := _cXCLVL
+		MsUnlock()
+	Else
+		Alert("Item Contabil C"+M->A1_COD+M->A1_LOJA+" ja Cadastrado!")
+		_lRet := .f.
+	EndIf
+
+Endif
+
+RestArea(_aAreaSA1)
+RestArea(_aAreaCTH)
+RestArea(_aArea)
+
+Return(_lRet)*/

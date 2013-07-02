@@ -3917,7 +3917,7 @@ If !Empty(cFilOrig) .And. !Empty(cLocalArmz)
 					ElseIf mv_par46 == 2
 						//Tes de Conta e Ordem Fora do Estado
 						if lOrig12                    
-							cRetTes := SZ8->Z8_TESCOFE2
+							cRetTes := SZ8->Z8_TESCOF2
 						else
 							cRetTes := SZ8->Z8_TESCOFE
 						endif
@@ -3931,7 +3931,7 @@ If !Empty(cFilOrig) .And. !Empty(cLocalArmz)
 					ElseIf cPrdIndust != "S"
 						//Tes de Prod. Comerc. Fora do Estado
 						if lOrig12                   
-							cRetTes := SZ8->Z8_TESCOF2
+							cRetTes := SZ8->Z8_TESCFE2
 						else
 							cRetTes := SZ8->Z8_TESCFE
 						endif

@@ -15,7 +15,12 @@
 
 User Function M410LIOK()
 Local lEnd      := .T.
-Local nPosSTrib := aScan(aHeader,{|x| Upper(AllTrim(x[2])) == "C6_CLASFIS"})    // Valdemir Jose 19/06/2013
+Local nPosSTrib := aScan(aHeader,{|x| Upper(AllTrim(x[2])) == "C6_CLASFIS"})    // Valdemir Jose 19/06/2013 
+Local nPosCF    := aScan(aHeader,{|x| Upper(AllTrim(x[2])) == "C6_CF"})         // Valdemir Jose 19/06/2013 
+Local nPosARM   := aScan(aHeader,{|x| Upper(AllTrim(x[2])) == "C6_LOCAL"})      // Valdemir Jose 19/06/2013 
+Local _cCFOP    := GETMV("MV_CFOP410")                                          // Valdemir Jose 01/07/2013
+Local _cARM     := GETMV("MV_ARMZ410")                                          // Valdemir Jose 01/07/2013
+
 lc6_nota   := aScan( aHeader, { |aVal|aVal[2] = "C6_NOTA" } )
 
 
@@ -27,6 +32,14 @@ Endif
 
 
 If Inclui .Or. Altera
+	// Valdemir Jose 01/07/2013
+	IF SF4->F4_PODER3 = 'R' .and. (alltrim(aCols[n,nPosCF]) $ _cCFOP)
+	   IF  !(alltrim(aCols[n,nPosARM]) $ _cARM) 
+	   		Alert("CFOP não pode ser utilizada com armazem "+aCols[n,nPosARM]+", por favor verifique...")
+	   		Return .F.
+	   Endif
+	ENDIF
+	
 	// Valdemir Jose 19/06/2013
 	if Len(alltrim(aCols[n,nPosSTrib])) < 3
 		Alert("Situação Tributária com informação errada. Por favor, Informe o Produto e TES novamente...")
