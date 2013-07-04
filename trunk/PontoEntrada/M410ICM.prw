@@ -1,0 +1,44 @@
+#Include "PROTHEUS.CH"
+#include "RWMAKE.CH"
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ XXXXXXXX ³ Prog  ³ Juliano Junio Souza   ³ Data ³ 22.08.2011³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Faz Acerto do ICMS pelo Cliente Faturamento.                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ CCAB                                                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+/*/
+
+// Para a Planilha Financeira da rotina Pedidos de Venda.
+User Function M410ICM()     
+/*                  Removido por ter mudado a regra. Caso adicione novamente, ele passará a calcular errado a planilha - Valdemir Jose 04/07/2013
+Local aTrb := PARAMIXB[1]
+Local cUfCli := Alltrim(SC5->C5_XESTCLI)
+Local cPosImp := Alltrim(Getmv("MV_ICMCCAB"))
+Local nAliq := SubStr(cPosImp,AT(cUfCli,cPosImp)+2,2)
+If SC5->C5_CLIENTE+SC5->C5_LOJACLI <> SC5->C5_CLIENT+SC5->C5_LOJAENT
+	_ALIQICM := Val(nAliq)
+	_VALICM := (_BASEICM*_ALIQICM)/100
+Endif  
+*/
+Return
+
+
+// Para o acerto fiscal da rotina Documento de saida.
+User Function M460ICM()
+/*                  Removido por ter mudado a regra. Caso adicione novamente, ele passará a calcular errado a planilha - Valdemir Jose 04/07/2013
+Local aTrb := PARAMIXB[1]
+Local cUfCli := Alltrim(SC5->C5_XESTCLI)
+Local cPosImp := Alltrim(Getmv("MV_ICMCCAB"))
+Local nAliq := SubStr(cPosImp,AT(cUfCli,cPosImp)+2,2)
+If SC5->C5_CLIENTE+SC5->C5_LOJACLI <> SC5->C5_CLIENT+SC5->C5_LOJAENT
+	_ALIQICM := Val(nAliq)
+	_VALICM := (_BASEICM*_ALIQICM)/100
+Endif
+*/
+Return

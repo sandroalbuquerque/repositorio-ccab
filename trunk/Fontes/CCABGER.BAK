@@ -699,11 +699,28 @@ User Function RegMasterLog(pTabela, pRotina, pAcao)
 
 		// Registra o Log informando as alterações
 		For nConta := 1 To Len(aCampos)
-                
-            cCampoTab := ALLTRIM((pTabela)->&(aCampos[nConta][2]))
+			// De
+			if ValType( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) ) = "N"
+				cCampoTab := Alltrim( Str( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) ) )
+			Elseif ValType( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) ) = "D"
+				cCampoTab := dtoc( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) )
+			Else
+				cCampoTab := (pTabela)->&(ALLTRIM(aCampos[nConta][2]))
+			endif                                                                       
+
+			// Para
+			if ValType( M->&(ALLTRIM(aCampos[nConta][2])) ) = "N"
+				cCamPara := Alltrim( Str( M->&(ALLTRIM(aCampos[nConta][2])) ) )
+			Elseif ValType( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) ) = "D"
+				cCamPara := dtoc( M->&(ALLTRIM(aCampos[nConta][2])) )
+			Else
+				cCamPara := M->&(ALLTRIM(aCampos[nConta][2]))
+			endif                                                                       
+			
+            cCampoTab := IF(VALTYPE((pTabela)->&(ALLTRIM(aCampos[nConta][2])))="N",ALLTRIM(STR((pTabela)->&(ALLTRIM(aCampos[nConta][2])))), (pTabela)->&(ALLTRIM(aCampos[nConta][2])) )
 			if     PadL(pAcao,3) == "ALT"
 				_cDetalh := 'Alterado'
-    			_cDetalh := _cDetalh+" Campo "+aCampos[nConta][1]+" de: "+cCampoTab+" para: "+ALLTRIM(M->&(aCampos[nConta][2]))
+    			_cDetalh := _cDetalh+" Campo "+aCampos[nConta][1]+" de: "+cCampoTab+" para: "+cCamPara
 			Endif     
 
 			grvMasterLog(pRotina, pAcao, _cDetalh, pTabela)
@@ -711,7 +728,7 @@ User Function RegMasterLog(pTabela, pRotina, pAcao)
 		Next	
 		
 	Elseif (PadL(pAcao,3) == "EXC") .or. (PadL(pAcao,3) == "INC")
-		if     PadL(pAcao,3) == "EXC"
+		if     PadL(pAcao,3) == "EXC"                                                                                       
 	   		_cDetalh := 'Excluído'
    			_cDetalh := _cDetalh+" Registro - "+(pTabela)->(FieldGet(1))+" "+(pTabela)->(FieldGet(2)) //+"  "+(pTabela)->(FieldGet(6))
 		Else
@@ -751,9 +768,14 @@ Static Function grvMasterLog(pRotina, pAcao, pDetalh, pTabela)
 	Local cTab    := ""
 	
 	if (pTabela = 'SA1')  .or. (pTabela = 'SA2') 
-	 _Codigo := iif(pTabela = 'SA1', M->A1_COD, M->A2_COD)
-	 _Codigo += '-'+iif(pTabela = 'SA1', M->A1_LOJA, M->A2_LOJA)
-	 cAlias := "SZJ"
+	  IF (ALTERA .OR. INCLUI)
+		 _Codigo := iif(pTabela = 'SA1', M->A1_COD, M->A2_COD)
+		 _Codigo += '-'+iif(pTabela = 'SA1', M->A1_LOJA, M->A2_LOJA)
+	  Else
+		 _Codigo := iif(pTabela = 'SA1', SA1->A1_COD, SA2->A2_COD)
+		 _Codigo += '-'+iif(pTabela = 'SA1', SA1->A1_LOJA, SA2->A2_LOJA)
+	  Endif
+	 cAlias := "SZJ"  
 	elseif pTabela = 'SB1' 
 	 _Codigo := SB1->B1_COD  
 	 cAlias := "SZJ"
