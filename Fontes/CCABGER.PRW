@@ -699,11 +699,27 @@ User Function RegMasterLog(pTabela, pRotina, pAcao)
 
 		// Registra o Log informando as alterações
 		For nConta := 1 To Len(aCampos)
-                
-            cCampoTab := ALLTRIM((pTabela)->&(aCampos[nConta][2]))
+			// De
+			if ValType( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) ) = "N"
+				cCampoTab := Alltrim( Str( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) ) )
+			Elseif ValType( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) ) = "D"
+				cCampoTab := dtoc( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) )
+			Else
+				cCampoTab := (pTabela)->&(ALLTRIM(aCampos[nConta][2]))
+			endif                                                                       
+
+			// Para
+			if ValType( M->&(ALLTRIM(aCampos[nConta][2])) ) = "N"
+				cCamPara := Alltrim( Str( M->&(ALLTRIM(aCampos[nConta][2])) ) )
+			Elseif ValType( (pTabela)->&(ALLTRIM(aCampos[nConta][2])) ) = "D"
+				cCamPara := dtoc( M->&(ALLTRIM(aCampos[nConta][2])) )
+			Else
+				cCamPara := M->&(ALLTRIM(aCampos[nConta][2]))
+			endif                                                                       
+			
 			if     PadL(pAcao,3) == "ALT"
 				_cDetalh := 'Alterado'
-    			_cDetalh := _cDetalh+" Campo "+aCampos[nConta][1]+" de: "+cCampoTab+" para: "+ALLTRIM(M->&(aCampos[nConta][2]))
+    			_cDetalh := _cDetalh+" Campo "+aCampos[nConta][1]+" de: "+cCampoTab+" para: "+cCamPara
 			Endif     
 
 			grvMasterLog(pRotina, pAcao, _cDetalh, pTabela)
@@ -711,7 +727,7 @@ User Function RegMasterLog(pTabela, pRotina, pAcao)
 		Next	
 		
 	Elseif (PadL(pAcao,3) == "EXC") .or. (PadL(pAcao,3) == "INC")
-		if     PadL(pAcao,3) == "EXC"
+		if     PadL(pAcao,3) == "EXC"                                                                                       
 	   		_cDetalh := 'Excluído'
    			_cDetalh := _cDetalh+" Registro - "+(pTabela)->(FieldGet(1))+" "+(pTabela)->(FieldGet(2)) //+"  "+(pTabela)->(FieldGet(6))
 		Else
